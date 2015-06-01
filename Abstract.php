@@ -196,7 +196,6 @@ abstract class Typed\Abstract implements Typed\Interface, Iterator, Countable
 	/**
 	 * Set data to named variable.
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
-	 * If $mustExist flag is true then exception is thrown if key doesn't exist.
 	 *
 	 * @param string $k
 	 * @param mixed $v
@@ -207,13 +206,13 @@ abstract class Typed\Abstract implements Typed\Interface, Iterator, Countable
 		if ( !array_key_exists($k, $this->_class_vars) ) {
 			return;
 		}
-		
+
 		$setter = '_set_' . $k;
 		if ( method_exists( $this->_called_class, $setter ) ) {
 			$this->$setter($v);
 			return;
 		}
-		
+
 		switch ( gettype($this->{$k}) ) {
 			case 'bool':
 			case 'boolean':
@@ -239,6 +238,10 @@ abstract class Typed\Abstract implements Typed\Interface, Iterator, Countable
 
 			case 'string':
 			$this->{$k}	= (string) $v;
+			break;
+
+			case 'array':
+			$this->{$k} = (array) $v;
 			break;
 
 			case 'object':
@@ -274,18 +277,9 @@ abstract class Typed\Abstract implements Typed\Interface, Iterator, Countable
 			}
 			break;
 
-			case 'array':
-			if ( is_array($v) ) {
-				$this->{$k} = $v;
-			}
-			else {
-				$this->{$k} = (array) $v;
-			}
-			break;
-
 			case 'null':
 			case 'NULL':
-			$this->__unset($k);
+			$this->__unset($k); //	set to the default value
 			break;
 
 			//	resource
