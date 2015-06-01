@@ -1,5 +1,6 @@
 # Typed
 PHP classes to help manage data types of class members.
+<p>It is currently in the process of being copied from PHP Utilities and might be incomplete.
 
 ##Typed\Abstract
 The derivitives of Typed\Abstract will do these things:
