@@ -22,3 +22,20 @@ The instances or derivitives of Typed\Array will do these things:
 * Every member be the same type.
 * Silently cast assigned data in the most obvious way when input is of a different type.
 * Have a method to return a deeply transformed hashed array (or map).
+
+##Typed\Interface
+This defines the convience methods that are to be implemented in the above classes.
+###assignObject
+Copies all matching member names while maintaining original types and doing a deep copy where appropriate.
+This method silently ignores extra properties in the input object, leaves unmatched properties in this class untouched, and skips names starting with an underscore.
+Input can be an object, an associative array, or a JSON string representing a non-scalar type.
+###toArray
+Returns a simple array of this object with only the appropriate members. A deep copy/converstion to a simple array from objects is also performed.
+###toJson
+Returns JSON string representing the simple form (toArray) of this object. Optionally retruns a pretty-print string.
+###getSqlInsert
+Returns a string formatted for an SQL insert or update.
+Accepts an array where the values are the names of members to include. An empty array means to use all members.
+###getSqlValues
+Returns a string formatted for an SQL "ON DUPLICATE KEY UPDATE" statement.
+Accepts an array where the values are the names of members to include. An empty array means to use all members.
