@@ -3,13 +3,14 @@ PHP classes to help manage data types of class members.
 
 ##Typed\Abstract
 The derivitives of Typed\Abstract will do these things:
-* Maintain the initial type of each member property.
-* Cast data assigned to properties in the most obvious way when input is a different type.
+* Member/property access will behave like any standard object.
+* Maintain the initial type of each member/property.
+* Silently cast data assigned to properties in the most obvious way when input is of a different type.
 * Use setter methods based on property name to further handle input data, like filtering.
 * Use getter methods based on property name to handle output, like formatting.
-* Return a deeply transformed hashed array (or map).
-* Handle special cases of object members.
-* Accept a simple object, hashed array, or indexed array and assign the input values to the appropriate members.
+* Have a method to return a deeply transformed hashed array (or map).
+* Handle special cases of members/properties that are objects.
+* Accept a another object, hashed array, or indexed array and assign the input values to the appropriate members.
  *	Copy object or named array item by item.
  *	Copy indexed array by position.
  *	Accept JSON string and handle contents as the previous two type.
@@ -17,6 +18,7 @@ The derivitives of Typed\Abstract will do these things:
 
 ##Typed\Array
 The instances or derivitives of Typed\Array will do these things:
+* It will behave like a standard PHP array.
 * Every member be the same type.
-* Cast data assigned to indicies in the most obvious way when input is a different type.
-* Return a deeply transformed hashed array (or map).
+* Silently cast assigned data in the most obvious way when input is of a different type.
+* Have a method to return a deeply transformed hashed array (or map).
