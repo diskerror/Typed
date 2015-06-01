@@ -2,7 +2,7 @@
 PHP classes to help manage data types of class members.
 
 ##Typed\Abstract
-**The derivitives of Typed\Abstract will do these things:**
+The derivitives of Typed\Abstract will do these things:
 * Maintain the initial type of each member property.
 * Cast data assigned to properties in the most obvious way when input is a different type.
 * Use setter methods based on property name to further handle input data, like filtering.
@@ -16,7 +16,7 @@ PHP classes to help manage data types of class members.
  *	Null and boolean false sets entire object's members to their default values.
 
 ##Typed\Array
-**The instances or derivitives of Typed\Array will do these things:**
+The instances or derivitives of Typed\Array will do these things:
 * Every member be the same type.
 * Cast data assigned to indicies in the most obvious way when input is a different type.
 * Return a deeply transformed hashed array (or map).
