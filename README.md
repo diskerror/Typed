@@ -2,7 +2,7 @@
 PHP classes to help manage data types of class members.
 <p>It is currently in the process of being copied from [PHP Utilities] (https://github.com/diskerror/PHP-utilities#php-utilities) and might be incomplete.
 
-##Typed\Abstract
+##Typed\TypedAbstract
 The derivitives of Typed\Abstract will do these things:
 * Member/property access will behave like any standard object.
 * Maintain the initial type of each member/property.
@@ -17,14 +17,14 @@ The derivitives of Typed\Abstract will do these things:
  *	Accept JSON string and handle contents as the previous two type.
  *	Null and boolean false sets entire object's members to their default values.
 
-##Typed\Array
+##Typed\TypedArray
 The instances or derivitives of Typed\Array will do these things:
 * It will behave like a standard PHP array.
 * Every member be the same type.
 * Silently cast assigned data in the most obvious way when input is of a different type.
 * Have a method to return a deeply transformed hashed array (or map).
 
-##Typed\Interface
+##Typed\TypedInterface
 This defines the convience methods that are to be implemented in the above classes.
 ###assignObject
 Copies all matching member names while maintaining original types and doing a deep copy where appropriate.
