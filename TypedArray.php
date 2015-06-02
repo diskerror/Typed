@@ -1,13 +1,19 @@
 <?php
 
-require_once 'Interface.php';
+namespace Typed;
+
+require_once 'TypedInterface.php';
+
+use Zend_Json;
+
+use ArrayAccess, Countable, IteratorAggregate;
 
 /**
  * Provides support for an array's elements to all have the same type.
  * If type is defined as null then any element can have any type but
  *    features of deep copying are available.
  */
-class Typed\Array implements Typed\Interface, ArrayAccess, Countable, IteratorAggregate
+class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggregate
 {
 	/**
 	 * An array that contains the items of interest.
@@ -110,7 +116,7 @@ class Typed\Array implements Typed\Interface, ArrayAccess, Countable, IteratorAg
 	 *    $value is a scalar and _type is an array or object (wrap and save value? throw exception for now);
 	 *    $value is an object and _type is an array (cast object to array);
 	 *    $value and _type are both exactly the same object or array type (replace current value);
-	 *    $value is a simple array or object of name/value pairs and _type implements Typed\Interface.
+	 *    $value is a simple array or object of name/value pairs and _type implements TypedInterface.
 	 * Each scalar type must be handled separately due to the way PHP handles casting.
 	 *
 	 * @param string|int $offset
@@ -215,7 +221,7 @@ class Typed\Array implements Typed\Interface, ArrayAccess, Countable, IteratorAg
 						clone $value :
 						new $this->_type($value);
 			}
-			//	If location is not set or is null, AND NOT our special Typed\Abstract class then just overwrite.
+			//	If location is not set or is null, AND NOT our special TypedAbstract class then just overwrite.
 			elseif ( !isset($this->_container[$offset]) || !is_subclass_of($this->_type, 'TypedInterface') ) {
 				$this->_container[$offset] =
 					( is_object($value) && get_class($value) === $this->_type ) ?

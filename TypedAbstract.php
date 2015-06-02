@@ -1,6 +1,10 @@
 <?php
 
-require_once 'Interface.php';
+namespace Typed;
+
+require_once 'TypedInterface.php';
+
+use Iterator, Countable;
 
 /**
  * Provides support for class members/properties maintain their initial types.
@@ -36,7 +40,7 @@ require_once 'Interface.php';
  * @copyright  Copyright (c) 2012 Reid Woodbury Jr.
  * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
  */
-abstract class Typed\Abstract implements Typed\Interface, Iterator, Countable
+abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 {
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
@@ -96,7 +100,7 @@ abstract class Typed\Abstract implements Typed\Interface, Iterator, Countable
 
 	/**
 	 * Clone.
-	 * Objects of type "Typed\Abstract" will be deep cloned.
+	 * Objects of type "TypedAbstract" will be deep cloned.
 	 */
 	public function __clone()
 	{
@@ -251,7 +255,7 @@ abstract class Typed\Abstract implements Typed\Interface, Iterator, Countable
 					$this->{$k} = clone $v;
 				}
 
-				//	if this->k is a Typed\Abstract object and v is any other type
+				//	if this->k is a TypedAbstract object and v is any other type
 				//		then absorb v or v's properties into this->k's properties
 				elseif ( is_subclass_of($this->{$k}, __CLASS__) ) {
 					$this->{$k}->assignObject($v);
