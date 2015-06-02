@@ -1,5 +1,6 @@
 # Typed
 PHP classes to help manage data types of class members.
+<p>It is currently in the process of being copied from [PHP Utilities] (https://github.com/diskerror/PHP-utilities#php-utilities) and might be incomplete.
 
 ##Typed\Abstract
 The derivitives of Typed\Abstract will do these things:
@@ -34,7 +35,7 @@ Returns a simple array of this object with only the appropriate members. A deep 
 ###toJson
 Returns JSON string representing the simple form (toArray) of this object. Optionally retruns a pretty-print string.
 ###getSqlInsert
-Returns a string formatted for an SQL insert or update.
+Returns a string formatted for an SQL INSERT or UPDATE statement.
 Accepts an array where the values are the names of members to include. An empty array means to use all members.
 ###getSqlValues
 Returns a string formatted for an SQL "ON DUPLICATE KEY UPDATE" statement.
