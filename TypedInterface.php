@@ -1,12 +1,14 @@
 <?php
 
+namespace Typed;
+
 /**
- * Provides common interface for Typed\Abstract and Typed\Array.
+ * Provides common interface for TypedAbstract and TypedArray.
  *
  * @copyright  Copyright (c) 2015 Reid Woodbury Jr.
  * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
  */
-interface Typed\Interface
+interface TypedInterface
 {
 	/**
 	 * Copies all matching member names while maintaining original types and
