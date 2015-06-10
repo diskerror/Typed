@@ -4,9 +4,7 @@ namespace Typed;
 
 require_once 'TypedInterface.php';
 
-use Zend_Json;
-
-use ArrayAccess, Countable, IteratorAggregate;
+use ArrayAccess, Countable, IteratorAggregate, Zend_Json;
 
 /**
  * Provides support for an array's elements to all have the same type.
@@ -26,7 +24,7 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 	 * A child class can override _type rather than it being set with the constructor.
 	 * @var string|null
 	 */
-	protected $_type = null;
+	protected $_type = '';
 
 	/**
 	 * Constructor.
@@ -34,10 +32,10 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 	 * @param array|object|string|null $values OPTIONAL null
 	 * @param string $type OPTIONAL null
 	 */
-	public function __construct($values = null, $type = null)
+	public function __construct($values = null, $type = '')
 	{
-		//	If null or empty then leave _type alone.
-		if ( '' !== $type && null !== $type ) {
+		//	If empty then leave _type alone.
+		if ( '' !== $type ) {
 			$this->_type = (string) $type;
 		}
 
@@ -100,147 +98,117 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 
 	/**
 	 * Required by the ArrayAccess interface
-	 * Coerces all input values to be the required type.
+	 * Coerces input values to be the required type.
 	 *
-	 * There are 4 conditions involving $offset:
+	 * There are 5 basic conditions for $this->_type:
+	 *    $this->_type is null (accept any type and value, like a standard array);
+	 *    $this->_type is a scalar [bool, int, float, string];
+	 *    $this->_type is an array (check if value has toArray);
+	 *    $this->_type is an object of type TypedInterface (call assignObject);
+	 *    $this->_type is any other object.
+	 *
+	 * There are 3 conditions involving $offset:
 	 *    $offset is null;
-	 *    $this->_container[$offset] does not exist;
-	 *    $this->_container[$offset] exists but the contents is null;
-	 *    $this->_container[$offset] has a current value.
-	 * Some container types will allow these conditions to be grouped together.
+	 *    $offset is set;
+	 *    $this->_container[$offset] has an object that implements TypedInterface.
 	 *
-	 * There are 6 conditions for handling $value:
-	 *    $value is null (replace current value with null);
-	 *    $value and _type are both scalars (cast and replace current value);
-	 *    $value is a an array or object, and _type is a scalar (throw exception);
-	 *    $value is a scalar and _type is an array or object (wrap and save value? throw exception for now);
-	 *    $value is an object and _type is an array (cast object to array);
-	 *    $value and _type are both exactly the same object or array type (replace current value);
-	 *    $value is a simple array or object of name/value pairs and _type implements TypedInterface.
-	 * Each scalar type must be handled separately due to the way PHP handles casting.
+	 * There are 4 conditions for handling $value:
+	 *    $value is null (replace current value with null, except instance of TypedInterface or array);
+	 *    $value is a scalar (cast);
+	 *    $value is a an array (check for toArray, or cast);
+	 *    $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
 	 * @param string|int $offset
 	 * @param mixed $value
-	 * @throws LogicException
 	 */
 	final public function offsetSet($offset, $value)
 	{
+		$setValue = true;
 		switch ($this->_type) {
 			case 'null':
 			case 'NULL':
+			case '':
 			case null:
-			if ( null === $offset ) {
-				$this->_container[] = $value;
-			}
-			else {
-				$this->_container[$offset] = $value;
-			}
+			$newValue = $value;
 			break;
 
 
 			case 'bool':
 			case 'boolean':
-			if ( !is_scalar($value) ) {
-				throw new LogicException('A scalar type is expected.');
-			}
-			elseif ( null === $offset ) {
-				$this->_container[] = (null === $value ? null : (boolean) $value);
-			}
-			else {
-				$this->_container[$offset] = (null === $value ? null : (boolean) $value);
-			}
+			self::_assertScalar($value);
+			$newValue = (null === $value ? null : (boolean) $value);
 			break;
 
 
 			case 'int':
 			case 'integer':
-			if ( !is_scalar($value) ) {
-				throw new LogicException('A scalar type is expected.');
-			}
-			elseif ( null === $offset ) {
-				$this->_container[] = (null === $value ? null : (int) $value);
-			}
-			else {
-				$this->_container[$offset] = (null === $value ? null : (int) $value);
-			}
+			self::_assertScalar($value);
+			$newValue = (null === $value ? null : (int) $value);
 			break;
 
 
 			case 'float':
 			case 'double':
 			case 'real':
-			if ( !is_scalar($value) ) {
-				throw new LogicException('A scalar type is expected.');
-			}
-			elseif ( null === $offset ) {
-				$this->_container[] = (null === $value ? null : (double) $value);
-			}
-			else {
-				$this->_container[$offset] = (null === $value ? null : (double) $value);
-			}
+			self::_assertScalar($value);
+			$newValue = (null === $value ? null : (double) $value);
 			break;
 
 
 			case 'string':
-			if ( !is_scalar($value) ) {
-				throw new LogicException('A scalar type is expected.');
-			}
-			elseif ( null === $offset ) {
-				$this->_container[] = (null === $value ? null : (string) $value);
-			}
-			else {
-				$this->_container[$offset] = (null === $value ? null : (string) $value);
-			}
+			self::_assertScalar($value);
+			$newValue = (null === $value ? null : (string) $value);
 			break;
 
 
 			case 'array':
-			if ( is_scalar($value) ) {
-				throw new LogicException('An array or object type is expected.');
-			}
-			elseif ( null === $offset ) {
-				$this->_container[] =
-					( is_object($value) && method_exists($value, 'toArray') ) ?
-						$value->toArray() :
-						(null === $value ? [] : (array) $value);
-			}
-			else {
-				$this->_container[$offset] =
-					( is_object($value) && method_exists($value, 'toArray') ) ?
-						$value->toArray() :
-						(null === $value ? [] : (array) $value);
-			}
+			$newValue =
+				( is_object($value) && method_exists($value, 'toArray') ) ?
+					$value->toArray() :
+					(null === $value ? [] : (array) $value);
 			break;
 
 
 			//	All object and class types.
 			default:
-			if ( null === $offset ) {
-				$this->_container[] =
+			if (
+				null === $offset
+				|| !isset($this->_container[$offset])
+				|| !($this->_container[$offset] instanceof TypedInterface)
+				) {
+				$newValue =
 					( is_object($value) && get_class($value) === $this->_type ) ?
 						clone $value :
 						new $this->_type($value);
 			}
-			//	If location is not set or is null.
-			elseif ( !isset($this->_container[$offset]) ) {
-				$this->_container[$offset] =
-					( is_object($value) && get_class($value) === $this->_type ) ?
-						clone $value :
-						new $this->_type($value);
-			}
-			//	If is set and an instance of our special type.
-			elseif ( $this->_container[$offset] instanceof TypedInterface ) {
+			//	Else it's an instance of our special type.
+			else {
+				$setValue = false;
 				$this->_container[$offset]->assignObject($value);
 			}
-			//	If is set and an instance of any other type of object.
-			else {
-				//	If it's an object and the same type then clone it, else create new object wrapping value.
-				$this->_container[$offset] =
-					( is_object($value) && get_class($value) === $this->_type ) ?
-						clone $value :
-						new $this->_type($value);
-			}
 			break;
+		}
+
+
+		if ( $setValue ) {
+			if ( null === $offset ) {
+				$this->_container[] =& $newValue;
+			}
+			else {
+				$this->_container[$offset] =& $newValue;
+			}
+		}
+	}
+
+	/**
+	 * @param mixed $v
+	 * @param string $message -OPTIONAL
+	 * @throws LogicException
+	 */
+	private static function _assertScalar(&$v, $message='A scalar type or null is expected.')
+	{
+		if ( !is_scalar($v) && null !== $v ) {
+			throw new LogicException($message);
 		}
 	}
 
