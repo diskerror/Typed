@@ -221,10 +221,16 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 						clone $value :
 						new $this->_type($value);
 			}
-			//	If location is not set or is null, AND NOT our special TypedAbstract class then just overwrite.
-			elseif ( !isset($this->_container[$offset]) || !is_subclass_of($this->_type, 'TypedInterface') ) {
+			//	If location is not set or is null.
+			elseif ( !isset($this->_container[$offset]) ) {
 				$this->_container[$offset] =
 					( is_object($value) && get_class($value) === $this->_type ) ?
+						clone $value :
+						new $this->_type($value);
+			}
+			elseif ( is_object($value) && !is_subclass_of($this->_type, 'TypedInterface') ) {
+				$this->_container[$offset] =
+					( get_class($value) === $this->_type ) ?
 						clone $value :
 						new $this->_type($value);
 			}
@@ -374,7 +380,7 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 		$j = Zend_Json::encode( $this->toArray() );
 
 		if ( $pretty ) {
-			return Zend_Json::prettyprint( $j );
+			return Zend_Json::prettyprint( $j ) . "\n";
 		}
 
 		return $j;

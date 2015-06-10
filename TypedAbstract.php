@@ -469,7 +469,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 		$j = Zend_Json::encode( $this->toArray() );
 
 		if ( $pretty ) {
-			return Zend_Json::prettyprint( $j );
+			return Zend_Json::prettyprint( $j ) . "\n";
 		}
 
 		return $j;
