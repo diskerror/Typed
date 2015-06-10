@@ -228,15 +228,17 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 						clone $value :
 						new $this->_type($value);
 			}
-			elseif ( is_object($value) && !is_subclass_of($this->_type, 'TypedInterface') ) {
+			//	If is set and an instance of our special type.
+			elseif ( $this->_container[$offset] instanceof TypedInterface ) {
+				$this->_container[$offset]->assignObject($value);
+			}
+			//	If is set and an instance of any other type of object.
+			else {
+				//	If it's an object and the same type then clone it, else create new object wrapping value.
 				$this->_container[$offset] =
-					( get_class($value) === $this->_type ) ?
+					( is_object($value) && get_class($value) === $this->_type ) ?
 						clone $value :
 						new $this->_type($value);
-			}
-			//	Classes that implement TypedInterface handle the input type.
-			else {
-				$this->_container[$offset]->assignObject($value);
 			}
 			break;
 		}
