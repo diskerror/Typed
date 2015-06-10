@@ -1,5 +1,5 @@
 # Typed
-PHP classes to help manage data types of class members.
+PHP classes to control the data types of class members.
 <p>It is currently in the process of being copied from [PHP Utilities] (https://github.com/diskerror/PHP-utilities#php-utilities) and might be incomplete.
 
 ##TypedAbstract
