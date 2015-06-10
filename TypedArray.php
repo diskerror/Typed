@@ -113,7 +113,7 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 	 *    $this->_container[$offset] has an object that implements TypedInterface.
 	 *
 	 * There are 4 conditions for handling $value:
-	 *    $value is null (replace current value with null, except instance of TypedInterface or array);
+	 *    $value is null (replace current scalar values with null, reset non-scalars);
 	 *    $value is a scalar (cast);
 	 *    $value is a an array (check for toArray, or cast);
 	 *    $value is a an object (clone if the same as _type, otherwise new _type(value) );
