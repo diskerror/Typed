@@ -49,7 +49,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	protected $_called_class;
 
 	/**
-	 * Holds the default values of the called class to-be-public properties in key=>value array.
+	 * Holds the default values of the called class to-be-public properties in associative array.
 	 * @var array
 	 */
 	protected $_class_vars;
@@ -217,7 +217,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			return;
 		}
 
-		switch ( gettype($this->{$k}) ) {
+		switch ( gettype($this->_class_vars[$k]) ) {
 			case 'bool':
 			case 'boolean':
 			$this->{$k}	= (boolean) $v;
@@ -226,7 +226,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			case 'int':
 			case 'integer':
 			//	if it's a string then assume it might need to be converted
-			//	strings must start with '0x' (hex), '0b' (binary), or '0' (octal)
+			//	http://php.net/manual/en/function.intval.php
 			if ( gettype($v) === 'string' ) {
 				$this->{$k} = intval($v, 0);
 			}
@@ -251,13 +251,13 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			case 'object':
 			if ( gettype($v) === 'object' ) {
 				//	if identical types then clone
-				if ( get_class($this->{$k}) === get_class($v) ) {
+				if ( get_class($this->_class_vars[$k]) === get_class($v) ) {
 					$this->{$k} = clone $v;
 				}
 
 				//	if this->k is a TypedAbstract object and v is any other type
 				//		then absorb v or v's properties into this->k's properties
-				elseif ( is_subclass_of($this->{$k}, __CLASS__) ) {
+				elseif ($this->_class_vars[$k] instanceof TypedInterface) {
 					$this->{$k}->assignObject($v);
 				}
 
@@ -270,8 +270,8 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 				//	Other classes might be able to absorb/convert other input,
 				//		like «DateTime::__construct("now")» accepts a string.
 				//	This works for DateTime, UDateTime, and UDate.
-				if ( is_a($this->{$k}, 'DateTime') && gettype($v) === 'string' || is_null($v) ) {
-					$class = get_class($this->{$k});
+				if ( ($this->_class_vars[$k] instanceof DateTime) && gettype($v) === 'string' || is_null($v) ) {
+					$class = get_class($this->_class_vars[$k]);
 					$this->{$k} = new $class($v);
 				}
 				//	Else give up.

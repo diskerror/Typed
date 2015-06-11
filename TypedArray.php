@@ -118,10 +118,10 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 	 *    $value is a an array (check for toArray, or cast);
 	 *    $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
-	 * @param string|int $offset
-	 * @param mixed $value
+	 * @param string|int $k
+	 * @param mixed $v
 	 */
-	final public function offsetSet($offset, $value)
+	final public function offsetSet($k, $v)
 	{
 		$setValue = true;
 		switch ($this->_type) {
@@ -129,73 +129,77 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 			case 'NULL':
 			case '':
 			case null:
-			$newValue = $value;
+			$newValue = $v;
 			break;
 
 
 			case 'bool':
 			case 'boolean':
-			self::_assertScalar($value);
-			$newValue = (null === $value ? null : (boolean) $value);
+			self::_assertScalar($v);
+			$newValue = (null === $v ? null : (boolean) $v);
 			break;
 
 
 			case 'int':
 			case 'integer':
-			self::_assertScalar($value);
-			$newValue = (null === $value ? null : (int) $value);
+			self::_assertScalar($v);
+			$newValue = ( null === $v ) ?
+				null :
+				( gettype($v) === 'string' ?
+					intval($v, 0) :
+					(int) $v );
 			break;
 
 
 			case 'float':
 			case 'double':
 			case 'real':
-			self::_assertScalar($value);
-			$newValue = (null === $value ? null : (double) $value);
+			self::_assertScalar($v);
+			$newValue = (null === $v ? null : (double) $v);
 			break;
 
 
 			case 'string':
-			self::_assertScalar($value);
-			$newValue = (null === $value ? null : (string) $value);
+			self::_assertScalar($v);
+			$newValue = (null === $v ? null : (string) $v);
 			break;
 
 
 			case 'array':
 			$newValue =
-				( is_object($value) && method_exists($value, 'toArray') ) ?
-					$value->toArray() :
-					(null === $value ? [] : (array) $value);
+				( is_object($v) && method_exists($v, 'toArray') ) ?
+					$v->toArray() :
+					(null === $v ? [] : (array) $v);
 			break;
 
 
 			//	All object and class types.
 			default:
 			if (
-				null === $offset
-				|| !isset($this->_container[$offset])
-				|| !($this->_container[$offset] instanceof TypedInterface)
+				null === $k
+				|| !isset($this->_container[$k])
+				|| !($this->_container[$k] instanceof TypedInterface)
 				) {
 				$newValue =
-					( is_object($value) && get_class($value) === $this->_type ) ?
-						clone $value :
-						new $this->_type($value);
+					( is_object($v) && get_class($v) === $this->_type ) ?
+						clone $v :
+						new $this->_type($v);
 			}
 			//	Else it's an instance of our special type.
 			else {
 				$setValue = false;
-				$this->_container[$offset]->assignObject($value);
+				$this->_container[$k]->assignObject($v);
 			}
 			break;
 		}
 
 
 		if ( $setValue ) {
-			if ( null === $offset ) {
+			if ( null === $k ) {
 				$this->_container[] =& $newValue;
 			}
 			else {
-				$this->_container[$offset] =& $newValue;
+				$this->_container[$k] =& $newValue;
 			}
 		}
 	}
