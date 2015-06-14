@@ -3,8 +3,9 @@
 namespace Typed;
 
 require_once 'TypedInterface.php';
+require_once 'ToJsonTrait.php';
 
-use ArrayAccess, Countable, IteratorAggregate, Zend_Json;
+use ArrayAccess, Countable, IteratorAggregate;
 
 /**
  * Provides support for an array's elements to all have the same type.
@@ -74,14 +75,16 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 			break;
 
 			case 'string':
-			require_once 'Zend/Json.php';
-			//	Zend_Json throws an exception if input cannot be interpreted as a JSON string.
-			$in = Zend_Json::decode( $in, Zend_Json::TYPE_ARRAY );
+			if ( !function_exists('json_decode') ) {
+				throw new BadMethodCallException('json_decode must be available');
+			}
+			//	json_decode fails silently and an empty array is set.
+			$in = json_decode( $in, true );
 			if ( !is_array($in) ) {
 				$in = [];
 			}
 			break;
-			
+
 			case 'null':
 			case 'NULL':
 			$this->_container = [];
@@ -342,21 +345,5 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 		return $this;
 	}
 
-	/**
-	 * Returns JSON string representing the object.
-	 * Optionally retruns a pretty-print string.
-	 *
-	 * @param bool $pretty -OPTIONAL
-	 * @return string
-	 */
-	final public function toJson($pretty = false)
-	{
-		$j = Zend_Json::encode( $this->toArray() );
-
-		if ( $pretty ) {
-			return Zend_Json::prettyprint( $j ) . "\n";
-		}
-
-		return $j;
-	}
+	use ToJsonTrait;
 }
