@@ -81,6 +81,13 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			if ($k[0] === '_') {
 				unset($this->_class_vars[$k]);
 			}
+			//	If $v is a string and has '__class__' at the start then instantiate the named object.
+			elseif ( is_string($v) && 0===stripos($v, '__class__') ) {
+				$this->_class_vars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
+				//	Objects are always passed by reference,
+				//		but we want a separate copy so the original stays unchanged.
+				$this->{$k} = clone $this->_class_vars[$k];
+			}
 		}
 
 		$this->_class_props = array_keys($this->_class_vars);
@@ -165,9 +172,11 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			break;
 
 			case 'string':
-			require_once 'Zend/Json.php';
-			//	Zend_Json throws an exception if input cannot be interpreted as a JSON string.
-			$in = Zend_Json::decode( $in, Zend_Json::TYPE_ARRAY );
+			if ( !function_exists('json_decode') ) {
+				throw new BadMethodCallException('json_decode must be available');
+			}
+			//	json_decode fails silently and an empty array is set.
+			$in = json_decode( $in, true );
 			if ( !is_array($in) ) {
 				$in = [];
 			}
@@ -179,12 +188,12 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			case 'boolean':	//	a 'false' is returned by MySQL:PDO for "no results"
 			//	return default values;
 			if ( $in !== true ) {	//	do only if false or null. True does nothing.
-				foreach ($this->_class_vars as $k => $v) {
-					$this->{$k} = $v;
+				foreach ($this->_class_vars as $k => &$v) {
+					$this->__unset($k);
 				}
 			}
-
 			return;
+
 
 			default:
 			throw new InvalidArgumentException('unknown input type');
@@ -217,6 +226,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			return;
 		}
 
+		//	Get the original type as the current member might contain null.
 		switch ( gettype($this->_class_vars[$k]) ) {
 			case 'bool':
 			case 'boolean':
@@ -343,7 +353,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	 */
 	public function __isset($k)
 	{
-		if ( substr($k, 0, 1) === '_' ) {
+		if ( $k[0] === '_'	 ) {
 			return false;
 		}
 
@@ -358,7 +368,9 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	public function __unset($k)
 	{
 		//	rather than unsetting, we set to default value
-		$this->{$k} = $this->_class_vars[$k];
+		$this->{$k} = is_object($this->_class_vars[$k]) ?
+			clone $this->_class_vars[$k] :
+			$this->_class_vars[$k];
 	}
 
 	/**
@@ -466,13 +478,62 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	 */
 	final public function toJson($pretty = false)
 	{
-		$j = Zend_Json::encode( $this->toArray() );
-
-		if ( $pretty ) {
-			return Zend_Json::prettyprint( $j ) . "\n";
+		if ( !function_exists('json_encode') ) {
+			throw new BadMethodCallException('json_encode must be available');
 		}
 
-		return $j;
+		$j = json_encode( $this->toArray() );
+
+		if ( !$pretty ) {
+			return $j;
+		}
+
+		//	Pretty print from Zend/Json/Json.php v2.4.0.
+        $tokens = preg_split('|([\{\}\]\[,])|', $j, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $result = "";
+        $indent = 0;
+
+        $inLiteral = false;
+        foreach ($tokens as $token) {
+            $token = trim($token);
+            if ($token == "") {
+                continue;
+            }
+
+            if (preg_match('/^("(?:.*)"):[ ]?(.*)$/', $token, $matches)) {
+                $token = $matches[1] . ': ' . $matches[2];
+            }
+
+            $prefix = str_repeat("\t", $indent);
+            if (!$inLiteral && ($token == "{" || $token == "[")) {
+                $indent++;
+                if ($result != "" && $result[strlen($result)-1] == "\n") {
+                    $result .= $prefix;
+                }
+                $result .= "$token\n";
+            }
+            elseif (!$inLiteral && ($token == "}" || $token == "]")) {
+                $indent--;
+                $prefix = str_repeat("\t", $indent);
+                $result .= "\n$prefix$token";
+            }
+            elseif (!$inLiteral && $token == ",") {
+                $result .= "$token\n";
+            }
+            else {
+                $result .= ($inLiteral ?  '' : $prefix) . $token;
+
+                //remove escaped backslash sequences causing false positives in next check
+                $token = str_replace('\\', '', $token);
+                // Count # of unescaped double-quotes in token, subtract # of
+                // escaped double-quotes and if the result is odd then we are
+                // inside a string literal
+                if ((substr_count($token, '"')-substr_count($token, '\\"')) % 2 != 0) {
+                    $inLiteral = !$inLiteral;
+                }
+            }
+        }
+		return $result . "\n";
 	}
 
 	/**
@@ -572,5 +633,5 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 
 		return implode(",\n", $sqlStrs);
 	}
-	
+
 }
