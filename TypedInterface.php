@@ -38,12 +38,14 @@ interface TypedInterface
 	 * Returns JSON string representing the simple form (toArray) of this object.
 	 * Optionally retruns a pretty-print string.
 	 *
+	 * Use ToJsonTrait.php
+	 *
 	 * @param bool $pretty -OPTIONAL
 	 * @return string
 	 */
 	public function toJson($pretty = false);
-	
-	
+
+
 	/**
 	 * Returns a string formatted for an SQL insert or update.
 	 *

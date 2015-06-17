@@ -2,10 +2,7 @@
 
 namespace Typed;
 
-require_once 'TypedInterface.php';
-require_once 'ToJsonTrait.php';
-
-use Iterator, Countable;
+use Iterator, Countable, InvalidArgumentException, BadMethodCallException;
 
 /**
  * Provides support for class members/properties maintain their initial types.
@@ -146,7 +143,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	 *   a JSON string representing an object.
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
-	 * @throws UnexpectedValueException
+	 * @throws BadMethodCallException|InvalidArgumentException
 	 */
 	public function assignObject($in = null)
 	{

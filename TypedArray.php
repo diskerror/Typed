@@ -2,10 +2,13 @@
 
 namespace Typed;
 
-require_once 'TypedInterface.php';
-require_once 'ToJsonTrait.php';
-
-use ArrayAccess, Countable, IteratorAggregate;
+use ArrayAccess;
+use Countable;
+use IteratorAggregate;
+use BadMethodCallException;
+use InvalidArgumentException;
+use LogicException;
+use LengthException;
 
 /**
  * Provides support for an array's elements to all have the same type.
@@ -65,7 +68,7 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 	 * Null clears the entire contents of the typed array but not it's type.
 	 *
 	 * @param object|array|string|null $in OPTIONAL null
-	 * @throws UnexpectedValueException
+	 * @throws BadMethodCallException|InvalidArgumentException
 	 */
 	public function assignObject($in=null)
 	{
