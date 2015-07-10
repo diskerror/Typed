@@ -154,11 +154,8 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			case 'array':
 			//	Test to see if it's an indexed or an associative array.
 			//	Leave associative array as is.
-			for ( reset($in); is_int(key($in)); next($in) );
-
-			//	if it's now null then the array has only integer keys:
-			//		then copy by position to a named array
-			if ( is_null(key($in)) ) {
+			//	Copy indexed array by position to a named array
+			if ( array_values($in) === $in ) {
 				$nameArr = $this->_class_vars;
 				$ct = min( count($in), count($nameArr) );
 				for ( $i = 0; $i<$ct; ++$i ) {
@@ -184,7 +181,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			case 'NULL':
 			case 'bool':
 			case 'boolean':	//	a 'false' is returned by MySQL:PDO for "no results"
-			//	return default values;
+			//	So, return default values;
 			if ( $in !== true ) {	//	do only if false or null. True does nothing.
 				foreach ($this->_class_vars as $k => &$v) {
 					$this->__unset($k);

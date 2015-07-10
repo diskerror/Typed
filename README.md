@@ -1,6 +1,7 @@
 # Typed
-PHP classes to control the data types of class members.
-<p>It is currently in the process of being copied from [PHP Utilities] (https://github.com/diskerror/PHP-utilities#php-utilities) and might be incomplete.
+PHP classes to strictly define member structure, to control their data types, and to add convience methods.
+
+It is currently in the process of being copied from [PHP Utilities] (https://github.com/diskerror/PHP-utilities#php-utilities) and might be incomplete.
 
 ##TypedAbstract
 The derivitives of Typed\TypedAbstract will do these things:
