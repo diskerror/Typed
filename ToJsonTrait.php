@@ -30,7 +30,7 @@ trait ToJsonTrait
 			return $j;
 		}
 
-		//	Pretty print from Zend/Json/Json.php v2.4.0.
+		//	Pretty print from Zend/Json/Json.php v2.4.2.
         $tokens = preg_split('|([\{\}\]\[,])|', $j, -1, PREG_SPLIT_DELIM_CAPTURE);
         $result = "";
         $indent = 0;

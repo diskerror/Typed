@@ -285,20 +285,20 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 				//	Other classes might be able to absorb/convert other input,
 				//		like «DateTime::__construct("now")» accepts a string.
 				//	This works for DateTime, UDateTime, and UDate.
-				if ( ($this->_class_vars[$k] instanceof DateTime) && gettype($v) === 'string' || is_null($v) ) {
+// 				if ( $this->_class_vars[$k] instanceof DateTime ) {
 					$class = get_class($this->_class_vars[$k]);
 					$this->{$k} = new $class($v);
-				}
-				//	Else give up.
-				else {
-					throw new InvalidArgumentException('cannot coerce data into object');
-				}
+// 				}
+// 				//	Else give up.
+// 				else {
+// 					throw new InvalidArgumentException('cannot coerce data into object');
+// 				}
 			}
 			break;
 
 			case 'null':
 			case 'NULL':
-			$this->__unset($k); //	set to the default value
+			$this->__unset($k);
 			break;
 
 			//	resource
@@ -358,7 +358,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	 */
 	public function __isset($k)
 	{
-		if ( $k[0] === '_'	 ) {
+		if ( $k[0] === '_' ) {
 			return false;
 		}
 
@@ -381,7 +381,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	/**
 	 * Override this method for additional checking such as when a start date
 	 * is required to be earlier than an end date, any range of values like
-	 * minimum and maximum, or any custom filtering.
+	 * minimum and maximum, or any custom filtering not dependent on a single property.
 	 */
 	protected function _checkRelatedProperties()
 	{
