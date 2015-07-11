@@ -4,26 +4,27 @@ PHP classes to strictly define member structure, to control their data types, an
 It is currently in the process of being copied from [PHP Utilities] (https://github.com/diskerror/PHP-utilities#php-utilities) and might be incomplete.
 
 ##TypedAbstract
-The derivitives of Typed\TypedAbstract will do these things:
+The derivitives of Typed\TypedAbstract will do (or soon) these things:
 * Member/property access will behave like any standard object.
 * Maintain the initial type of each member/property.
 * Silently cast data assigned to properties in the most obvious way when input is of a different type.
 * Use setter methods based on property name to further handle input data, like filtering.
 * Use getter methods based on property name to handle output, like formatting.
-* Have a method to return a deeply transformed associative array (or map).
+* Have a method to return a deeply transformed associative array.
 * Handle special cases of members/properties that are objects.
 * Accept a another object, associative or indexed array, and assign the input values to the appropriate members.
  *	Copy object or named array item by item.
  *	Copy indexed array by position.
  *	Accept JSON string and handle contents as the previous two types.
- *	Reset entire object's members to their default values.
+ *  Map known erroneous names to proper names.
+ *	Reset single property or entire object's members to their default values.
 
 ##TypedArray
 The instances or derivitives of Typed\TypedArray will do these things:
-* It will behave like a standard PHP array.
+* It will behave like a standard PHP associative array.
 * Every member be the same type.
 * Silently cast assigned data in the most obvious way when input is of a different type.
-* Have a method to return a deeply transformed associative array (or map).
+* Have a method to return a deeply transformed associative array.
 
 ##TypedInterface
 This defines the convience methods that are to be implemented in the above classes.
