@@ -44,19 +44,19 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	 * Holds the name of the name of the child class for method_exists and property_exists.
 	 * @var string
 	 */
-	protected $_called_class;
+	private $_called_class;
 
 	/**
 	 * Holds the default values of the called class to-be-public properties in associative array.
 	 * @var array
 	 */
-	protected $_class_vars;
+	private $_class_vars;
 
 	/**
 	 * Holds the names of the called class' to-be-public properties in an indexed array.
 	 * @var array
 	 */
-	protected $_class_props;
+	private $_public_names;
 
 	/**
 	 * Holds the position for Iterator.
@@ -65,8 +65,14 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	private $_position = 0;
 
 	/**
+	 * Holds the name pairs for when different/bad key names need to point to the same data.
+	 * @var array
+	 */
+	protected $_map = [];
+
+	/**
 	 * Constructor.
-	 * Accepts an object, associative array, or JSON string.
+	 * Accepts an object, array, or JSON string.
 	 *
 	 * @param mixed $in -OPTIONAL
 	 */
@@ -88,10 +94,10 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			}
 		}
 
-		$this->_class_props = array_keys($this->_class_vars);
+		$this->_public_names = array_keys($this->_class_vars);
 
 		//	Don't waste time with assignObject if input is one of these.
-		//		Just return leave the default values.
+		//		Just return leaving the default values.
 		switch (gettype($in)) {
 			case 'NULL':
 			case 'null':
@@ -105,11 +111,11 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 
 	/**
 	 * Clone.
-	 * Objects of type "TypedAbstract" will be deep cloned.
+	 * All objects will be deep cloned.
 	 */
 	public function __clone()
 	{
-		foreach ($this->_class_props as $k) {
+		foreach ($this->_public_names as $k) {
 			if ( is_object($this->{$k}) ) {
 				$this->{$k} = clone $this->{$k};
 			}
@@ -159,7 +165,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 				$nameArr = $this->_class_vars;
 				$ct = min( count($in), count($nameArr) );
 				for ( $i = 0; $i<$ct; ++$i ) {
-					$nameArr[$this->_class_props[$i]] = $in[$i];
+					$nameArr[$this->_public_names[$i]] = $in[$i];
 				}
 
 				$in = $nameArr;
@@ -195,6 +201,10 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 		}
 
 		foreach ($in as $k => $v) {
+			if ( array_key_exists($k, $this->_map) ) {
+				$k = $this->_map[$k];
+			}
+
 			$this->_setByName($k, $v);
 		}
 
@@ -391,7 +401,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	*/
 	final public function current()
 	{
-		return $this->_getByName( $this->_class_props[$this->_position] );
+		return $this->_getByName( $this->_public_names[$this->_position] );
 	}
 
 	/*
@@ -400,7 +410,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	*/
 	final public function key()
 	{
-		return $this->_class_props[$this->_position];
+		return $this->_public_names[$this->_position];
 	}
 
 	/*
@@ -417,7 +427,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	*/
 	final public function valid()
 	{
-		return isset( $this->_class_props[$this->_position] );
+		return isset( $this->_public_names[$this->_position] );
 	}
 
 	/*
@@ -442,7 +452,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	{
 		$arr = [];
 
-		foreach ($this->_class_props as $k) {
+		foreach ($this->_public_names as $k) {
 			$v = $this->_getByName($k);
 
 			if ( is_object($v) ) {
@@ -556,7 +566,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			}
 		}
 		else {
-			foreach ($this->_class_props as $k) {
+			foreach ($this->_public_names as $k) {
 				$sqlStrs[] = '`' . $k . '` = VALUES(`' . $k . '`)';
 			}
 		}
