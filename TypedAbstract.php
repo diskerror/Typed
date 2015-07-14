@@ -123,6 +123,17 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	}
 
 	/**
+	 * Returns true if key/prop name exists.
+	 *
+	 * @param string $k
+	 * @return bool
+	 */
+	private function _keyExists($k)
+	{
+		return ( array_key_exists($k, $this->_class_vars) || array_key_exists($k, $this->_map) );
+	}
+
+	/**
 	 * Throws exception if named property does not exist.
 	 *
 	 * @param string $k
@@ -130,7 +141,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	 */
 	protected function _assertPropName($k)
 	{
-		if ( !array_key_exists($k, $this->_class_vars) ) {
+		if ( !$this->_keyExists($k) ) {
 			throw new InvalidArgumentException();
 		}
 	}
@@ -138,7 +149,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	/**
 	 * Copies all matching property names while maintaining original types and
 	 *   doing a deep copy where appropriate.
-	 * This method silently ignores extra properties in $obj,
+	 * This method silently ignores extra properties in $input,
 	 *   leaves unmatched properties in this class untouched, and
 	 *   skips names starting with an underscore.
 	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
@@ -148,12 +159,12 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	 * Input can be an object, an associative array, or
 	 *   a JSON string representing an object.
 	 *
-	 * @param object|array|string|bool|null $in -OPTIONAL
+	 * @param object|array|string|bool|null $input -OPTIONAL
 	 * @throws BadMethodCallException|InvalidArgumentException
 	 */
-	public function assignObject($in = null)
+	public function assignObject($input = null)
 	{
-		switch ( gettype($in) ) {
+		switch ( gettype($input) ) {
 			case 'object':
 			break;
 
@@ -161,14 +172,14 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			//	Test to see if it's an indexed or an associative array.
 			//	Leave associative array as is.
 			//	Copy indexed array by position to a named array
-			if ( array_values($in) === $in ) {
+			if ( array_values($input) === $input ) {
 				$nameArr = $this->_class_vars;
-				$ct = min( count($in), count($nameArr) );
+				$ct = min( count($input), count($nameArr) );
 				for ( $i = 0; $i<$ct; ++$i ) {
-					$nameArr[$this->_public_names[$i]] = $in[$i];
+					$nameArr[$this->_public_names[$i]] = $input[$i];
 				}
 
-				$in = $nameArr;
+				$input = $nameArr;
 			}
 			break;
 
@@ -177,9 +188,9 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 				throw new BadMethodCallException('json_decode must be available');
 			}
 			//	json_decode fails silently and an empty array is set.
-			$in = json_decode( $in, true );
-			if ( !is_array($in) ) {
-				$in = [];
+			$input = json_decode( $input, true );
+			if ( !is_array($input) ) {
+				$input = [];
 			}
 			break;
 
@@ -188,7 +199,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			case 'bool':
 			case 'boolean':	//	a 'false' is returned by MySQL:PDO for "no results"
 			//	So, return default values;
-			if ( $in !== true ) {	//	do only if false or null. True does nothing.
+			if ( $input !== true ) {	//	do only if false or null. True does nothing.
 				foreach ($this->_class_vars as $k => &$v) {
 					$this->__unset($k);
 				}
@@ -200,9 +211,9 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			throw new InvalidArgumentException('unknown input type');
 		}
 
-		foreach ($in as $k => $v) {
-			if ( array_key_exists($k, $this->_map) ) {
-				$k = $this->_map[$k];
+		foreach ($input as $k => $v) {
+			if ( !$this->_keyExists($k) ) {
+				continue;
 			}
 
 			$this->_setByName($k, $v);
@@ -221,7 +232,12 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	 */
 	protected function _setByName($k, $v)
 	{
-		if ( !array_key_exists($k, $this->_class_vars) ) {
+		if ( array_key_exists($k, $this->_map) ) {
+			$k = $this->_map[$k];
+		}
+
+		if ( null === $v ) {
+			$this->{$k} = null;
 			return;
 		}
 
@@ -296,13 +312,10 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			}
 			break;
 
+			//	If the original is NULL then allow any value.
 			case 'null':
 			case 'NULL':
-			$this->__unset($k);
-			break;
-
-			//	resource
-			default:
+			default:	//	resource
 			$this->{$k}	= $v;
 			break;
 		}
