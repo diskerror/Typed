@@ -30,7 +30,7 @@ The instances or derivitives of Typed\TypedArray will do these things:
 This defines the convience methods that are to be implemented in the above classes.
 ###assignObject
 Copies all matching member names while maintaining original types and doing a deep copy where appropriate.
-This method silently ignores extra properties in the input object, leaves unmatched properties in this class untouched, and skips names starting with an underscore.
+This method silently ignores extra properties in the input object, leaves unmatched properties in the current class untouched, and skips names starting with an underscore (per Zend Framework coding style).
 Input can be an object, an associative array, or a JSON string representing a non-scalar type.
 ###toArray
 Returns a simple array of this object with only the appropriate members. A deep copy/converstion to a simple array from objects is also performed.
