@@ -236,7 +236,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			$k = $this->_map[$k];
 		}
 
-		if ( null === $v ) {
+		if ( null === $v && is_scalar($this->_class_vars[$k]) ) {
 			$this->{$k} = null;
 			return;
 		}
@@ -251,6 +251,10 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 		switch ( gettype($this->_class_vars[$k]) ) {
 			case 'bool':
 			case 'boolean':
+			//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
+			if ( gettype($v) === 'object' ) {
+				$v = (array) $v;
+			}
 			$this->{$k}	= (boolean) $v;
 			break;
 
@@ -261,6 +265,10 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			if ( gettype($v) === 'string' ) {
 				$this->{$k} = intval($v, 0);
 			}
+			//	Empty array or object (no members) is 0. Any property or index then 1. (Like PHP 4)
+			elseif ( gettype($v) === 'object' ) {
+				$this->{$k} = (integer) (array) $v;
+			}
 			else {
 				$this->{$k} = (integer) $v;
 			}
@@ -268,11 +276,27 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 
 			case 'float':
 			case 'double':
+			//	Empty array or object (no members) is 0.0. Any property or index then 1.0. (Like PHP 4)
+			if ( gettype($v) === 'object' ) {
+				$v = (array) $v;
+			}
 			$this->{$k}	= (double) $v;
 			break;
 
 			case 'string':
-			$this->{$k}	= (string) $v;
+			switch (gettype($v)) {
+				case 'array':
+				$this->{$k}	= 'Array';
+				break;
+
+				case 'object':
+				$this->{$k}	= 'Object';
+				break;
+
+				default:
+				$this->{$k}	= (string) $v;
+				break;
+			}
 			break;
 
 			case 'array':
@@ -298,13 +322,16 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 				}
 			}
 			else {
+				if ( get_class($this->_class_vars[$k]) === 'stdClass' && is_array($v) ) {
+					$this->{$k} = (object) $v;
+				}
+				else {
 				//	Other classes might be able to absorb/convert other input,
 				//		like «DateTime::__construct("now")» accepts a string.
 				//	This works for DateTime, UDateTime, and UDate.
-// 				if ( $this->_class_vars[$k] instanceof DateTime ) {
 					$class = get_class($this->_class_vars[$k]);
 					$this->{$k} = new $class($v);
-// 				}
+				}
 // 				//	Else give up.
 // 				else {
 // 					throw new InvalidArgumentException('cannot coerce data into object');
