@@ -113,10 +113,9 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 	 *    $this->_type is an object of type TypedInterface (call assignObject);
 	 *    $this->_type is any other object.
 	 *
-	 * There are 3 conditions involving $offset:
+	 * There are 2 conditions involving $offset:
 	 *    $offset is null;
 	 *    $offset is set;
-	 *    $this->_container[$offset] has an object that implements TypedInterface.
 	 *
 	 * There are 4 conditions for handling $value:
 	 *    $value is null (replace current scalar values with null, reset non-scalars);
@@ -141,33 +140,59 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 
 			case 'bool':
 			case 'boolean':
-			self::_assertScalar($v);
+			//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
+			if ( gettype($v) === 'object' ) {
+				$v = (array) $v;
+			}
 			$newValue = (null === $v ? null : (boolean) $v);
 			break;
 
 
 			case 'int':
 			case 'integer':
-			self::_assertScalar($v);
-			$newValue = ( null === $v ) ?
-				null :
-				( gettype($v) === 'string' ?
-					intval($v, 0) :
-					(int) $v );
+			//	if it's a string then assume it might need to be converted
+			//	http://php.net/manual/en/function.intval.php
+			if ( gettype($v) === 'string' ) {
+				$newValue = intval($v, 0);
+			}
+			//	Empty array or object (no members) is 0. Any property or index then 1. (Like PHP 4)
+			elseif ( gettype($v) === 'object' ) {
+				$newValue = (integer) (array) $v;
+			}
+			elseif ( null === $v ) {
+				$newValue = null;
+			}
+			else {
+				$newValue = (integer) $v;
+			}
 			break;
 
 
 			case 'float':
 			case 'double':
 			case 'real':
-			self::_assertScalar($v);
+			//	Empty array or object (no members) is 0.0. Any property or index then 1.0. (Like PHP 4)
+			if ( gettype($v) === 'object' ) {
+				$v = (array) $v;
+			}
 			$newValue = (null === $v ? null : (double) $v);
 			break;
 
 
 			case 'string':
-			self::_assertScalar($v);
-			$newValue = (null === $v ? null : (string) $v);
+			switch (gettype($v)) {
+				case 'array':
+				$newValue = 'Array';
+				break;
+
+				case 'object':
+				$newValue = 'Object';
+				break;
+
+				default:
+				$newValue = (null === $v ? null : (string) $v);
+				break;
+			}
 			break;
 
 
@@ -209,19 +234,6 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 			}
 		}
 	}
-
-	/**
-	 * @param mixed $v
-	 * @param string $message -OPTIONAL
-	 * @throws LogicException
-	 */
-	private static function _assertScalar(&$v, $message='A scalar type or null is expected.')
-	{
-		if ( !is_scalar($v) && null !== $v ) {
-			throw new LogicException($message);
-		}
-	}
-
 
 	/**
 	 * Required by the ArrayAccess interface.

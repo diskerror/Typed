@@ -572,7 +572,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 
 				case 'array':
 				case 'object':	//	toArray prevents objects from getting here
-				$sqlStrs[] = '`' . $k . '` = 0x' . bin2hex(Zend_Json::encode($v)) . '';
+				$sqlStrs[] = '`' . $k . '` = 0x' . bin2hex(json_encode($v)) . '';
 				break;
 
 				//	resource, (just ignore these?)
