@@ -2,14 +2,23 @@
 
 namespace Typed;
 
+use Countable;
+
 /**
  * Provides common interface for TypedAbstract and TypedArray.
  *
  * @copyright  Copyright (c) 2015 Reid Woodbury Jr.
  * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
  */
-interface TypedInterface
+interface TypedInterface extends Countable
 {
+	/*
+	 * Required method for Countable.
+	 * @return int
+	 */
+	public function count();
+
+
 	/**
 	 * Copies all matching member names while maintaining original types and
 	 *   doing a deep copy where appropriate.
@@ -26,8 +35,8 @@ interface TypedInterface
 
 
 	/**
-	 * Returns a simple array of this object with only the appropriate members.
-	 * A deep copy/converstion to a simple array from objects is also performed.
+	 * Returns an array of this object with only the appropriate members.
+	 * A deep copy/converstion to an array from objects is also performed where appropriate.
 	 *
 	 * @return array
 	 */

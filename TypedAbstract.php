@@ -38,7 +38,7 @@ use Iterator, Countable, InvalidArgumentException, BadMethodCallException;
  * @copyright  Copyright (c) 2012 Reid Woodbury Jr.
  * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
  */
-abstract class TypedAbstract implements TypedInterface, Iterator, Countable
+abstract class TypedAbstract implements TypedInterface, Iterator
 {
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
@@ -122,6 +122,8 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 		}
 	}
 
+	use TypedTrait;
+
 	/**
 	 * Returns true if key/prop name exists.
 	 *
@@ -172,7 +174,7 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			//	Test to see if it's an indexed or an associative array.
 			//	Leave associative array as is.
 			//	Copy indexed array by position to a named array
-			if ( array_values($input) === $input ) {
+			if ( self::_isIndexedArray($input) ) {
 				$nameArr = $this->_class_vars;
 				$ct = min( count($input), count($nameArr) );
 				for ( $i = 0; $i<$ct; ++$i ) {
@@ -187,11 +189,8 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			if ( !function_exists('json_decode') ) {
 				throw new BadMethodCallException('json_decode must be available');
 			}
-			//	json_decode fails silently and an empty array is set.
-			$input = json_decode( $input, true );
-			if ( !is_array($input) ) {
-				$input = [];
-			}
+
+			$input = self::_jsonDecode( $input, true );
 			break;
 
 			case 'null':
@@ -236,11 +235,6 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			$k = $this->_map[$k];
 		}
 
-		if ( null === $v && is_scalar($this->_class_vars[$k]) ) {
-			$this->{$k} = null;
-			return;
-		}
-
 		$setter = '_set_' . $k;
 		if ( method_exists( $this->_called_class, $setter ) ) {
 			$this->$setter($v);
@@ -249,58 +243,36 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 
 		//	Get the original type as the current member might contain null.
 		switch ( gettype($this->_class_vars[$k]) ) {
+			//	If the original is NULL then allow any value.
+			case 'null':
+			case 'NULL':
+			case '':
+			case null:
+			$this->{$k}	= $v;
+			break;
+
 			case 'bool':
 			case 'boolean':
-			//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
-			if ( gettype($v) === 'object' ) {
-				$v = (array) $v;
-			}
-			$this->{$k}	= (boolean) $v;
+			$this->{$k} = self::_convertToBoolean($v);
 			break;
 
 			case 'int':
 			case 'integer':
-			//	if it's a string then assume it might need to be converted
-			//	http://php.net/manual/en/function.intval.php
-			if ( gettype($v) === 'string' ) {
-				$this->{$k} = intval($v, 0);
-			}
-			//	Empty array or object (no members) is 0. Any property or index then 1. (Like PHP 4)
-			elseif ( gettype($v) === 'object' ) {
-				$this->{$k} = (integer) (array) $v;
-			}
-			else {
-				$this->{$k} = (integer) $v;
-			}
+			$this->{$k} = self::_convertToInteger($v);
 			break;
 
 			case 'float':
 			case 'double':
-			//	Empty array or object (no members) is 0.0. Any property or index then 1.0. (Like PHP 4)
-			if ( gettype($v) === 'object' ) {
-				$v = (array) $v;
-			}
-			$this->{$k}	= (double) $v;
+			case 'real':
+			$this->{$k}	= self::_convertToDouble($v);
 			break;
 
 			case 'string':
-			switch (gettype($v)) {
-				case 'array':
-				$this->{$k}	= 'Array';
-				break;
-
-				case 'object':
-				$this->{$k}	= 'Object';
-				break;
-
-				default:
-				$this->{$k}	= (string) $v;
-				break;
-			}
+			$this->{$k}	= self::_convertToString($v);
 			break;
 
 			case 'array':
-			$this->{$k} = (array) $v;
+			$this->{$k}	= self::_convertToArray($v);
 			break;
 
 			case 'object':
@@ -339,9 +311,6 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 			}
 			break;
 
-			//	If the original is NULL then allow any value.
-			case 'null':
-			case 'NULL':
 			default:	//	resource
 			$this->{$k}	= $v;
 			break;
@@ -427,33 +396,33 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 	{
 	}
 
-	/*
-	* Required method for Iterator.
-	*/
+	/**
+	 * Required method for Iterator.
+	 */
 	final public function rewind()
 	{
 		$this->_position = 0;
 	}
 
-	/*
-	* Required method for Iterator.
+	/**
+	 * Required method for Iterator.
 	 * @return mixed
-	*/
+	 */
 	final public function current()
 	{
 		return $this->_getByName( $this->_public_names[$this->_position] );
 	}
 
-	/*
-	* Required method for Iterator.
+	/**
+	 * Required method for Iterator.
 	 * @return mixed
-	*/
+	 */
 	final public function key()
 	{
 		return $this->_public_names[$this->_position];
 	}
 
-	/*
+	/**
 	* Required method for Iterator.
 	*/
 	final public function next()
@@ -461,19 +430,19 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 		++$this->_position;
 	}
 
-	/*
-	* Required method for Iterator.
+	/**
+	 * Required method for Iterator.
 	 * @return boolean
-	*/
+	 */
 	final public function valid()
 	{
 		return isset( $this->_public_names[$this->_position] );
 	}
 
-	/*
-	* Required method for Countable.
+	/**
+	 * Required method for Countable.
 	 * @return int
-	*/
+	 */
 	final public function count()
 	{
 		return count( $this->_class_vars );
@@ -513,8 +482,6 @@ abstract class TypedAbstract implements TypedInterface, Iterator, Countable
 
 		return $arr;
 	}
-
-	use ToJsonTrait;
 
 	/**
 	 * Returns a string formatted for an SQL insert or update.
