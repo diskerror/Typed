@@ -15,7 +15,7 @@ use LengthException;
  * If type is defined as null then any element can have any type but
  *    features of deep copying are available.
  */
-class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggregate
+class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 {
 	/**
 	 * An array that contains the items of interest.
@@ -38,7 +38,7 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 	 */
 	public function __construct($values = null, $type = '')
 	{
-		//	If empty then leave _type alone.
+		//	If empty then leave _type alone. It might be set in child class.
 		if ( '' !== $type ) {
 			$this->_type = (string) $type;
 		}
@@ -57,6 +57,8 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 			}
 		}
 	}
+
+	use TypedTrait;
 
 	/**
 	 * Copies all members into this class.
@@ -113,9 +115,10 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 	 *    $this->_type is an object of type TypedInterface (call assignObject);
 	 *    $this->_type is any other object.
 	 *
-	 * There are 2 conditions involving $offset:
+	 * There are 3 conditions involving $offset:
 	 *    $offset is null;
-	 *    $offset is set;
+	 *    $offset is set and exists;
+	 *    $offset is set and does not exist;
 	 *
 	 * There are 4 conditions for handling $value:
 	 *    $value is null (replace current scalar values with null, reset non-scalars);
@@ -129,6 +132,7 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 	final public function offsetSet($k, $v)
 	{
 		$setValue = true;
+
 		switch ($this->_type) {
 			case 'null':
 			case 'NULL':
@@ -137,72 +141,29 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 			$newValue = $v;
 			break;
 
-
 			case 'bool':
 			case 'boolean':
-			//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
-			if ( gettype($v) === 'object' ) {
-				$v = (array) $v;
-			}
-			$newValue = (null === $v ? null : (boolean) $v);
+			$newValue = self::_convertToBoolean($v);
 			break;
-
 
 			case 'int':
 			case 'integer':
-			//	if it's a string then assume it might need to be converted
-			//	http://php.net/manual/en/function.intval.php
-			if ( gettype($v) === 'string' ) {
-				$newValue = intval($v, 0);
-			}
-			//	Empty array or object (no members) is 0. Any property or index then 1. (Like PHP 4)
-			elseif ( gettype($v) === 'object' ) {
-				$newValue = (integer) (array) $v;
-			}
-			elseif ( null === $v ) {
-				$newValue = null;
-			}
-			else {
-				$newValue = (integer) $v;
-			}
+			$newValue = self::_convertToInteger($v);
 			break;
-
 
 			case 'float':
 			case 'double':
 			case 'real':
-			//	Empty array or object (no members) is 0.0. Any property or index then 1.0. (Like PHP 4)
-			if ( gettype($v) === 'object' ) {
-				$v = (array) $v;
-			}
-			$newValue = (null === $v ? null : (double) $v);
+			$newValue = self::_convertToDouble($v);
 			break;
-
 
 			case 'string':
-			switch (gettype($v)) {
-				case 'array':
-				$newValue = 'Array';
-				break;
-
-				case 'object':
-				$newValue = 'Object';
-				break;
-
-				default:
-				$newValue = (null === $v ? null : (string) $v);
-				break;
-			}
+			$newValue = self::_convertToString($v);
 			break;
-
 
 			case 'array':
-			$newValue =
-				( is_object($v) && method_exists($v, 'toArray') ) ?
-					$v->toArray() :
-					(null === $v ? [] : (array) $v);
+			$newValue = self::_convertToString($v);
 			break;
-
 
 			//	All object and class types.
 			default:
@@ -360,5 +321,4 @@ class TypedArray implements TypedInterface, ArrayAccess, Countable, IteratorAggr
 		return $this;
 	}
 
-	use ToJsonTrait;
 }

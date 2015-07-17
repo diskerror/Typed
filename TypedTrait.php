@@ -3,13 +3,123 @@
 namespace Typed;
 
 /**
- * Common toJson method for both TypedAbstract and TypedArray.
+ * Common methods for both TypedAbstract and TypedArray.
  *
  * @copyright  Copyright (c) 2015 Reid Woodbury Jr.
  * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
  */
-trait ToJsonTrait
+trait TypedTrait
 {
+	final protected static function _isIndexedArray(array &$in)
+	{
+		return (array_values($in) === $in);
+	}
+
+	//	json_decode fails silently and an empty array is returned.
+	final protected static function _jsonDecode(&$in)
+	{
+		$output = json_decode( $in, true );
+		if ( !is_array($output) ) {
+			return [];
+		}
+		return $output;
+	}
+
+	//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
+	final protected static function _convertToBoolean(&$in)
+	{
+		switch (gettype($in)) {
+			case 'object':
+			return (boolean) (array) $in;
+
+			case 'null':
+			case 'NULL':
+			return null;
+
+			default:
+			return (boolean) $in;
+		}
+	}
+
+	//	Empty array or object (no members) is 0. Any property or index then 1. (Like PHP 4)
+	final protected static function _convertToInteger(&$in)
+	{
+		switch ( gettype($in) ) {
+			case 'string':
+			return intval($in, 0);
+
+			case 'object':
+			return (integer) (array) $in;
+
+			case 'null':
+			case 'NULL':
+			return null;
+
+			default:
+			return (integer) $in;
+		}
+	}
+
+	//	Empty array or object (no members) is 0.0. Any property or index then 1.0. (Like PHP 4)
+	final protected static function _convertToDouble(&$in)
+	{
+		switch ( gettype($in) ) {
+			case 'object':
+			if ( method_exists($in, 'toArray') ) {
+				return (double) $in->toArray();
+			}
+			return (double) (array) $in;
+
+			case 'null':
+			case 'NULL':
+			return null;
+
+			default:
+			return (double) $in;
+		}
+	}
+
+	//	Empty array or object (no members) is "". Any property or index then "1". (Like PHP 4)
+	final protected static function _convertToString(&$in)
+	{
+		switch (gettype($in)) {
+			case 'object':
+			if ( method_exists($in, '__toString') ) {
+				return $in->__toString();
+			}
+			elseif ( method_exists($in, 'format') ) {
+				return $in->format('c');
+			}
+			elseif ( method_exists($in, 'toArray') ) {
+				$in = $in->toArray();
+			}
+			//	fall through with new $in
+			case 'array':
+			return json_encode($in);
+
+			case 'null':
+			case 'NULL':
+			return null;
+
+			default:
+			return (string) $in;
+		}
+	}
+
+	final protected static function _convertToArray(&$in)
+	{
+		switch ( gettype($in) ) {
+			case 'object':
+			if ( method_exists($in, 'toArray') ) {
+				return $in->toArray();
+			}
+			return (array) $in;
+
+			default:
+			return (array) $in;
+		}
+	}
+
 
 	/**
 	 * Returns JSON string representing the object.
