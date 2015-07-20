@@ -30,6 +30,9 @@ trait TypedTrait
 	{
 		switch (gettype($in)) {
 			case 'object':
+			if ( method_exists($in, 'toArray') ) {
+				return (double) $in->toArray();
+			}
 			return (boolean) (array) $in;
 
 			case 'null':
@@ -41,7 +44,7 @@ trait TypedTrait
 		}
 	}
 
-	//	Empty array or object (no members) is 0. Any property or index then 1. (Like PHP 4)
+	//	Empty array or object (no members) is 0. Any property or index then 1 (Like PHP 4).
 	final protected static function _convertToInteger(&$in)
 	{
 		switch ( gettype($in) ) {

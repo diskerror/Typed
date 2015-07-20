@@ -5,6 +5,7 @@ namespace Typed;
 use ArrayAccess;
 use Countable;
 use IteratorAggregate;
+use ArrayIterator;
 use BadMethodCallException;
 use InvalidArgumentException;
 use LogicException;
