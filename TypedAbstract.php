@@ -509,37 +509,42 @@ abstract class TypedAbstract implements TypedInterface, Iterator
 
 		$sqlStrs = [];
 		foreach ($arr as $k => &$v) {
+			$kEq = '`' . $k . '` = ';
 			switch ( gettype($v) ) {
 				case 'bool':
 				case 'boolean':
-				$sqlStrs[] = '`' . $k . '` = ' . ( $v ? 1 : 0 );
+				$sqlStrs[] = $kEq . ( $v ? 1 : 0 );
 				break;
 
 				case 'int':
 				case 'integer':
 				case 'float':
 				case 'double':
-				$sqlStrs[] = '`' . $k . '` = ' . $v;
+				$sqlStrs[] = $kEq . $v;
 				break;
 
 				case 'string':
 				if ( $v === 'NULL' ) {
-					$sqlStrs[] = '`' . $k . '` = NULL';
+					$sqlStrs[] = $kEq . 'NULL';
+				}
+				elseif ( $v === '' ) {
+					$sqlStrs[] = $kEq . '""';
 				}
 				else {
-// 					$sqlStrs[] = '`' . $k . '` = "' . preg_replace('/([\x00\n\r\\\\\'"\x1a])/u', '\\\\$1', $v); . '"';
-					$sqlStrs[] = '`' . $k . '` = "' . addslashes($v) . '"';
+// 					$sqlStrs[] = $kEq . '"' . preg_replace('/([\x00\n\r\\\\\'"\x1a])/u', '\\\\$1', $v); . '"';
+// 					$sqlStrs[] = $kEq . '"' . addslashes($v) . '"';
+					$sqlStrs[] = $kEq . '0x' . bin2hex($v);
 				}
 				break;
 
 				case 'null':
 				case 'NULL':
-				$sqlStrs[] = '`' . $k . '` = NULL';
+				$sqlStrs[] = $kEq . 'NULL';
 				break;
 
 				case 'array':
-				case 'object':	//	toArray prevents objects from getting here
-				$sqlStrs[] = '`' . $k . '` = 0x' . bin2hex(json_encode($v)) . '';
+				case 'object':
+				$sqlStrs[] = $kEq . '0x' . bin2hex(json_encode($v));
 				break;
 
 				//	resource, (just ignore these?)
