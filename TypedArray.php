@@ -3,7 +3,6 @@
 namespace Typed;
 
 use ArrayAccess;
-use Countable;
 use IteratorAggregate;
 use ArrayIterator;
 use BadMethodCallException;
@@ -16,7 +15,7 @@ use LengthException;
  * If type is defined as null then any element can have any type but
  *    features of deep copying are available.
  */
-class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
+class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 {
 	/**
 	 * An array that contains the items of interest.
@@ -58,8 +57,6 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 			}
 		}
 	}
-
-	use TypedTrait;
 
 	/**
 	 * Copies all members into this class.
@@ -113,7 +110,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 	 *    $this->_type is null (accept any type and value, like a standard array);
 	 *    $this->_type is a scalar [bool, int, float, string];
 	 *    $this->_type is an array (check if value has toArray);
-	 *    $this->_type is an object of type TypedInterface (call assignObject);
+	 *    $this->_type is an object of type TypedAbstract (call assignObject);
 	 *    $this->_type is any other object.
 	 *
 	 * There are 3 conditions involving $offset:
@@ -163,7 +160,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 			break;
 
 			case 'array':
-			$newValue = self::_convertToString($v);
+			$newValue = self::_convertToArray($v);
 			break;
 
 			//	All object and class types.
@@ -171,7 +168,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 			if (
 				null === $k
 				|| !isset($this->_container[$k])
-				|| !($this->_container[$k] instanceof TypedInterface)
+				|| !($this->_container[$k] instanceof TypedAbstract)
 				) {
 				$newValue =
 					( is_object($v) && get_class($v) === $this->_type ) ?
