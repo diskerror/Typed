@@ -2,588 +2,246 @@
 
 namespace Typed;
 
-use Iterator, Countable, InvalidArgumentException, BadMethodCallException;
+use Countable;
 
 /**
- * Provides support for class members/properties maintain their initial types.
+ * Provides common interface for TypedClass and TypedArray.
  *
- * Create a child of this class with your named properties with a visibility of
- *    protected or private, and default values of the desired type. Property
- *    names CANNOT begin with an underscore. This maintains the Zend Framework
- *    convention that protected and private property names should begin with an
- *    underscore. This abstract class will expose all members whose name don't
- *    begin with an underscore, but filter access to those class members or
- *    properties that have a visibility of protected or private.
- *
- * Input to the constructor or assignObject methods must be an array or object. Only the
- *    values in the matching names will be filtered and copied into the object.
- *    All input will be copied by value, not referenced.
- *
- * This class will adds simple casting of input values to be the same type as the
- *    named property or member. This includes scalar values, built-in PHP classes,
- *    and other classes derived from this class.
- *
- * Only properties in the original child class are allowed. This prevents adding
- *    properties on the fly.
- *
- * More elaborate filtering can be done by creating methods with this naming
- *    convention: If property is called "personName" then create a method called
- *    "_set_personName($in)". That is, prepend "_set_" to the property name.
- *
- * The ideal usage of this abstract class is as the parent class of a data set
- *    where the input to the constructor (or assignObject) method is an HTTP request
- *    object. It will help with filtering and insuring the existance of default
- *    values for missing input parameters.
- *
- * @copyright  Copyright (c) 2012 Reid Woodbury Jr.
+ * @copyright  Copyright (c) 2015 Reid Woodbury Jr.
  * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
  */
-abstract class TypedAbstract implements TypedInterface, Iterator
+abstract class TypedAbstract implements Countable
 {
-	/**
-	 * Holds the name of the name of the child class for method_exists and property_exists.
-	 * @var string
-	 */
-	private $_called_class;
-
-	/**
-	 * Holds the default values of the called class to-be-public properties in associative array.
-	 * @var array
-	 */
-	private $_class_vars;
-
-	/**
-	 * Holds the names of the called class' to-be-public properties in an indexed array.
-	 * @var array
-	 */
-	private $_public_names;
-
-	/**
-	 * Holds the position for Iterator.
-	 * @var int
-	 */
-	private $_position = 0;
-
-	/**
-	 * Holds the name pairs for when different/bad key names need to point to the same data.
-	 * @var array
-	 */
-	protected $_map = [];
-
-	/**
-	 * Constructor.
-	 * Accepts an object, array, or JSON string.
-	 *
-	 * @param mixed $in -OPTIONAL
-	 */
-	public function __construct($in = null)
-	{
-		$this->_called_class = get_called_class();
-		$this->_class_vars = get_class_vars($this->_called_class);
-		//	remove elements with names starting with underscore
-		foreach ( $this->_class_vars as $k => $v ) {
-			if ($k[0] === '_') {
-				unset($this->_class_vars[$k]);
-			}
-			//	If $v is a string and has '__class__' at the start then instantiate the named object.
-			elseif ( is_string($v) && 0===stripos($v, '__class__') ) {
-				$this->_class_vars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
-				//	Objects are always passed by reference,
-				//		but we want a separate copy so the original stays unchanged.
-				$this->{$k} = clone $this->_class_vars[$k];
-			}
-		}
-
-		$this->_public_names = array_keys($this->_class_vars);
-
-		//	Don't waste time with assignObject if input is one of these.
-		//		Just return leaving the default values.
-		switch (gettype($in)) {
-			case 'NULL':
-			case 'null':
-			case 'bool':
-			case 'boolean':
-			return;
-		}
-
-		$this->assignObject( $in );
-	}
-
-	/**
-	 * Clone.
-	 * All objects will be deep cloned.
-	 */
-	public function __clone()
-	{
-		foreach ($this->_public_names as $k) {
-			if ( is_object($this->{$k}) ) {
-				$this->{$k} = clone $this->{$k};
-			}
-		}
-	}
-
-	use TypedTrait;
-
-	/**
-	 * Returns true if key/prop name exists.
-	 *
-	 * @param string $k
-	 * @return bool
-	 */
-	private function _keyExists($k)
-	{
-		return ( array_key_exists($k, $this->_class_vars) || array_key_exists($k, $this->_map) );
-	}
-
-	/**
-	 * Throws exception if named property does not exist.
-	 *
-	 * @param string $k
-	 * @throws InvalidArgumentException
-	 */
-	protected function _assertPropName($k)
-	{
-		if ( !$this->_keyExists($k) ) {
-			throw new InvalidArgumentException();
-		}
-	}
-
-	/**
-	 * Copies all matching property names while maintaining original types and
-	 *   doing a deep copy where appropriate.
-	 * This method silently ignores extra properties in $input,
-	 *   leaves unmatched properties in this class untouched, and
-	 *   skips names starting with an underscore.
-	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
-	 *	property (property names not starting with an underscore). Extra values
-	 *	are ignored. Unused properties are unchanged.
-	 *
-	 * Input can be an object, an associative array, or
-	 *   a JSON string representing an object.
-	 *
-	 * @param object|array|string|bool|null $input -OPTIONAL
-	 * @throws BadMethodCallException|InvalidArgumentException
-	 */
-	public function assignObject($input = null)
-	{
-		switch ( gettype($input) ) {
-			case 'object':
-			break;
-
-			case 'array':
-			//	Test to see if it's an indexed or an associative array.
-			//	Leave associative array as is.
-			//	Copy indexed array by position to a named array
-			if ( self::_isIndexedArray($input) ) {
-				$nameArr = $this->_class_vars;
-				$ct = min( count($input), count($nameArr) );
-				for ( $i = 0; $i<$ct; ++$i ) {
-					$nameArr[$this->_public_names[$i]] = $input[$i];
-				}
-
-				$input = $nameArr;
-			}
-			break;
-
-			case 'string':
-			if ( !function_exists('json_decode') ) {
-				throw new BadMethodCallException('json_decode must be available');
-			}
-
-			$input = self::_jsonDecode( $input, true );
-			break;
-
-			case 'null':
-			case 'NULL':
-			case 'bool':
-			case 'boolean':	//	a 'false' is returned by MySQL:PDO for "no results"
-			//	So, return default values;
-			if ( $input !== true ) {	//	do only if false or null. True does nothing.
-				foreach ($this->_class_vars as $k => &$v) {
-					$this->__unset($k);
-				}
-			}
-			return;
-
-
-			default:
-			throw new InvalidArgumentException('unknown input type');
-		}
-
-		foreach ($input as $k => $v) {
-			if ( !$this->_keyExists($k) ) {
-				continue;
-			}
-
-			$this->_setByName($k, $v);
-		}
-
-		$this->_checkRelatedProperties();
-	}
-
-	/**
-	 * Set data to named variable.
-	 * Casts the incoming data ($v) to the same type as the named ($k) property.
-	 *
-	 * @param string $k
-	 * @param mixed $v
-	 * @throws InvalidArgumentException
-	 */
-	protected function _setByName($k, $v)
-	{
-		if ( array_key_exists($k, $this->_map) ) {
-			$k = $this->_map[$k];
-		}
-
-		$setter = '_set_' . $k;
-		if ( method_exists( $this->_called_class, $setter ) ) {
-			$this->$setter($v);
-			return;
-		}
-
-		//	Get the original type as the current member might contain null.
-		switch ( gettype($this->_class_vars[$k]) ) {
-			//	If the original is NULL then allow any value.
-			case 'null':
-			case 'NULL':
-			case '':
-			case null:
-			$this->{$k}	= $v;
-			break;
-
-			case 'bool':
-			case 'boolean':
-			$this->{$k} = self::_convertToBoolean($v);
-			break;
-
-			case 'int':
-			case 'integer':
-			$this->{$k} = self::_convertToInteger($v);
-			break;
-
-			case 'float':
-			case 'double':
-			case 'real':
-			$this->{$k}	= self::_convertToDouble($v);
-			break;
-
-			case 'string':
-			$this->{$k}	= self::_convertToString($v);
-			break;
-
-			case 'array':
-			$this->{$k}	= self::_convertToArray($v);
-			break;
-
-			case 'object':
-			if ( gettype($v) === 'object' ) {
-				//	if identical types then clone
-				if ( get_class($this->_class_vars[$k]) === get_class($v) ) {
-					$this->{$k} = clone $v;
-				}
-
-				//	if this->k is a TypedAbstract object and v is any other type
-				//		then absorb v or v's properties into this->k's properties
-				elseif ($this->_class_vars[$k] instanceof TypedInterface) {
-					$this->{$k}->assignObject($v);
-				}
-
-				//	Else give up.
-				else {
-					throw new InvalidArgumentException('cannot coerce object types');
-				}
-			}
-			else {
-				if ( get_class($this->_class_vars[$k]) === 'stdClass' && is_array($v) ) {
-					$this->{$k} = (object) $v;
-				}
-				else {
-				//	Other classes might be able to absorb/convert other input,
-				//		like «DateTime::__construct("now")» accepts a string.
-				//	This works for DateTime, UDateTime, and UDate.
-					$class = get_class($this->_class_vars[$k]);
-					$this->{$k} = new $class($v);
-				}
-// 				//	Else give up.
-// 				else {
-// 					throw new InvalidArgumentException('cannot coerce data into object');
-// 				}
-			}
-			break;
-
-			default:	//	resource
-			$this->{$k}	= $v;
-			break;
-		}
-	}
-
-	/**
-	 * Get variable.
-	 * @param string $k
-	 * @return mixed
-	 */
-	protected function _getByName($k)
-	{
-		//	Create a method with a name like the next line and it will be called here.
-		$getter = '_get_' . $k;
-		if ( method_exists($this->_called_class, $getter ) ) {
-			return $this->$getter();
-		}
-
-		return $this->{$k};
-	}
-
-	/**
-	 * Set variable
-	 * Casts the incoming data ($v) to the same type as the named ($k) property.
-	 *
-	 * @param string $k
-	 * @param mixed $v
-	 * @throws InvalidArgumentException
-	 */
-	public function __set($k, $v)
-	{
-		$this->_assertPropName($k);
-		$this->_setByName($k, $v);
-		$this->_checkRelatedProperties();
-	}
-
-	/**
-	 * Get variable.
-	 * @param string $k
-	 * @return mixed
-	 */
-	public function __get($k)
-	{
-		$this->_assertPropName($k);
-		return $this->_getByName($k);
-	}
-
-	/**
-	 * Is a variable set?
-	 *
-	 * @param string $k
-	 * @return bool
-	 */
-	public function __isset($k)
-	{
-		if ( $k[0] === '_' ) {
-			return false;
-		}
-
-		return isset($this->{$k});
-	}
-
-	/**
-	 * Sets a variable to it's default value rather than unsetting it.
-	 *
-	 * @param string $k
-	 */
-	public function __unset($k)
-	{
-		//	rather than unsetting, we set to default value
-		$this->{$k} = is_object($this->_class_vars[$k]) ?
-			clone $this->_class_vars[$k] :
-			$this->_class_vars[$k];
-	}
-
-	/**
-	 * Override this method for additional checking such as when a start date
-	 * is required to be earlier than an end date, any range of values like
-	 * minimum and maximum, or any custom filtering not dependent on a single property.
-	 */
-	protected function _checkRelatedProperties()
-	{
-	}
-
-	/**
-	 * Required method for Iterator.
-	 */
-	final public function rewind()
-	{
-		$this->_position = 0;
-	}
-
-	/**
-	 * Required method for Iterator.
-	 * @return mixed
-	 */
-	final public function current()
-	{
-		return $this->_getByName( $this->_public_names[$this->_position] );
-	}
-
-	/**
-	 * Required method for Iterator.
-	 * @return mixed
-	 */
-	final public function key()
-	{
-		return $this->_public_names[$this->_position];
-	}
-
-	/**
-	* Required method for Iterator.
-	*/
-	final public function next()
-	{
-		++$this->_position;
-	}
-
-	/**
-	 * Required method for Iterator.
-	 * @return boolean
-	 */
-	final public function valid()
-	{
-		return isset( $this->_public_names[$this->_position] );
-	}
-
-	/**
+	/*
 	 * Required method for Countable.
 	 * @return int
 	 */
-	final public function count()
-	{
-		return count( $this->_class_vars );
-	}
+	abstract public function count();
+
 
 	/**
-	 * Returns an array with all public, protected, and private properties in
-	 * object that DO NOT begin with an underscore. This allows protected or
-	 * private properties to be treated as if they were public. This supports the
-	 * convention that protected and private property names begin with an
-	 * underscore (_). Use "__get" and "__set" to access individual names.
+	 * Copies all matching member names while maintaining original types and
+	 *   doing a deep copy where appropriate.
+	 * This method silently ignores extra properties in $in,
+	 *   leaves unmatched properties in this class untouched, and
+	 *   skips names starting with an underscore.
+	 *
+	 * Input can be an object, an associative array, or
+	 *   a JSON string representing a non-scalar type.
+	 *
+	 * @param object|array|string|bool|null $in -OPTIONAL
+	 */
+	abstract public function assignObject($in = null);
+
+
+	/**
+	 * Returns an array of this object with only the appropriate members.
+	 * A deep copy/converstion to an array from objects is also performed where appropriate.
 	 *
 	 * @return array
 	 */
-	final public function toArray()
-	{
-		$arr = [];
+	abstract public function toArray();
 
-		foreach ($this->_public_names as $k) {
-			$v = $this->_getByName($k);
-
-			if ( is_object($v) ) {
-				if ( method_exists($v, 'toArray') ) {
-					$arr[$k] = $v->toArray();
-				}
-				elseif ( method_exists($v, '__toString') ) {
-					$arr[$k] = $v->__toString();
-				}
-				else {
-					$arr[$k] = (array) $v;
-				}
-			}
-			else {
-				$arr[$k] = $v;
-			}
-		}
-
-		return $arr;
-	}
 
 	/**
 	 * Returns a string formatted for an SQL insert or update.
 	 *
-	 * Accepts an array where the values are the names of properties.
-	 * An empty array means to use all
+	 * Accepts an array where the values are the names of members to include.
+	 * An empty array means to use all.
 	 *
 	 * @param array $include
 	 * @return string
 	 */
-	public function getSqlIns(array $include = [])
-	{
-		if ( count($include) ) {
-			$tmp = $this->toArray();
-			$arr = [];
-			foreach ( $include as $i ) {
-				if ( array_key_exists($i, $this->_class_vars) ) {
-					$arr[$i] = $tmp[$i];
-				}
-			}
-		}
-		else {
-			$arr = $this->toArray();
-		}
+// 	abstract public function getSqlInsert(array $include = []);
 
-		$sqlStrs = [];
-		foreach ($arr as $k => &$v) {
-			$kEq = '`' . $k . '` = ';
-			switch ( gettype($v) ) {
-				case 'bool':
-				case 'boolean':
-				$sqlStrs[] = $kEq . ( $v ? 1 : 0 );
-				break;
-
-				case 'int':
-				case 'integer':
-				case 'float':
-				case 'double':
-				$sqlStrs[] = $kEq . $v;
-				break;
-
-				case 'string':
-				if ( $v === 'NULL' ) {
-					$sqlStrs[] = $kEq . 'NULL';
-				}
-				elseif ( $v === '' ) {
-					$sqlStrs[] = $kEq . '""';
-				}
-				else {
-// 					$sqlStrs[] = $kEq . '"' . preg_replace('/([\x00\n\r\\\\\'"\x1a])/u', '\\\\$1', $v); . '"';
-// 					$sqlStrs[] = $kEq . '"' . addslashes($v) . '"';
-					$sqlStrs[] = $kEq . '0x' . bin2hex($v);
-				}
-				break;
-
-				case 'null':
-				case 'NULL':
-				$sqlStrs[] = $kEq . 'NULL';
-				break;
-
-				case 'array':
-				case 'object':
-				$sqlStrs[] = $kEq . '0x' . bin2hex(json_encode($v));
-				break;
-
-				//	resource, (just ignore these?)
-				default:
-				throw new InvalidArgumentException('bad input type');
-			}
-		}
-
-		return implode(",\n", $sqlStrs);
-	}
 
 	/**
 	 * Returns a string formatted for an SQL
 	 * "ON DUPLICATE KEY UPDATE" statement.
 	 *
-	 * Accepts an array where the values are the names of properties.
-	 * An empty array means to use all
+	 * Accepts an array where the values are the names of members to include.
+	 * An empty array means to use all members.
 	 *
 	 * @param array $include
 	 * @return string
 	 */
-	public function getSqlVals(array $include = [])
+// 	abstract public function getSqlValues(array $include = []);
+
+
+	final protected static function _isIndexedArray(array &$in)
 	{
-		$sqlStrs = [];
-
-		if ( count($include) ) {
-			foreach ($include as $i) {
-				if ( array_key_exists($i, $this->_class_vars) ) {
-					$sqlStrs[] = '`' . $i . '` = VALUES(`' . $i . '`)';
-				}
-			}
-		}
-		else {
-			foreach ($this->_public_names as $k) {
-				$sqlStrs[] = '`' . $k . '` = VALUES(`' . $k . '`)';
-			}
-		}
-
-		return implode(",\n", $sqlStrs);
+		return (array_values($in) === $in);
 	}
+
+	//	json_decode fails silently and an empty array is returned.
+	final protected static function _jsonDecode(&$in)
+	{
+		$output = json_decode( $in, true );
+		if ( !is_array($output) ) {
+			return [];
+		}
+		return $output;
+	}
+
+	//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
+	final protected static function _convertToBoolean(&$in)
+	{
+		switch (gettype($in)) {
+			case 'object':
+			if ( method_exists($in, 'toArray') ) {
+				return (double) $in->toArray();
+			}
+			return (boolean) (array) $in;
+
+			case 'null':
+			case 'NULL':
+			return null;
+
+			default:
+			return (boolean) $in;
+		}
+	}
+
+	//	Empty array or object (no members) is 0. Any property or index then 1 (Like PHP 4).
+	final protected static function _convertToInteger(&$in)
+	{
+		switch ( gettype($in) ) {
+			case 'string':
+			return intval($in, 0);
+
+			case 'object':
+			return (integer) (array) $in;
+
+			case 'null':
+			case 'NULL':
+			return null;
+
+			default:
+			return (integer) $in;
+		}
+	}
+
+	//	Empty array or object (no members) is 0.0. Any property or index then 1.0. (Like PHP 4)
+	final protected static function _convertToDouble(&$in)
+	{
+		switch ( gettype($in) ) {
+			case 'object':
+			if ( method_exists($in, 'toArray') ) {
+				return (double) $in->toArray();
+			}
+			return (double) (array) $in;
+
+			case 'null':
+			case 'NULL':
+			return null;
+
+			default:
+			return (double) $in;
+		}
+	}
+
+	//	Empty array or object (no members) is "". Any property or index then "1". (Like PHP 4)
+	final protected static function _convertToString(&$in)
+	{
+		switch (gettype($in)) {
+			case 'object':
+			if ( method_exists($in, '__toString') ) {
+				return $in->__toString();
+			}
+			elseif ( method_exists($in, 'format') ) {
+				return $in->format('c');
+			}
+			elseif ( method_exists($in, 'toArray') ) {
+				$in = $in->toArray();
+			}
+			//	other objects fall through, object to array falls through
+			case 'array':
+			return json_encode($in);
+
+			case 'null':
+			case 'NULL':
+			return null;
+
+			default:
+			return (string) $in;
+		}
+	}
+
+	final protected static function _convertToArray(&$in)
+	{
+		if ( is_object($in) && method_exists($in, 'toArray') ) {
+			return $in->toArray();
+		}
+		return (array) $in;
+	}
+
+
+	/**
+	 * Returns JSON string representing the object.
+	 * Optionally retruns a pretty-print string.
+	 *
+	 * @param bool $pretty -OPTIONAL
+	 * @return string
+	 */
+	final public function toJson($pretty = false)
+	{
+		if ( !function_exists('json_encode') ) {
+			throw new BadMethodCallException('json_encode must be available');
+		}
+
+		$j = json_encode( $this->toArray() );
+
+		if ( !$pretty ) {
+			return $j;
+		}
+
+		//	Pretty print from Zend/Json/Json.php v2.4.2.
+        $tokens = preg_split('|([\{\}\]\[,])|', $j, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $result = "";
+        $indent = 0;
+
+        $inLiteral = false;
+        foreach ($tokens as $token) {
+            $token = trim($token);
+            if ($token == "") {
+                continue;
+            }
+
+            if (preg_match('/^("(?:.*)"):[ ]?(.*)$/', $token, $matches)) {
+                $token = $matches[1] . ': ' . $matches[2];
+            }
+
+            $prefix = str_repeat("\t", $indent);
+            if (!$inLiteral && ($token == '{' || $token == '[')) {
+                $indent++;
+                if ($result != '' && $result[strlen($result)-1] == "\n") {
+                    $result .= $prefix;
+                }
+                $result .= "$token\n";
+            }
+            elseif (!$inLiteral && ($token == '}' || $token == ']')) {
+                $indent--;
+                $prefix = str_repeat("\t", $indent);
+                $result .= "\n$prefix$token";
+            }
+            elseif (!$inLiteral && $token == ',') {
+                $result .= "$token\n";
+            }
+            else {
+                $result .= ($inLiteral ?  '' : $prefix) . $token;
+
+                //remove escaped backslash sequences causing false positives in next check
+                $token = str_replace('\\', '', $token);
+                // Count # of unescaped double-quotes in token, subtract # of
+                // escaped double-quotes and if the result is odd then we are
+                // inside a string literal
+                if ((substr_count($token, '"')-substr_count($token, '\\"')) % 2 != 0) {
+                    $inLiteral = !$inLiteral;
+                }
+            }
+        }
+		return $result . "\n";
+	}
+
 
 }
