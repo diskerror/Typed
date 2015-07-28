@@ -161,12 +161,12 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * Input can be an object, an associative array, or
 	 *   a JSON string representing an object.
 	 *
-	 * @param object|array|string|bool|null $input -OPTIONAL
+	 * @param object|array|string|bool|null $in -OPTIONAL
 	 * @throws BadMethodCallException|InvalidArgumentException
 	 */
-	public function assignObject($input = null)
+	public function assignObject($in = null)
 	{
-		switch ( gettype($input) ) {
+		switch ( gettype($in) ) {
 			case 'object':
 			break;
 
@@ -174,23 +174,19 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			//	Test to see if it's an indexed or an associative array.
 			//	Leave associative array as is.
 			//	Copy indexed array by position to a named array
-			if ( self::_isIndexedArray($input) ) {
+			if ( self::_isIndexedArray($in) ) {
 				$nameArr = $this->_class_vars;
-				$ct = min( count($input), count($nameArr) );
+				$ct = min( count($in), count($nameArr) );
 				for ( $i = 0; $i<$ct; ++$i ) {
-					$nameArr[$this->_public_names[$i]] = $input[$i];
+					$nameArr[$this->_public_names[$i]] = $in[$i];
 				}
 
-				$input = $nameArr;
+				$in = $nameArr;
 			}
 			break;
 
 			case 'string':
-			if ( !function_exists('json_decode') ) {
-				throw new BadMethodCallException('json_decode must be available');
-			}
-
-			$input = self::_jsonDecode( $input, true );
+			$in = self::_jsonDecode( $in );
 			break;
 
 			case 'null':
@@ -198,7 +194,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			case 'bool':
 			case 'boolean':	//	a 'false' is returned by MySQL:PDO for "no results"
 			//	So, return default values;
-			if ( $input !== true ) {	//	do only if false or null. True does nothing.
+			if ( $in !== true ) {	//	do only if false or null. True does nothing.
 				foreach ($this->_class_vars as $k => &$v) {
 					$this->__unset($k);
 				}
@@ -210,7 +206,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			throw new InvalidArgumentException('unknown input type');
 		}
 
-		foreach ($input as $k => $v) {
+		foreach ($in as $k => $v) {
 			if ( !$this->_keyExists($k) ) {
 				continue;
 			}

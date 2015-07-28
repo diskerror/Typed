@@ -78,14 +78,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			break;
 
 			case 'string':
-			if ( !function_exists('json_decode') ) {
-				throw new BadMethodCallException('json_decode must be available');
-			}
-			//	json_decode fails silently and an empty array is set.
-			$in = json_decode( $in, true );
-			if ( !is_array($in) ) {
-				$in = [];
-			}
+			$in = self::_jsonDecode( $in );
 			break;
 
 			case 'null':

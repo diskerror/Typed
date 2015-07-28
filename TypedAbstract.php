@@ -76,11 +76,11 @@ abstract class TypedAbstract implements Countable
 	//	json_decode fails silently and an empty array is returned.
 	final protected static function _jsonDecode(&$in)
 	{
-		$output = json_decode( $in, true );
-		if ( !is_array($output) ) {
+		$out = json_decode( $in, true );
+		if ( !is_array($out) ) {
 			return [];
 		}
-		return $output;
+		return $out;
 	}
 
 	//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
@@ -148,10 +148,10 @@ abstract class TypedAbstract implements Countable
 			if ( method_exists($in, '__toString') ) {
 				return $in->__toString();
 			}
-			elseif ( method_exists($in, 'format') ) {
+			if ( method_exists($in, 'format') ) {
 				return $in->format('c');
 			}
-			elseif ( method_exists($in, 'toArray') ) {
+			if ( method_exists($in, 'toArray') ) {
 				$in = $in->toArray();
 			}
 			//	other objects fall through, object to array falls through
