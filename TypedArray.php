@@ -122,47 +122,46 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 */
 	final public function offsetSet($k, $v)
 	{
-		$setValue = true;
-
 		switch ($this->_type) {
 			case 'null':
 			case 'NULL':
 			case '':
 			case null:
-			$newValue = $v;
+			if ( is_object($v) ) {
+				$newValue = clone $v;
+			}
+			else {
+				$newValue = $v;
+			}
 			break;
 
 			case 'bool':
 			case 'boolean':
-			$newValue = self::_convertToBoolean($v);
+			$newValue = self::_castToBoolean($v);
 			break;
 
 			case 'int':
 			case 'integer':
-			$newValue = self::_convertToInteger($v);
+			$newValue = self::_castToInteger($v);
 			break;
 
 			case 'float':
 			case 'double':
 			case 'real':
-			$newValue = self::_convertToDouble($v);
+			$newValue = self::_castToDouble($v);
 			break;
 
 			case 'string':
-			$newValue = self::_convertToString($v);
+			$newValue = self::_castToString($v);
 			break;
 
 			case 'array':
-			$newValue = self::_convertToArray($v);
+			$newValue = self::_castToArray($v);
 			break;
 
 			//	All object and class types.
 			default:
-			if (
-				null === $k
-				|| !isset($this->_container[$k])
-				|| !($this->_container[$k] instanceof TypedAbstract)
-				) {
+			if ( null === $k || !isset($this->_container[$k]) || !($this->_container[$k] instanceof TypedAbstract) ) {
 				$newValue =
 					( is_object($v) && get_class($v) === $this->_type ) ?
 						clone $v :
@@ -170,20 +169,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			}
 			//	Else it's an instance of our special type.
 			else {
-				$setValue = false;
 				$this->_container[$k]->assignObject($v);
+				return; //	value already assigned to container
 			}
 			break;
 		}
 
-
-		if ( $setValue ) {
-			if ( null === $k ) {
-				$this->_container[] =& $newValue;
-			}
-			else {
-				$this->_container[$k] =& $newValue;
-			}
+		if ( null === $k ) {
+			$this->_container[] =& $newValue;
+		}
+		else {
+			$this->_container[$k] =& $newValue;
 		}
 	}
 
