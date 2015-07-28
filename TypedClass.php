@@ -249,39 +249,39 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 			case 'bool':
 			case 'boolean':
-			$this->{$k} = self::_convertToBoolean($v);
+			$this->{$k} = self::_castToBoolean($v);
 			break;
 
 			case 'int':
 			case 'integer':
-			$this->{$k} = self::_convertToInteger($v);
+			$this->{$k} = self::_castToInteger($v);
 			break;
 
 			case 'float':
 			case 'double':
 			case 'real':
-			$this->{$k}	= self::_convertToDouble($v);
+			$this->{$k}	= self::_castToDouble($v);
 			break;
 
 			case 'string':
-			$this->{$k}	= self::_convertToString($v);
+			$this->{$k}	= self::_castToString($v);
 			break;
 
 			case 'array':
-			$this->{$k}	= self::_convertToArray($v);
+			$this->{$k}	= self::_castToArray($v);
 			break;
 
 			case 'object':
 			if ( is_object($v) ) {
-				//	if identical types then clone
-				if ( get_class($this->_class_vars[$k]) === get_class($v) ) {
-					$this->{$k} = clone $v;
-				}
-
 				//	if this->k is a TypedAbstract object and v is any other type
 				//		then absorb v or v's properties into this->k's properties
-				elseif ($this->_class_vars[$k] instanceof TypedAbstract) {
+				if ($this->_class_vars[$k] instanceof TypedAbstract) {
 					$this->{$k}->assignObject($v);
+				}
+
+				//	if identical types then clone
+				elseif ( get_class($this->_class_vars[$k]) === get_class($v) ) {
+					$this->{$k} = clone $v;
 				}
 
 				//	Else give up.

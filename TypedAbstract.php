@@ -84,12 +84,12 @@ abstract class TypedAbstract implements Countable
 	}
 
 	//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
-	final protected static function _convertToBoolean(&$in)
+	final protected static function _castToBoolean(&$in)
 	{
 		switch (gettype($in)) {
 			case 'object':
 			if ( method_exists($in, 'toArray') ) {
-				return (double) $in->toArray();
+				return (boolean) $in->toArray();
 			}
 			return (boolean) (array) $in;
 
@@ -103,7 +103,7 @@ abstract class TypedAbstract implements Countable
 	}
 
 	//	Empty array or object (no members) is 0. Any property or index then 1 (Like PHP 4).
-	final protected static function _convertToInteger(&$in)
+	final protected static function _castToInteger(&$in)
 	{
 		switch ( gettype($in) ) {
 			case 'string':
@@ -122,7 +122,7 @@ abstract class TypedAbstract implements Countable
 	}
 
 	//	Empty array or object (no members) is 0.0. Any property or index then 1.0. (Like PHP 4)
-	final protected static function _convertToDouble(&$in)
+	final protected static function _castToDouble(&$in)
 	{
 		switch ( gettype($in) ) {
 			case 'object':
@@ -141,7 +141,7 @@ abstract class TypedAbstract implements Countable
 	}
 
 	//	Empty array or object (no members) is "". Any property or index then "1". (Like PHP 4)
-	final protected static function _convertToString(&$in)
+	final protected static function _castToString(&$in)
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -167,7 +167,7 @@ abstract class TypedAbstract implements Countable
 		}
 	}
 
-	final protected static function _convertToArray(&$in)
+	final protected static function _castToArray(&$in)
 	{
 		if ( is_object($in) && method_exists($in, 'toArray') ) {
 			return $in->toArray();
@@ -185,10 +185,6 @@ abstract class TypedAbstract implements Countable
 	 */
 	final public function toJson($pretty = false)
 	{
-		if ( !function_exists('json_encode') ) {
-			throw new BadMethodCallException('json_encode must be available');
-		}
-
 		$j = json_encode( $this->toArray() );
 
 		if ( !$pretty ) {
