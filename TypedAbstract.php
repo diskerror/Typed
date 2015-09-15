@@ -5,7 +5,7 @@ namespace Typed;
 use Countable;
 
 /**
- * Provides common interface for TypedClass and TypedArray.
+ * Provides common interface and core methods for TypedClass and TypedArray.
  *
  * @copyright  Copyright (c) 2015 Reid Woodbury Jr.
  * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
@@ -43,31 +43,7 @@ abstract class TypedAbstract implements Countable
 	abstract public function toArray();
 
 
-	/**
-	 * Returns a string formatted for an SQL insert or update.
-	 *
-	 * Accepts an array where the values are the names of members to include.
-	 * An empty array means to use all.
-	 *
-	 * @param array $include
-	 * @return string
-	 */
-// 	abstract public function getSqlInsert(array $include = []);
-
-
-	/**
-	 * Returns a string formatted for an SQL
-	 * "ON DUPLICATE KEY UPDATE" statement.
-	 *
-	 * Accepts an array where the values are the names of members to include.
-	 * An empty array means to use all members.
-	 *
-	 * @param array $include
-	 * @return string
-	 */
-// 	abstract public function getSqlValues(array $include = []);
-
-
+	//	Test whether a supplied array is indexed or associative.
 	final protected static function _isIndexedArray(array &$in)
 	{
 		return (array_values($in) === $in);
@@ -174,70 +150,5 @@ abstract class TypedAbstract implements Countable
 		}
 		return (array) $in;
 	}
-
-
-	/**
-	 * Returns JSON string representing the object.
-	 * Optionally retruns a pretty-print string.
-	 *
-	 * @param bool $pretty -OPTIONAL
-	 * @return string
-	 */
-	final public function toJson($pretty = false)
-	{
-		$j = json_encode( $this->toArray() );
-
-		if ( !$pretty ) {
-			return $j;
-		}
-
-		//	Pretty print from Zend/Json/Json.php v2.4.2.
-		$tokens = preg_split('|([\{\}\]\[,])|', $j, -1, PREG_SPLIT_DELIM_CAPTURE);
-		$result = "";
-		$indent = 0;
-
-		$inLiteral = false;
-		foreach ($tokens as $token) {
-			$token = trim($token);
-			if ($token == "") {
-				continue;
-			}
-
-			if (preg_match('/^("(?:.*)"):[ ]?(.*)$/', $token, $matches)) {
-				$token = $matches[1] . ': ' . $matches[2];
-			}
-
-			$prefix = str_repeat("\t", $indent);
-			if (!$inLiteral && ($token == '{' || $token == '[')) {
-				$indent++;
-				if ($result != '' && $result[strlen($result)-1] == "\n") {
-					$result .= $prefix;
-				}
-				$result .= "$token\n";
-			}
-			elseif (!$inLiteral && ($token == '}' || $token == ']')) {
-				$indent--;
-				$prefix = str_repeat("\t", $indent);
-				$result .= "\n$prefix$token";
-			}
-			elseif (!$inLiteral && $token == ',') {
-				$result .= "$token\n";
-			}
-			else {
-				$result .= ($inLiteral ?  '' : $prefix) . $token;
-
-				//remove escaped backslash sequences causing false positives in next check
-				$token = str_replace('\\', '', $token);
-				// Count # of unescaped double-quotes in token, subtract # of
-				// escaped double-quotes and if the result is odd then we are
-				// inside a string literal
-				if ((substr_count($token, '"')-substr_count($token, '\\"')) % 2 != 0) {
-					$inLiteral = !$inLiteral;
-				}
-			}
-		}
-		return $result . "\n";
-	}
-
 
 }
