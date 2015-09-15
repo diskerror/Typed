@@ -23,10 +23,10 @@ use BadMethodCallException;
  *
  * This class will adds simple casting of input values to be the same type as the
  *    named property or member. This includes scalar values, built-in PHP classes,
- *    and other classes derived from this class.
+ *    and other classes, especially those derived from this class.
  *
- * Only properties in the original child class are allowed. This prevents adding
- *    properties on the fly.
+ * Only properties in the original child class are allowed. This prevents erroneously
+ *    adding properties on the fly.
  *
  * More elaborate filtering can be done by creating methods with this naming
  *    convention: If property is called "personName" then create a method called
@@ -185,10 +185,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			}
 			break;
 
-			case 'string':
-			$in = self::_jsonDecode( $in );
-			break;
-
 			case 'null':
 			case 'NULL':
 			case 'bool':
@@ -198,12 +194,12 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				foreach ($this->_class_vars as $k => &$v) {
 					$this->__unset($k);
 				}
+				return;
 			}
-			return;
-
+			//	A boolean 'true' falls through.
 
 			default:
-			throw new InvalidArgumentException('unknown input type');
+			throw new InvalidArgumentException('invalid input type');
 		}
 
 		foreach ($in as $k => $v) {
@@ -273,15 +269,15 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 			case 'object':
 			if ( is_object($v) ) {
-				//	if this->k is a TypedAbstract object and v is any other type
-				//		then absorb v or v's properties into this->k's properties
-				if ($this->_class_vars[$k] instanceof TypedAbstract) {
-					$this->{$k}->assignObject($v);
+				//	if identical types then clone
+				if ( get_class($this->_class_vars[$k]) === get_class($v) ) {
+					$this->{$k} = clone $v;
 				}
 
-				//	if identical types then clone
-				elseif ( get_class($this->_class_vars[$k]) === get_class($v) ) {
-					$this->{$k} = clone $v;
+				//	if this->k is a TypedAbstract object and v is any other type
+				//		then absorb v or v's properties into this->k's properties
+				elseif ($this->_class_vars[$k] instanceof TypedAbstract) {
+					$this->{$k}->assignObject($v);
 				}
 
 				//	Else give up.
@@ -476,109 +472,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		}
 
 		return $arr;
-	}
-
-	/**
-	 * Returns a string formatted for an SQL insert or update.
-	 *
-	 * Accepts an array where the values are the names of properties.
-	 * An empty array means to use all
-	 *
-	 * @param array $include
-	 * @return string
-	 */
-	public function getSqlIns(array $include = [])
-	{
-		if ( count($include) ) {
-			$tmp = $this->toArray();
-			$arr = [];
-			foreach ( $include as $i ) {
-				if ( array_key_exists($i, $this->_class_vars) ) {
-					$arr[$i] = $tmp[$i];
-				}
-			}
-		}
-		else {
-			$arr = $this->toArray();
-		}
-
-		$sqlStrs = [];
-		foreach ($arr as $k => &$v) {
-			$kEq = '`' . $k . '` = ';
-			switch ( gettype($v) ) {
-				case 'bool':
-				case 'boolean':
-				$sqlStrs[] = $kEq . ( $v ? 1 : 0 );
-				break;
-
-				case 'int':
-				case 'integer':
-				case 'float':
-				case 'double':
-				$sqlStrs[] = $kEq . $v;
-				break;
-
-				case 'string':
-				if ( $v === 'NULL' ) {
-					$sqlStrs[] = $kEq . 'NULL';
-				}
-				elseif ( $v === '' ) {
-					$sqlStrs[] = $kEq . '""';
-				}
-				else {
-// 					$sqlStrs[] = $kEq . '"' . preg_replace('/([\x00\n\r\\\\\'"\x1a])/u', '\\\\$1', $v); . '"';
-// 					$sqlStrs[] = $kEq . '"' . addslashes($v) . '"';
-					$sqlStrs[] = $kEq . '0x' . bin2hex($v);
-				}
-				break;
-
-				case 'null':
-				case 'NULL':
-				$sqlStrs[] = $kEq . 'NULL';
-				break;
-
-				case 'array':
-				case 'object':
-				$sqlStrs[] = $kEq . '0x' . bin2hex(json_encode($v));
-				break;
-
-				//	resource, (just ignore these?)
-				default:
-				throw new InvalidArgumentException('bad input type');
-			}
-		}
-
-		return implode(",\n", $sqlStrs);
-	}
-
-	/**
-	 * Returns a string formatted for an SQL
-	 * "ON DUPLICATE KEY UPDATE" statement.
-	 *
-	 * Accepts an array where the values are the names of properties.
-	 * An empty array means to use all
-	 *
-	 * @param array $include
-	 * @return string
-	 */
-	public function getSqlVals(array $include = [])
-	{
-		$sqlStrs = [];
-
-		if ( count($include) ) {
-			foreach ($include as $i) {
-				if ( array_key_exists($i, $this->_class_vars) ) {
-					$sqlStrs[] = '`' . $i . '` = VALUES(`' . $i . '`)';
-				}
-			}
-		}
-		else {
-			foreach ($this->_public_names as $k) {
-				$sqlStrs[] = '`' . $k . '` = VALUES(`' . $k . '`)';
-			}
-		}
-
-		return implode(",\n", $sqlStrs);
 	}
 
 }
