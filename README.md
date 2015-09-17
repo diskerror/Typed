@@ -42,4 +42,6 @@ Returns a string formatted for an SQL "ON DUPLICATE KEY UPDATE" statement.
 Accepts an array where the values are the names of members to include. An empty array means to use all members.
 
 ##Composer
+```
 > composer require diskerror/typed
+```
