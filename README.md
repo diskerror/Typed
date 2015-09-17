@@ -57,4 +57,9 @@ Accepts an array where the values are the names of members to include. An empty 
 			}
 		}
 	],
+    "autoload": {
+        "psr-4": {
+        	"Diskerror\\Typed\\": ""
+        }
+    },
 ```
