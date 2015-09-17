@@ -10,12 +10,12 @@
             "role": "Developer"
         }
     ],
-    "require": {
-        "php": ">=5.4"
-    },
     "autoload": {
         "psr-4": {
         	"Diskerror\\Typed\\": "/"
         }
+    },
+    "require": {
+        "php": ">=5.4"
     }
 }
