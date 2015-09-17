@@ -13,7 +13,7 @@
     },
     "autoload": {
         "psr-4": {
-        	"Diskerror\\Typed": "./.."
+        	"Diskerror\\Typed": "src"
         }
     }
 }
