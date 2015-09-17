@@ -1,5 +1,7 @@
 {
 	"name": "diskerror/typed",
+    "description": "PHP classes to strictly define member structure, to control their data types, and to add convience methods.",
+    "homepage": "https://github.com/diskerror/typed",
     "authors": [
         {
             "name": "Reid Woodbury",
@@ -13,7 +15,7 @@
     },
     "autoload": {
         "psr-4": {
-        	"Diskerror\\Typed\\": ""
+        	"Diskerror\\Typed\\": "/"
         }
     }
 }
