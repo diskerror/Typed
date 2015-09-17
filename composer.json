@@ -1,21 +1,24 @@
 {
 	"name": "diskerror/typed",
-    "description": "PHP classes to strictly define member structure, to control their data types, and to add convience methods.",
-    "homepage": "https://github.com/diskerror/typed",
-    "authors": [
-        {
-            "name": "Reid Woodbury",
-            "email": "reidw@rawsound.com",
-            "homepage": "http://www.rawsound.com",
-            "role": "Developer"
-        }
-    ],
-    "autoload": {
-        "psr-4": {
-        	"Diskerror\\Typed\\": "/"
-        }
-    },
-    "require": {
-        "php": ">=5.4"
-    }
+	"type": "library",
+	"description": "PHP classes to strictly define member structure, to control their data types, and to add convience methods.",
+	"keywords": ["type", "structure"],
+	"homepage": "https://github.com/diskerror/typed",
+	"license": "Apache-2.0",
+	"authors": [
+		{
+			"name": "Reid Woodbury",
+			"email": "reidw@rawsound.com",
+			"homepage": "http://www.rawsound.com",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"php": ">=5.4"
+	},
+	"autoload": {
+		"psr-4": {
+			"Diskerror\\Typed\\": "/"
+		}
+	}
 }
