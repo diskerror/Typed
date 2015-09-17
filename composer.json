@@ -1,0 +1,19 @@
+{
+	"name": "diskerror/typed",
+    "authors": [
+        {
+            "name": "Reid Woodbury",
+            "email": "reidw@rawsound.com",
+            "homepage": "http://www.rawsound.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4"
+    },
+    "autoload": {
+        "psr-4": {
+        	"Diskerror\\Typed": ""
+        }
+    }
+}

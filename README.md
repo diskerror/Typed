@@ -40,3 +40,21 @@ Accepts an array where the values are the names of members to include. An empty 
 ###getSqlValues
 Returns a string formatted for an SQL "ON DUPLICATE KEY UPDATE" statement.
 Accepts an array where the values are the names of members to include. An empty array means to use all members.
+
+##Composer
+```
+	"repositories": [
+		{
+			"type": "package",
+			"package": {
+				"name": "diskerror/typed",
+				"version": "dev-master",
+				"source": {
+					"url": "git://github.com/diskerror/typed.git",
+					"type": "git",
+					"reference": "master"
+				}
+			}
+		}
+	],
+```
