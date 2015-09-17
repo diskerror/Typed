@@ -1,6 +1,6 @@
 <?php
 
-namespace Typed;
+namespace Diskerror\Typed;
 
 use ArrayAccess;
 use IteratorAggregate;

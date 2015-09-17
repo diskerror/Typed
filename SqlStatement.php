@@ -1,9 +1,9 @@
 <?php
 
-namespace Typed;
+namespace Diskerror\Typed;
 
 /**
- * Converts associate arrays and objects into partial SQL statements.
+ * Converts associative arrays and objects into partial SQL statements.
  *
  * @copyright  Copyright (c) 2015 Reid Woodbury Jr.
  * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
