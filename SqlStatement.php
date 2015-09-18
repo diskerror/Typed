@@ -75,7 +75,7 @@ class SqlStatement
 			}
 		}
 		else {
-			$arr &= $this->_input;
+			$arr =& $this->_input;
 		}
 
 		$sqlStrs = [];
