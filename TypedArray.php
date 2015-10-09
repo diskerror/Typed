@@ -77,10 +77,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			case 'array':
 			break;
 
-			case 'string':
-			$in = self::_jsonDecode( $in );
-			break;
-
 			case 'null':
 			case 'NULL':
 			$this->_container = [];
@@ -120,7 +116,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * @param string|int $k
 	 * @param mixed $v
 	 */
-	final public function offsetSet($k, $v)
+	public function offsetSet($k, $v)
 	{
 		switch ($this->_type) {
 			case 'null':
@@ -189,7 +185,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * @param string|int $offset
 	 * @return bool
 	 */
-	final public function offsetExists($offset)
+	public function offsetExists($offset)
 	{
 		return isset($this->_container[$offset]);
 	}
@@ -199,7 +195,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @param string|int $offset
 	 */
-	final public function offsetUnset($offset)
+	public function offsetUnset($offset)
 	{
 		unset($this->_container[$offset]);
 	}
@@ -213,7 +209,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * @param string|int $offset
 	 * @return mixed
 	 */
-	final public function &offsetGet($offset)
+	public function &offsetGet($offset)
 	{
 		return $this->_container[$offset];
 	}
@@ -223,7 +219,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return int
 	 */
-	final public function count()
+	public function count()
 	{
 		return count($this->_container);
 	}
@@ -245,7 +241,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return array
 	 */
-	final public function toArray()
+	public function toArray()
 	{
 		switch ($this->_type) {
 			case 'bool':
@@ -285,7 +281,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return array
 	 */
-	final public function keys()
+	public function keys()
 	{
 		return array_keys( $this->_container );
 	}
@@ -297,7 +293,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * @return TypedArray
 	 * @throws LengthException
 	 */
-	final public function combine(array $keys)
+	public function combine(array $keys)
 	{
 		if ( count($keys) !== count($this->_container) ) {
 			throw new LengthException('array counts do not match');
