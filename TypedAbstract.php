@@ -49,18 +49,8 @@ abstract class TypedAbstract implements Countable
 		return (array_values($in) === $in);
 	}
 
-	//	json_decode fails silently and an empty array is returned.
-	final protected static function _jsonDecode(&$in)
-	{
-		$out = json_decode( $in, true );
-		if ( !is_array($out) ) {
-			return [];
-		}
-		return $out;
-	}
-
 	//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
-	final protected static function _castToBoolean(&$in)
+	protected static function _castToBoolean(&$in)
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -79,7 +69,7 @@ abstract class TypedAbstract implements Countable
 	}
 
 	//	Empty array or object (no members) is 0. Any property or index then 1 (Like PHP 4).
-	final protected static function _castToInteger(&$in)
+	protected static function _castToInteger(&$in)
 	{
 		switch ( gettype($in) ) {
 			case 'string':
@@ -98,7 +88,7 @@ abstract class TypedAbstract implements Countable
 	}
 
 	//	Empty array or object (no members) is 0.0. Any property or index then 1.0. (Like PHP 4)
-	final protected static function _castToDouble(&$in)
+	protected static function _castToDouble(&$in)
 	{
 		switch ( gettype($in) ) {
 			case 'object':
@@ -117,7 +107,7 @@ abstract class TypedAbstract implements Countable
 	}
 
 	//	Empty array or object (no members) is "". Any property or index then "1". (Like PHP 4)
-	final protected static function _castToString(&$in)
+	protected static function _castToString(&$in)
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -143,7 +133,7 @@ abstract class TypedAbstract implements Countable
 		}
 	}
 
-	final protected static function _castToArray(&$in)
+	protected static function _castToArray(&$in)
 	{
 		if ( is_object($in) && method_exists($in, 'toArray') ) {
 			return $in->toArray();
