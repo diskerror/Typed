@@ -20,11 +20,13 @@ class SqlStatement
 	 * Constructor.
 	 * Accepts an object or an associative array.
 	 *
-	 * @param mixed $in
+	 * @param mixed $in -OPTIONAL
 	 */
-	public function __construct($in)
+	public function __construct($in=null)
 	{
-		$this->setInput($in);
+		if ( null !== $in ) {
+			$this->setInput($in);
+		}
 	}
 
 	/**
