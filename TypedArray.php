@@ -62,8 +62,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * Copies all members into this class.
 	 * This method attempts to coerce all members of the input to the required type.
 	 *
-	 * Input can be an object, an associative array, or
-	 *	 a JSON string representing an object.
+	 * Input can be an object, or an indexed or associative array.
 	 *
 	 * Null clears the entire contents of the typed array but not it's type.
 	 *

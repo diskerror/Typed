@@ -158,8 +158,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *	property (property names not starting with an underscore). Extra values
 	 *	are ignored. Unused properties are unchanged.
 	 *
-	 * Input can be an object, an associative array, or
-	 *   a JSON string representing an object.
+	 * Input can be an object, or an indexed or associative array.
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
 	 * @throws BadMethodCallException|InvalidArgumentException
