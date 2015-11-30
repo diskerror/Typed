@@ -5,28 +5,26 @@ namespace Diskerror\Typed;
 use ArrayAccess;
 use IteratorAggregate;
 use ArrayIterator;
-use BadMethodCallException;
 use InvalidArgumentException;
-use LogicException;
 use LengthException;
 
 /**
  * Provides support for an array's elements to all have the same type.
  * If type is defined as null then any element can have any type but
- *    features of deep copying are available.
+ *	  features of deep copying are available.
  */
 class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 {
 	/**
 	 * An array that contains the items of interest.
-	 * @var array
+	 * @type array
 	 */
 	private $_container = null;
 
 	/**
 	 * A string that specifies the type of values in the container.
 	 * A child class can override _type rather than it being set with the constructor.
-	 * @var string|null
+	 * @type string|null
 	 */
 	protected $_type = '';
 
@@ -51,7 +49,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 */
 	public function __clone()
 	{
-		foreach ($this->_container as $k=>$v) {
+		foreach ($this->_container as $k => $v) {
 			if (is_object($v)) {
 				$this->_container[$k] = clone $v;
 			}
@@ -67,9 +65,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * Null clears the entire contents of the typed array but not it's type.
 	 *
 	 * @param object|array|string|null $in OPTIONAL null
-	 * @throws BadMethodCallException|InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
-	public function assignObject($in=null)
+	public function assignObject($in = null)
 	{
 		switch ( gettype($in) ) {
 			case 'object':
@@ -79,6 +77,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			case 'null':
 			case 'NULL':
 			$this->_container = [];
+
 			return;
 
 			default:
@@ -95,22 +94,22 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * Coerces input values to be the required type.
 	 *
 	 * There are 5 basic conditions for $this->_type:
-	 *    $this->_type is null (accept any type and value, like a standard array);
-	 *    $this->_type is a scalar [bool, int, float, string];
-	 *    $this->_type is an array (check if value has toArray);
-	 *    $this->_type is an object of type TypedAbstract (call assignObject);
-	 *    $this->_type is any other object.
+	 *	  $this->_type is null (accept any type and value, like a standard array);
+	 *	  $this->_type is a scalar [bool, int, float, string];
+	 *	  $this->_type is an array (check if value has toArray);
+	 *	  $this->_type is an object of type TypedAbstract (call assignObject);
+	 *	  $this->_type is any other object.
 	 *
 	 * There are 3 conditions involving $offset:
-	 *    $offset is null;
-	 *    $offset is set and exists;
-	 *    $offset is set and does not exist;
+	 *	  $offset is null;
+	 *	  $offset is set and exists;
+	 *	  $offset is set and does not exist;
 	 *
 	 * There are 4 conditions for handling $value:
-	 *    $value is null (replace current scalar values with null, reset non-scalars);
-	 *    $value is a scalar (cast);
-	 *    $value is a an array (check for toArray, or cast);
-	 *    $value is a an object (clone if the same as _type, otherwise new _type(value) );
+	 *	  $value is null (replace current scalar values with null, reset non-scalars);
+	 *	  $value is a scalar (cast);
+	 *	  $value is a an array (check for toArray, or cast);
+	 *	  $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
 	 * @param string|int $k
 	 * @param mixed $v
@@ -165,16 +164,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			//	Else it's an instance of our special type.
 			else {
 				$this->_container[$k]->assignObject($v);
+
 				return; //	value already assigned to container
 			}
 			break;
 		}
 
 		if ( null === $k ) {
-			$this->_container[] =& $newValue;
+			$this->_container[] = &$newValue;
 		}
 		else {
-			$this->_container[$k] =& $newValue;
+			$this->_container[$k] = &$newValue;
 		}
 	}
 
@@ -255,7 +255,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		}
 
 		$arr = [];
-		foreach ($this->_container as $k=>&$v) {
+		foreach ($this->_container as $k => &$v) {
 			if ( is_object($v) ) {
 				if ( method_exists($v, 'toArray') ) {
 					$arr[$k] = $v->toArray();
@@ -302,5 +302,4 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 
 		return $this;
 	}
-
 }

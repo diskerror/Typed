@@ -8,7 +8,7 @@ use Countable;
  * Provides common interface and core methods for TypedClass and TypedArray.
  *
  * @copyright  Copyright (c) 2015 Reid Woodbury Jr.
- * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
+ * @license	   http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
  */
 abstract class TypedAbstract implements Countable
 {
@@ -21,13 +21,13 @@ abstract class TypedAbstract implements Countable
 
 	/**
 	 * Copies all matching member names while maintaining original types and
-	 *   doing a deep copy where appropriate.
+	 *	 doing a deep copy where appropriate.
 	 * This method silently ignores extra properties in $in,
-	 *   leaves unmatched properties in this class untouched, and
-	 *   skips names starting with an underscore.
+	 *	 leaves unmatched properties in this class untouched, and
+	 *	 skips names starting with an underscore.
 	 *
 	 * Input can be an object, an associative array, or
-	 *   a JSON string representing a non-scalar type.
+	 *	 a JSON string representing a non-scalar type.
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
 	 */
@@ -57,11 +57,12 @@ abstract class TypedAbstract implements Countable
 			if ( method_exists($in, 'toArray') ) {
 				return (boolean) $in->toArray();
 			}
+
 			return (boolean) (array) $in;
 
 			case 'null':
 			case 'NULL':
-			return null;
+			return;
 
 			default:
 			return (boolean) $in;
@@ -80,7 +81,7 @@ abstract class TypedAbstract implements Countable
 
 			case 'null':
 			case 'NULL':
-			return null;
+			return;
 
 			default:
 			return (integer) $in;
@@ -95,11 +96,12 @@ abstract class TypedAbstract implements Countable
 			if ( method_exists($in, 'toArray') ) {
 				return (double) $in->toArray();
 			}
+
 			return (double) (array) $in;
 
 			case 'null':
 			case 'NULL':
-			return null;
+			return;
 
 			default:
 			return (double) $in;
@@ -126,7 +128,7 @@ abstract class TypedAbstract implements Countable
 
 			case 'null':
 			case 'NULL':
-			return null;
+			return;
 
 			default:
 			return (string) $in;
@@ -138,7 +140,7 @@ abstract class TypedAbstract implements Countable
 		if ( is_object($in) && method_exists($in, 'toArray') ) {
 			return $in->toArray();
 		}
+
 		return (array) $in;
 	}
-
 }
