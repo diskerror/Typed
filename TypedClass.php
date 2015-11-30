@@ -4,71 +4,70 @@ namespace Diskerror\Typed;
 
 use Iterator;
 use InvalidArgumentException;
-use BadMethodCallException;
 
 /**
  * Provides support for class members/properties maintain their initial types.
  *
  * Create a child of this class with your named properties with a visibility of
- *    protected or private, and default values of the desired type. Property
- *    names CANNOT begin with an underscore. This maintains the Zend Framework
- *    convention that protected and private property names should begin with an
- *    underscore. This abstract class will expose all members whose name don't
- *    begin with an underscore, but filter access to those class members or
- *    properties that have a visibility of protected or private.
+ *	  protected or private, and default values of the desired type. Property
+ *	  names CANNOT begin with an underscore. This maintains the Zend Framework
+ *	  convention that protected and private property names should begin with an
+ *	  underscore. This abstract class will expose all members whose name don't
+ *	  begin with an underscore, but filter access to those class members or
+ *	  properties that have a visibility of protected or private.
  *
  * Input to the constructor or assignObject methods must be an array or object. Only the
- *    values in the matching names will be filtered and copied into the object.
- *    All input will be copied by value, not referenced.
+ *	  values in the matching names will be filtered and copied into the object.
+ *	  All input will be copied by value, not referenced.
  *
  * This class will adds simple casting of input values to be the same type as the
- *    named property or member. This includes scalar values, built-in PHP classes,
- *    and other classes, especially those derived from this class.
+ *	  named property or member. This includes scalar values, built-in PHP classes,
+ *	  and other classes, especially those derived from this class.
  *
  * Only properties in the original child class are allowed. This prevents erroneously
- *    adding properties on the fly.
+ *	  adding properties on the fly.
  *
  * More elaborate filtering can be done by creating methods with this naming
- *    convention: If property is called "personName" then create a method called
- *    "_set_personName($in)". That is, prepend "_set_" to the property name.
+ *	  convention: If property is called "personName" then create a method called
+ *	  "_set_personName($in)". That is, prepend "_set_" to the property name.
  *
  * The ideal usage of this abstract class is as the parent class of a data set
- *    where the input to the constructor (or assignObject) method is an HTTP request
- *    object. It will help with filtering and insuring the existance of default
- *    values for missing input parameters.
+ *	  where the input to the constructor (or assignObject) method is an HTTP request
+ *	  object. It will help with filtering and insuring the existance of default
+ *	  values for missing input parameters.
  *
  * @copyright  Copyright (c) 2012 Reid Woodbury Jr.
- * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
+ * @license	   http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
  */
 abstract class TypedClass extends TypedAbstract implements Iterator
 {
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
-	 * @var string
+	 * @type string
 	 */
 	private $_called_class;
 
 	/**
 	 * Holds the default values of the called class to-be-public properties in associative array.
-	 * @var array
+	 * @type array
 	 */
 	private $_class_vars;
 
 	/**
 	 * Holds the names of the called class' to-be-public properties in an indexed array.
-	 * @var array
+	 * @type array
 	 */
 	private $_public_names;
 
 	/**
 	 * Holds the position for Iterator.
-	 * @var int
+	 * @type int
 	 */
 	private $_position = 0;
 
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
-	 * @var array
+	 * @type array
 	 */
 	protected $_map = [];
 
@@ -88,7 +87,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				unset($this->_class_vars[$k]);
 			}
 			//	If $v is a string and has '__class__' at the start then instantiate the named object.
-			elseif ( is_string($v) && 0===stripos($v, '__class__') ) {
+			elseif ( is_string($v) && 0 === stripos($v, '__class__') ) {
 				$this->_class_vars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
 				//	Objects are always passed by reference,
 				//		but we want a separate copy so the original stays unchanged.
@@ -150,10 +149,10 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 	/**
 	 * Copies all matching property names while maintaining original types and
-	 *   doing a deep copy where appropriate.
+	 *	 doing a deep copy where appropriate.
 	 * This method silently ignores extra properties in $input,
-	 *   leaves unmatched properties in this class untouched, and
-	 *   skips names starting with an underscore.
+	 *	 leaves unmatched properties in this class untouched, and
+	 *	 skips names starting with an underscore.
 	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
 	 *	property (property names not starting with an underscore). Extra values
 	 *	are ignored. Unused properties are unchanged.
@@ -161,7 +160,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * Input can be an object, or an indexed or associative array.
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
-	 * @throws BadMethodCallException|InvalidArgumentException
 	 */
 	public function assignObject($in = null)
 	{
@@ -176,7 +174,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			if ( self::_isIndexedArray($in) ) {
 				$nameArr = $this->_class_vars;
 				$ct = min( count($in), count($nameArr) );
-				for ( $i = 0; $i<$ct; ++$i ) {
+				for ( $i = 0; $i < $ct; ++$i ) {
 					$nameArr[$this->_public_names[$i]] = $in[$i];
 				}
 
@@ -187,12 +185,13 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			case 'null':
 			case 'NULL':
 			case 'bool':
-			case 'boolean':	//	a 'false' is returned by MySQL:PDO for "no results"
+			case 'boolean': //	a 'false' is returned by MySQL:PDO for "no results"
 			//	So, return default values;
 			if ( $in !== true ) {	//	do only if false or null. True does nothing.
 				foreach ($this->_class_vars as $k => &$v) {
 					$this->__unset($k);
 				}
+
 				return;
 			}
 			//	A boolean 'true' falls through.
@@ -229,6 +228,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		$setter = '_set_' . $k;
 		if ( method_exists( $this->_called_class, $setter ) ) {
 			$this->$setter($v);
+
 			return;
 		}
 
@@ -239,7 +239,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			case 'NULL':
 			case '':
 			case null:
-			$this->{$k}	= $v;
+			$this->{$k} = $v;
 			break;
 
 			case 'bool':
@@ -255,15 +255,15 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			case 'float':
 			case 'double':
 			case 'real':
-			$this->{$k}	= self::_castToDouble($v);
+			$this->{$k} = self::_castToDouble($v);
 			break;
 
 			case 'string':
-			$this->{$k}	= self::_castToString($v);
+			$this->{$k} = self::_castToString($v);
 			break;
 
 			case 'array':
-			$this->{$k}	= self::_castToArray($v);
+			$this->{$k} = self::_castToArray($v);
 			break;
 
 			case 'object':
@@ -289,20 +289,20 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 					$this->{$k} = (object) $v;
 				}
 				else {
-				//	Other classes might be able to absorb/convert other input,
+					//	Other classes might be able to absorb/convert other input,
 				//		like «DateTime::__construct("now")» accepts a string.
 					$class = get_class($this->_class_vars[$k]);
 					$this->{$k} = new $class($v);
 				}
-// 				//	Else give up.
-// 				else {
-// 					throw new InvalidArgumentException('cannot coerce data into object');
-// 				}
+//				//	Else give up.
+//				else {
+//					throw new InvalidArgumentException('cannot coerce data into object');
+//				}
 			}
 			break;
 
 			default:	//	resource
-			$this->{$k}	= $v;
+			$this->{$k} = $v;
 			break;
 		}
 	}
@@ -329,7 +329,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @param string $k
 	 * @param mixed $v
-	 * @throws InvalidArgumentException
 	 */
 	public function __set($k, $v)
 	{
@@ -346,6 +345,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	public function __get($k)
 	{
 		$this->_assertPropName($k);
+
 		return $this->_getByName($k);
 	}
 
@@ -413,8 +413,8 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	}
 
 	/**
-	* Required method for Iterator.
-	*/
+	 * Required method for Iterator.
+	 */
 	final public function next()
 	{
 		++$this->_position;
@@ -422,7 +422,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 	/**
 	 * Required method for Iterator.
-	 * @return boolean
+	 * @return bool
 	 */
 	final public function valid()
 	{
@@ -472,5 +472,4 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 		return $arr;
 	}
-
 }
