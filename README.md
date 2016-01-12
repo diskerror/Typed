@@ -17,9 +17,9 @@ The derivitives of Typed\TypedClass are contracted to do these things:
 * Silently cast data assigned to properties in the most obvious way when input is of a different type.
 * Use setter methods based on property name to further handle input data, like filtering.
 * Use getter methods based on property name to handle output, like formatting.
-* Have a method to return a deeply transformed associative array.
+* Have a method to return a deeply transformed standard associative array.
 * Handle special cases of members/properties that are objects.
-* Accept a another object, associative or indexed array, and assign the input values to the appropriate members.
+* Accept another object, associative or indexed array, and assign the input values to the appropriate members.
  *	Copy object or named array item by item.
  *	Copy indexed array by position.
  *  Map known erroneous names to proper names.
