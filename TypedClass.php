@@ -171,10 +171,10 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			//	Test to see if it's an indexed or an associative array.
 			//	Leave associative array as is.
 			//	Copy indexed array by position to a named array
-			if ( self::_isIndexedArray($in) ) {
+			if ( array_values($in) === $in ) {
 				$nameArr = $this->_class_vars;
-				$ct = min( count($in), count($nameArr) );
-				for ( $i = 0; $i < $ct; ++$i ) {
+				$minCount = min( count($in), count($nameArr) );
+				for ( $i = 0; $i < $minCount; ++$i ) {
 					$nameArr[$this->_public_names[$i]] = $in[$i];
 				}
 

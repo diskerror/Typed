@@ -26,8 +26,7 @@ abstract class TypedAbstract implements Countable
 	 *	 leaves unmatched properties in this class untouched, and
 	 *	 skips names starting with an underscore.
 	 *
-	 * Input can be an object, an associative array, or
-	 *	 a JSON string representing a non-scalar type.
+	 * Input can be an object, or an indexed or associative array.
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
 	 */
@@ -42,12 +41,6 @@ abstract class TypedAbstract implements Countable
 	 */
 	abstract public function toArray();
 
-
-	//	Test whether a supplied array is indexed or associative.
-	final protected static function _isIndexedArray(array &$in)
-	{
-		return (array_values($in) === $in);
-	}
 
 	//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
 	protected static function _castToBoolean(&$in)

@@ -51,8 +51,9 @@ class SqlStatement
 	        $this->_input =
 				method_exists($in, 'toArray') ?
 					$in->toArray() :
-					$this->_input = (array) $in;
+					(array) $in;
 	    }
+	    //	If is an array but not an indexed array...
 	    elseif ( is_array($in) && array_values($in) !== $in ) {
 	        $this->_input = $in;
 	    }
