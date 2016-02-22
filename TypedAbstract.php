@@ -1,4 +1,10 @@
 <?php
+/**
+ * Methods for maintaining variable type.
+ * @name		TypedAbstract
+ * @copyright	Copyright (c) 2012 Reid Woodbury Jr.
+ * @license		http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
+ */
 
 namespace Diskerror\Typed;
 
@@ -6,13 +12,10 @@ use Countable;
 
 /**
  * Provides common interface and core methods for TypedClass and TypedArray.
- *
- * @copyright  Copyright (c) 2015 Reid Woodbury Jr.
- * @license	   http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
  */
 abstract class TypedAbstract implements Countable
 {
-	/*
+	/**
 	 * Required method for Countable.
 	 * @return int
 	 */
@@ -28,7 +31,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * Input can be an object, or an indexed or associative array.
 	 *
-	 * @param object|array|string|bool|null $in -OPTIONAL
+	 * @param mixed $in -OPTIONAL
 	 */
 	abstract public function assignObject($in = null);
 
@@ -42,7 +45,13 @@ abstract class TypedAbstract implements Countable
 	abstract public function toArray();
 
 
-	//	Empty array or object (no members) is false. Any property or index then true. (Like PHP 4)
+	/**
+	 * Empty array or object (no members) is false.
+	 * Any property or index then true. (Like PHP 4)
+	 *
+	 * @param mixed $in
+	 * @return bool
+	 */
 	protected static function _castToBoolean(&$in)
 	{
 		switch (gettype($in)) {
@@ -62,7 +71,13 @@ abstract class TypedAbstract implements Countable
 		}
 	}
 
-	//	Empty array or object (no members) is 0. Any property or index then 1 (Like PHP 4).
+	/**
+	 * Empty array or object (no members) is 0.
+	 * Any property or index then 1. (Like PHP 4)
+	 *
+	 * @param mixed $in
+	 * @return int
+	 */
 	protected static function _castToInteger(&$in)
 	{
 		switch ( gettype($in) ) {
@@ -81,7 +96,13 @@ abstract class TypedAbstract implements Countable
 		}
 	}
 
-	//	Empty array or object (no members) is 0.0. Any property or index then 1.0. (Like PHP 4)
+	/**
+	 * Empty array or object (no members) is 0.0.
+	 * Any property or index then 1.0. (Like PHP 4)
+	 *
+	 * @param mixed $in
+	 * @return double
+	 */
 	protected static function _castToDouble(&$in)
 	{
 		switch ( gettype($in) ) {
@@ -101,7 +122,13 @@ abstract class TypedAbstract implements Countable
 		}
 	}
 
-	//	Empty array or object (no members) is "". Any property or index then "1". (Like PHP 4)
+	/**
+	 * Empty array or object (no members) is "".
+	 * Any property or index then "1". (Like PHP 4)
+	 *
+	 * @param mixed $in
+	 * @return string
+	 */
 	protected static function _castToString(&$in)
 	{
 		switch (gettype($in)) {
@@ -128,6 +155,12 @@ abstract class TypedAbstract implements Countable
 		}
 	}
 
+	/**
+	 * Cast all input to an array.
+	 *
+	 * @param mixed $in
+	 * @return array
+	 */
 	protected static function _castToArray(&$in)
 	{
 		if ( is_object($in) && method_exists($in, 'toArray') ) {

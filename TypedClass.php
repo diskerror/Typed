@@ -1,4 +1,10 @@
 <?php
+/**
+ * Provides support for class members/properties maintain their initial types.
+ * @name		TypedClass
+ * @copyright	Copyright (c) 2012 Reid Woodbury Jr.
+ * @license		http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
+ */
 
 namespace Diskerror\Typed;
 
@@ -6,8 +12,6 @@ use Iterator;
 use InvalidArgumentException;
 
 /**
- * Provides support for class members/properties maintain their initial types.
- *
  * Create a child of this class with your named properties with a visibility of
  *	  protected or private, and default values of the desired type. Property
  *	  names CANNOT begin with an underscore. This maintains the Zend Framework
@@ -35,39 +39,40 @@ use InvalidArgumentException;
  *	  where the input to the constructor (or assignObject) method is an HTTP request
  *	  object. It will help with filtering and insuring the existance of default
  *	  values for missing input parameters.
- *
- * @copyright  Copyright (c) 2012 Reid Woodbury Jr.
- * @license	   http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
  */
 abstract class TypedClass extends TypedAbstract implements Iterator
 {
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
-	 * @type string
+	 *
+	 * @var string
 	 */
 	private $_called_class;
 
 	/**
 	 * Holds the default values of the called class to-be-public properties in associative array.
-	 * @type array
+	 * @var array
 	 */
 	private $_class_vars;
 
 	/**
 	 * Holds the names of the called class' to-be-public properties in an indexed array.
-	 * @type array
+	 *
+	 * @var array
 	 */
 	private $_public_names;
 
 	/**
 	 * Holds the position for Iterator.
-	 * @type int
+	 *
+	 * @var int
 	 */
 	private $_position = 0;
 
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
-	 * @type array
+	 *
+	 * @var array
 	 */
 	protected $_map = [];
 
@@ -88,6 +93,9 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			}
 			//	If $v is a string and has '__class__' at the start then instantiate the named object.
 			elseif ( is_string($v) && 0 === stripos($v, '__class__') ) {
+				//	We must use `eval` because we want to handle
+				//		'__class__Date' and
+				//		'__class__DateTime("Jan 1, 2015")' with 1 or more parameters.
 				$this->_class_vars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
 				//	Objects are always passed by reference,
 				//		but we want a separate copy so the original stays unchanged.
@@ -111,8 +119,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	}
 
 	/**
-	 * Clone.
-	 * All objects will be deep cloned.
+	 * All member objects will be deep cloned.
 	 */
 	public function __clone()
 	{

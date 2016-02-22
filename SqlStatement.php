@@ -1,4 +1,10 @@
 <?php
+/**
+ * SQL statement generator.
+ * @name		SqlStatement
+ * @copyright	Copyright (c) 2015 Reid Woodbury Jr.
+ * @license		http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
+ */
 
 namespace Diskerror\Typed;
 
@@ -6,15 +12,12 @@ use InvalidArgumentException;
 
 /**
  * Converts associative arrays and objects into partial SQL statements.
- *
- * @copyright  Copyright (c) 2015 Reid Woodbury Jr.
- * @license    http://www.apache.org/licenses/LICENSE-2.0.html  Apache License, Version 2.0
  */
 class SqlStatement
 {
     /**
 	 * Holds the subject as an associative array for building queries.
-	 * @type array
+	 * @var array
 	 */
 	protected $_input;
 
@@ -106,10 +109,11 @@ class SqlStatement
 				    $sqlStrs[] = $kEq . 'NULL';
 				}
 				elseif ( $v === '' ) {
+					//	This condition is required with bin2hex() as only '0x' is not allowed.
 				    $sqlStrs[] = $kEq . '""';
 				}
 				else {
-				    // 					$sqlStrs[] = $kEq . '"' . preg_replace('/([\x00\n\r\\\\\'"\x1a])/u', '\\\\$1', $v); . '"';
+// 					$sqlStrs[] = $kEq . '"' . preg_replace('/([\x00\n\r\\\\\'"\x1a])/u', '\\\\$1', $v); . '"';
 // 					$sqlStrs[] = $kEq . '"' . addslashes($v) . '"';
 					$sqlStrs[] = $kEq . '0x' . bin2hex($v);
 				}
