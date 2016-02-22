@@ -1,4 +1,10 @@
 <?php
+/**
+ * Create an array where members must be the same type.
+ * @name		TypedArray
+ * @copyright	Copyright (c) 2012 Reid Woodbury Jr.
+ * @license		http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
+ */
 
 namespace Diskerror\Typed;
 
@@ -11,20 +17,20 @@ use LengthException;
 /**
  * Provides support for an array's elements to all have the same type.
  * If type is defined as null then any element can have any type but
- *	  features of deep copying are available.
+ *	  deep copying of objects is always available.
  */
 class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 {
 	/**
 	 * An array that contains the items of interest.
-	 * @type array
+	 * @var array
 	 */
 	private $_container = null;
 
 	/**
 	 * A string that specifies the type of values in the container.
 	 * A child class can override _type rather than it being set with the constructor.
-	 * @type string|null
+	 * @var string|null
 	 */
 	protected $_type = '';
 
@@ -94,22 +100,22 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * Coerces input values to be the required type.
 	 *
 	 * There are 5 basic conditions for $this->_type:
-	 *	  $this->_type is null (accept any type and value, like a standard array);
-	 *	  $this->_type is a scalar [bool, int, float, string];
-	 *	  $this->_type is an array (check if value has toArray);
-	 *	  $this->_type is an object of type TypedAbstract (call assignObject);
-	 *	  $this->_type is any other object.
+	 * # $this->_type is null (accept any type and value, like a standard array);
+	 * # $this->_type is a scalar [bool, int, float, string];
+	 * # $this->_type is an array (check if value has toArray);
+	 * # $this->_type is an object of type TypedAbstract (call assignObject);
+	 * # $this->_type is any other object.
 	 *
 	 * There are 3 conditions involving $offset:
-	 *	  $offset is null;
-	 *	  $offset is set and exists;
-	 *	  $offset is set and does not exist;
+	 * # $offset is null;
+	 * # $offset is set and exists;
+	 * # $offset is set and does not exist;
 	 *
 	 * There are 4 conditions for handling $value:
-	 *	  $value is null (replace current scalar values with null, reset non-scalars);
-	 *	  $value is a scalar (cast);
-	 *	  $value is a an array (check for toArray, or cast);
-	 *	  $value is a an object (clone if the same as _type, otherwise new _type(value) );
+	 * # $value is null (replace current scalar values with null, reset non-scalars);
+	 * # $value is a scalar (cast);
+	 * # $value is a an array (check for toArray, or cast);
+	 * # $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
 	 * @param string|int $k
 	 * @param mixed $v
