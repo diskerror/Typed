@@ -1,0 +1,10 @@
+{
+    "myBool": true,
+    "myInt": 0,
+    "myFloat": 4,
+    "myString": "",
+    "myArray": [],
+    "myObj": {
+        "nv": "new variable"
+    }
+}

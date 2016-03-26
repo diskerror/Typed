@@ -1,0 +1,15 @@
+{
+    "myBool": true,
+    "myInt": 2,
+    "myFloat": 3.14,
+    "myString": "very complicated",
+    "myArray": [
+        "a",
+        "b",
+        "c"
+    ],
+    "myObj": {
+        "anything": "ha!",
+        "more": "much!"
+    }
+}
