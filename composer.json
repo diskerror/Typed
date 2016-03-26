@@ -16,9 +16,13 @@
 	"require": {
 		"php": ">=5.4"
 	},
+    "require-dev": {
+		"phpunit/phpunit": "4.8.*",
+		"phpdocumentor/phpdocumentor": "2.*"
+    },
 	"autoload": {
 		"psr-4": {
-			"Diskerror\\Typed\\": "/"
+			"Diskerror\\Typed\\": "src/"
 		}
 	}
 }
