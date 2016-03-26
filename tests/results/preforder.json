@@ -1,0 +1,37 @@
+{
+    "zip": {
+        "included": true,
+        "boolean": "AND",
+        "compare": "!=",
+        "find": "",
+        "sort": "ASC"
+    },
+    "name": {
+        "included": true,
+        "boolean": "AND",
+        "compare": "!=",
+        "find": "",
+        "sort": "DESC"
+    },
+    "address": {
+        "included": false,
+        "boolean": "AND",
+        "compare": "",
+        "find": "",
+        "sort": ""
+    },
+    "city": {
+        "included": false,
+        "boolean": "AND",
+        "compare": "",
+        "find": "",
+        "sort": ""
+    },
+    "state": {
+        "included": true,
+        "boolean": "AND",
+        "compare": "",
+        "find": "",
+        "sort": ""
+    }
+}
