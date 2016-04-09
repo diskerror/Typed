@@ -12,6 +12,7 @@ use ArrayAccess;
 use IteratorAggregate;
 use ArrayIterator;
 use InvalidArgumentException;
+use LogicException;
 use LengthException;
 
 /**
@@ -25,14 +26,14 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * An array that contains the items of interest.
 	 * @var array
 	 */
-	private $_container = null;
+	private $_container;
 
 	/**
 	 * A string that specifies the type of values in the container.
 	 * A child class can override _type rather than it being set with the constructor.
 	 * @var string|null
 	 */
-	protected $_type = '';
+	protected $_type;
 
 	/**
 	 * Constructor.
@@ -40,12 +41,23 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * @param array|object|string|null $values OPTIONAL null
 	 * @param string $type OPTIONAL null
 	 */
-	public function __construct($values = null, $type = '')
+	public function __construct($values = null, $type = null)
 	{
-		//	If empty then leave _type alone. It might be set in child class.
-		if ( '' !== $type ) {
-			$this->_type = (string) $type;
+		if ( isset($this->_type) ) {
+			if ( null !== $type ) {
+				throw new LogicException('Can\'t set type when type is set in child class.');
+			}
 		}
+		else {
+			if ( '' !== $type && null !== $type ) {
+				$this->_type = (string) $type;
+			}
+			else {
+				$this->_type = null;
+			}
+		}
+
+		$this->_container = [];
 
 		$this->assignObject($values);
 	}
