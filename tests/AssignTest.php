@@ -1,6 +1,6 @@
 <?php
 
-require_once 'classes/SimpleTyped.php';
+require_once __DIR__ . '/classes/SimpleTyped.php';
 
 class AssignTest extends PHPUnit_Framework_TestCase
 {
