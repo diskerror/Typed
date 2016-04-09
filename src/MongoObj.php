@@ -25,8 +25,16 @@ class MongoObj extends DbGenAbstract
 	 */
 	public function setInput($in)
 	{
-		if ( !is_object($in) && !is_array($in) ) {
+		if ( is_object($in) ) {
+			$this->_input = method_exists($in, 'toArray') ?
+				$in->toArray() :
+				(array) $in;
+		}
+		elseif ( !is_array($in) ) {
 			throw new InvalidArgumentException('input must be an array or an object');
+		}
+		else {
+			$this->_input = $in;
 		}
 
 		//	Simplify structure.
@@ -55,12 +63,18 @@ class MongoObj extends DbGenAbstract
 	 */
 	protected static function _reducer(&$arr)
 	{
-		foreach ( $arr as $k =>&$v ) {
+		foreach ( $arr as $k => &$v ) {
 			switch ( gettype($v) ) {
 				case 'null':
 				case 'NULL':
 				case 'resource':
 				unset($arr[$k]);
+				break;
+
+				case 'string':
+				if ( '' === $v ) {
+					unset($arr[$k]); //	should this only apply to nulls?
+				}
 				break;
 
 				case 'object':
