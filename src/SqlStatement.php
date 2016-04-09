@@ -13,34 +13,8 @@ use InvalidArgumentException;
 /**
  * Converts associative arrays and objects into partial SQL statements.
  */
-class SqlStatement
+class SqlStatement extends DbGenAbstract
 {
-    /**
-	 * Holds the subject as an associative array for building queries.
-	 * @var array
-	 */
-	protected $_input;
-
-	/**
-	 * Constructor.
-	 * Accepts an object or an associative array.
-	 *
-	 * @param mixed $in -OPTIONAL
-	 */
-	public function __construct($in = null)
-	{
-	    if ( null !== $in ) {
-	        $this->setInput($in);
-	    }
-	}
-
-	/**
-	 * Disallow clone.
-	 */
-	private function __clone()
-	{
-	}
-
 
 	/**
 	 * Accepts an object or an associative array.
