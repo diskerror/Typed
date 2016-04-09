@@ -15,7 +15,7 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue( is_array($simp->myArray) );
 		$this->assertTrue( is_object($simp->myObj) );
 
-		// echo jsonEncode($simp->toArray()); exit;
+// 		echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-15.json',
 			json_encode($simp->toArray()),

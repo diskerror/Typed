@@ -6,5 +6,6 @@
     "myArray": [],
     "myObj": {
         "nv": "new variable"
-    }
+    },
+    "myTypedArray": []
 }

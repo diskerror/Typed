@@ -4,5 +4,6 @@
     "myFloat": 0.5,
     "myString": "simpppp2",
     "myArray": [],
-    "myObj": []
+    "myObj": [],
+    "myTypedArray": []
 }
