@@ -4,5 +4,6 @@
     "myFloat": 3.14,
     "myString": "",
     "myArray": [],
-    "myObj": []
+    "myObj": [],
+    "myTypedArray": []
 }

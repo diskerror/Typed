@@ -15,7 +15,8 @@ class SqlTest extends PHPUnit_Framework_TestCase
 `myFloat` = 3.14,
 `myString` = "",
 `myArray` = 0x5b5d,
-`myObj` = 0x5b5d',
+`myObj` = 0x5b5d,
+`myTypedArray` = 0x5b5d',
 		$ss->getSqlInsert()
 		);
 
@@ -26,7 +27,8 @@ class SqlTest extends PHPUnit_Framework_TestCase
 `myFloat` = VALUES(`myFloat`),
 `myString` = VALUES(`myString`),
 `myArray` = VALUES(`myArray`),
-`myObj` = VALUES(`myObj`)',
+`myObj` = VALUES(`myObj`),
+`myTypedArray` = VALUES(`myTypedArray`)',
 		$ss->getSqlValues()
 		);
 	}
