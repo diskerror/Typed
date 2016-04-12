@@ -9,6 +9,11 @@ This method silently ignores extra properties in the input object, leaves unmatc
 Input can be an object or an array.
 ###toArray
 Returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed.
+###getMongoObj
+Like "toArray" above, this returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed. This method specifically adds these features:
+* conversion of all objects with a "DateTime" lineage to MongoDB\BSON\UTCDateTime with all times assumed to be UTC;
+* all top level members with the name "id_" are assumed to be intended to be a Mongo primary key and the name is changed to "_id";
+* null or empty members are omitted to save space.
 
 ##TypedClass
 The derivitives of Typed\TypedClass are contracted to do these things:
@@ -40,11 +45,6 @@ Accepts an array where the values are the names of members to include. An empty 
 ###getSqlValues
 Returns a string formatted for an SQL "ON DUPLICATE KEY UPDATE" statement.
 Accepts an array where the values are the names of members to include. An empty array means to use all members.
-
-##MongoObj
-Utility class that outputs an [associative] array with only public values with only public members in the output. Members with null values or empty arrays are removed from the output.
-The special case where the input contains a member named "id_" then this name will be changed to "_id" which MongoDB will use as the key for the record.
-*** Still in testing ***
 
 ##Composer
 ```
