@@ -485,8 +485,8 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * made to be more compatible to MongoDB. All objects with a lineage
 	 * of DateTime are converted to MongoDB\BSON\UTCDateTime, and all top
 	 * level members with the name "id_" are assumed to be intended to be a
-	 * Mongo primary key and the name is changed to "_id" if they are a scalar.
-	 * All times are assumed to be UTC time. Null or empty members are omitted.
+	 * Mongo primary key and the name is changed to "_id". All times are
+	 * assumed to be UTC time. Null or empty members are omitted.
 	 *
 	 * @return array
 	 */
