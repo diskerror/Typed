@@ -479,4 +479,108 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 		return $arr;
 	}
+
+	/**
+	 * This is simmilar to "toArray" above except that some conversions are
+	 * made to be more compatible to MongoDB. All objects with a lineage
+	 * of DateTime are converted to MongoDB\BSON\UTCDateTime, and all top
+	 * level members with the name "id_" are assumed to be intended to be a
+	 * Mongo primary key and the name is changed to "_id" if they are a scalar.
+	 * All times are assumed to be UTC time. Null or empty members are omitted.
+	 *
+	 * @return array
+	 */
+	final public function getMongoObj()
+	{
+		$arr = [];
+
+		foreach ($this->_public_names as $k) {
+			$v = $this->_getByName($k);
+
+			if ( $k === 'id_' ) {
+				$arr['_id'] = $v;
+				continue;
+			}
+
+			if ( is_object($this->$k) ) {
+				// if each of these is not empty
+				if ( method_exists($this->$k, 'getMongoObj') ) {
+					$tObj = $this->$k->getMongoObj();
+					if ( count($tObj) ) {
+						$arr[$k] = $tObj;
+					}
+				}
+				elseif ( $this->$k instanceof \DateTime ) {
+					$arr[$k] = new \MongoDB\BSON\UTCDateTime( $this->$k->getTimestamp()*1000 );
+				}
+				elseif ( method_exists($v, 'toArray') ) {
+					$vArr = $v->toArray();
+					if ( count($vArr) ) {
+						$arr[$k] = $vArr;
+					}
+				}
+				elseif ( method_exists($v, '__toString') ) {
+					$vStr = $v->__toString();
+					if ( $vStr !== '' ) {
+						$arr[$k] = $vStr;
+					}
+				}
+				else {
+					if ( count($v) ) {
+						$arr[$k] = $v;
+					}
+				}
+
+				continue;
+			}
+
+			switch ( gettype($v) ) {
+				case 'null':
+				case 'NULL':
+				case 'resource':
+				// do not copy
+				break;
+
+				case 'string':
+				//	Copy only if there is data. Should this only apply to nulls?
+				if ( '' !== $v ) {
+					$arr[$k] = $v;
+				}
+				break;
+
+				case 'object':
+				if ( method_exists($v, 'toArray') ) {
+					$vArr = $v->toArray();
+					if ( count($vArr) ) {
+						$arr[$k] = $vArr;
+					}
+				}
+				elseif ( method_exists($v, '__toString') ) {
+					$vStr = $v->__toString();
+					if ( $vStr !== '' ) {
+						$arr[$k] = $vStr;
+					}
+				}
+				else {
+					if ( count($v) ) {
+						$arr[$k] = $v;
+					}
+				}
+				break;
+
+				case 'array':
+				if ( count($v) > 0 ) {
+					$arr[$k] = $v;
+				}
+				break;
+
+				//	ints and floats
+				default:
+				$arr[$k] = $v;
+			}
+		}
+
+		return $arr;
+	}
+
 }
