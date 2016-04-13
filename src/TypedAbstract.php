@@ -38,11 +38,21 @@ abstract class TypedAbstract implements Countable
 
 	/**
 	 * Returns an array of this object with only the appropriate members.
-	 * A deep copy/converstion to an array from objects is also performed where appropriate.
+	 * A deep copy/converstion to an array from objects is also performed
+	 * where appropriate.
 	 *
 	 * @return array
 	 */
 	abstract public function toArray();
+
+
+	/**
+	 * This is simmilar to "toArray" above except that some conversions are
+	 * made to be more compatible to MongoDB.
+	 *
+	 * @return array
+	 */
+	abstract public function getMongoObj();
 
 
 	/**
