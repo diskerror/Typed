@@ -269,24 +269,26 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			case 'double':
 			case 'real':
 			case 'string':
+			case 'array':
+			case 'resource':
 			return $this->_container;
 		}
 
+		//	At this point all items are some type of object.
 		$arr = [];
-		foreach ($this->_container as $k => &$v) {
-			if ( is_object($v) ) {
-				if ( method_exists($v, 'toArray') ) {
-					$arr[$k] = $v->toArray();
-				}
-				elseif ( method_exists($v, '__toString') ) {
-					$arr[$k] = $v->__toString();
-				}
-				else {
-					$arr[$k] = (array) $v;
-				}
+		if ( method_exists($this->_type, 'toArray') ) {
+			foreach ($this->_container as $k => &$v) {
+				$arr[$k] = $v->toArray();
 			}
-			else {
-				$arr[$k] = $v;
+		}
+		elseif ( method_exists($this->_type, '__toString') ) {
+			foreach ($this->_container as $k => &$v) {
+				$arr[$k] = $v->__toString();
+			}
+		}
+		else {
+			foreach ($this->_container as $k => &$v) {
+				$arr[$k] = (array) $v;
 			}
 		}
 
