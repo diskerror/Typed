@@ -1,5 +1,5 @@
 # Typed
-PHP classes to strictly define member structure, to control their data types, and to add convience methods.
+PHP classes to strictly define member structure, to control their data types, and to add convience methods. The master branch is considered to be in constant development. Once stability is achieved it is then tagged.
 
 ##TypedAbstract
 This defines the convience methods that are to be implemented in the below classes.
