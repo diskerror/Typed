@@ -252,6 +252,34 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	}
 
 	/**
+	 * Returns array keys.
+	 *
+	 * @return array
+	 */
+	public function keys()
+	{
+		return array_keys( $this->_container );
+	}
+
+	/**
+	 * Apply new names from input array values.
+	 *
+	 * @param array $keys
+	 * @return TypedArray
+	 * @throws LengthException
+	 */
+	public function combine(array $keys)
+	{
+		if ( count($keys) !== count($this->_container) ) {
+			throw new LengthException('array counts do not match');
+		}
+
+		$this->_container = array_combine( $keys, $this->_container );
+
+		return $this;
+	}
+
+	/**
 	 * Returns an array with all members checked for a "toArray" method so
 	 * that any member of type "Typed" will also be returned.
 	 * Use "__get" and "__set", or $var[$member] to access individual names.
@@ -296,30 +324,88 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	}
 
 	/**
-	 * Returns array keys.
+	 * This is simmilar to "toArray" above except that some conversions are
+	 * made to be more compatible to MongoDB. All objects with a lineage
+	 * of DateTime are converted to MongoDB\BSON\UTCDateTime. All times are
+	 * assumed to be UTC time. Null or empty members are omitted.
 	 *
 	 * @return array
 	 */
-	public function keys()
+	final public function getMongoObj()
 	{
-		return array_keys( $this->_container );
-	}
+		$arr = [];
+		switch ($this->_type) {
+			case 'bool':
+			case 'boolean':
+			case 'int':
+			case 'integer':
+			case 'float':
+			case 'double':
+			case 'real':
+			case 'resource':
+			foreach ( $this->_container as $k=>&$v ) {
+				if ( $v !== null ) {
+					$arr[$k] = $v;
+				}
+			}
+			return $arr;
 
-	/**
-	 * Apply new names from input array values.
-	 *
-	 * @param array $keys
-	 * @return TypedArray
-	 * @throws LengthException
-	 */
-	public function combine(array $keys)
-	{
-		if ( count($keys) !== count($this->_container) ) {
-			throw new LengthException('array counts do not match');
+			case 'string':
+			foreach ( $this->_container as $k=>&$v ) {
+				if ( $v !== '' && $v !== null ) {
+					$arr[$k] = $v;
+				}
+			}
+			return $arr;
+
+			case 'array':
+			foreach ( $this->_container as $k=>&$v ) {
+				if ( count($v) && $v !== null ) {
+					$arr[$k] = $v;
+				}
+			}
+			return $arr;
 		}
 
-		$this->_container = array_combine( $keys, $this->_container );
+		//	At this point all items are some type of object.
+		if ( method_exists($this->_type, 'getMongoObj') ) {
+			foreach ($this->_container as $k=>$v) {
+				$tObj = $v->getMongoObj();
+				if ( count($tObj) ) {
+					$arr[$k] = $tObj;
+				}
+			}
+		}
+		elseif ( $this->_type instanceof \DateTime ) {
+			foreach ($this->_container as $k=>$v) {
+				$arr[$k] = new \MongoDB\BSON\UTCDateTime( $v->getTimestamp()*1000 );
+			}
+		}
+		elseif ( method_exists($this->_type, 'toArray') ) {
+			foreach ($this->_container as $k=>$v) {
+				$vArr = $v->toArray();
+				if ( count($vArr) ) {
+					$arr[$k] = $vArr;
+				}
+			}
+		}
+		elseif ( method_exists($this->_type, '__toString') ) {
+			foreach ($this->_container as $k=>$v) {
+				$vStr = $v->__toString();
+				if ( $vStr !== '' ) {
+					$arr[$k] = $vStr;
+				}
+			}
+		}
+		else {
+			foreach ($this->_container as $k=>$v) {
+				if ( count($v) ) {
+					$arr[$k] = $v;
+				}
+			}
+		}
 
-		return $this;
+		return $arr;
 	}
+
 }
