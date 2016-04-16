@@ -21,7 +21,8 @@
 		"phpdocumentor/phpdocumentor": "2.*"
     },
     "suggest": {
-        "mongodb/mongodb": "^1.0.0"
+        "mongodb/mongodb": "^1.0.0",
+        "zendframework/zend-json": "^2.4"
     },
 	"autoload": {
 		"psr-4": {
