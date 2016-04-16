@@ -462,7 +462,10 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			$v = $this->_getByName($k);
 
 			if ( is_object($v) ) {
-				if ( method_exists($v, 'toArray') ) {
+				if ( $this->$k instanceof \Zend\Json\Expr ) {
+					$arr[$k] = $this->$k;	// maintain the type
+				}
+				elseif ( method_exists($v, 'toArray') ) {
 					$arr[$k] = $v->toArray();
 				}
 				elseif ( method_exists($v, '__toString') ) {
@@ -509,6 +512,9 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 					if ( count($tObj) ) {
 						$arr[$k] = $tObj;
 					}
+				}
+				elseif ( $this->$k instanceof \Zend\Json\Expr || $this->$k instanceof \MongoDB\BSON\UTCDateTime ) {
+					$arr[$k] = $this->$k;	// maintain the type
 				}
 				elseif ( $this->$k instanceof \DateTime ) {
 					$arr[$k] = new \MongoDB\BSON\UTCDateTime( $this->$k->getTimestamp()*1000 );
