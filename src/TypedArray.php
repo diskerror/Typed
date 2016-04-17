@@ -329,10 +329,14 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * of DateTime are converted to MongoDB\BSON\UTCDateTime. All times are
 	 * assumed to be UTC time. Null or empty members are omitted.
 	 *
+	 * @param array $opts
 	 * @return array
 	 */
-	final public function getMongoObj()
+	final public function getSpecialObj(array $opts=[])
 	{
+		//	Options that are passed in overwrite coded options.
+		$opts = array_merge(['dateToBsonDate'=>true, 'keepJsonExpr'=>true, 'switch_id'=>true], $opts);
+
 		$arr = [];
 		switch ($this->_type) {
 			case 'bool':
@@ -368,17 +372,22 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		}
 
 		//	At this point all items are some type of object.
-		if ( method_exists($this->_type, 'getMongoObj') ) {
+		if ( method_exists($this->_type, 'getSpecialObj') ) {
 			foreach ($this->_container as $k=>$v) {
-				$tObj = $v->getMongoObj();
+				$tObj = $v->getSpecialObj($opts);
 				if ( count($tObj) ) {
 					$arr[$k] = $tObj;
 				}
 			}
 		}
-		elseif ( $this->_type instanceof \DateTime ) {
+		elseif ( $this->_type instanceof \DateTime && $opts['dateToBsonDate'] ) {
 			foreach ($this->_container as $k=>$v) {
 				$arr[$k] = new \MongoDB\BSON\UTCDateTime( $v->getTimestamp()*1000 );
+			}
+		}
+		elseif ( $this->_type instanceof \MongoDB\BSON\UTCDateTime && $opts['dateToBsonDate'] ) {
+			foreach ($this->_container as $k=>$v) {
+				$arr[$k] = $v;
 			}
 		}
 		elseif ( method_exists($this->_type, 'toArray') ) {
@@ -403,6 +412,11 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 					$arr[$k] = $v;
 				}
 			}
+		}
+
+		if ( $opts['switch_id'] && array_key_exists('id_', $arr) ) {
+			$arr['_id'] = $arr['id_'];
+			unset($arr['id_']);
 		}
 
 		return $arr;
