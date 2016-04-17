@@ -491,16 +491,19 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * Mongo primary key and the name is changed to "_id". All times are
 	 * assumed to be UTC time. Null or empty members are omitted.
 	 *
+	 * @param array $opts
 	 * @return array
 	 */
-	final public function getMongoObj()
+	final public function getSpecialObj(array $opts=[])
 	{
-		$arr = [];
+		//	Options that are passed in overwrite coded options.
+		$opts = array_merge(['dateToBsonDate'=>true, 'keepJsonExpr'=>true, 'switch_id'=>true], $opts);
 
+		$arr = [];
 		foreach ($this->_public_names as $k) {
 			$v = $this->_getByName($k);
 
-			if ( $k === 'id_' ) {
+			if ( $k === 'id_' && $opts['switch_id'] ) {
 				$arr['_id'] = $v;
 				continue;
 			}
@@ -508,15 +511,18 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			if ( is_object($this->$k) ) {
 				// if each of these is not empty
 				if ( method_exists($this->$k, 'getMongoObj') ) {
-					$tObj = $this->$k->getMongoObj();
+					$tObj = $this->$k->getMongoObj($opts);
 					if ( count($tObj) ) {
 						$arr[$k] = $tObj;
 					}
 				}
-				elseif ( $this->$k instanceof \Zend\Json\Expr || $this->$k instanceof \MongoDB\BSON\UTCDateTime ) {
+				elseif ( $this->$k instanceof \Zend\Json\Expr && $opts['keepJsonExpr'] ) {
 					$arr[$k] = $this->$k;	// maintain the type
 				}
-				elseif ( $this->$k instanceof \DateTime ) {
+				elseif ( $this->$k instanceof \MongoDB\BSON\UTCDateTime && $opts['dateToBsonDate'] ) {
+					$arr[$k] = $this->$k;	// maintain the type
+				}
+				elseif ( $this->$k instanceof \DateTime && $opts['dateToBsonDate'] ) {
 					$arr[$k] = new \MongoDB\BSON\UTCDateTime( $this->$k->getTimestamp()*1000 );
 				}
 				elseif ( method_exists($v, 'toArray') ) {

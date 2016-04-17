@@ -48,11 +48,12 @@ abstract class TypedAbstract implements Countable
 
 	/**
 	 * This is simmilar to "toArray" above except that some conversions are
-	 * made to be more compatible to MongoDB.
+	 * made to be more compatible to MongoDB or communication to a web browser.
 	 *
+	 * @param array $opts
 	 * @return array
 	 */
-	abstract public function getMongoObj();
+	abstract public function getSpecialObj(array $opts=[]);
 
 
 	/**
