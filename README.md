@@ -9,7 +9,7 @@ This method silently ignores extra properties in the input object, leaves unmatc
 Input can be an object or an array.
 ###toArray
 Returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed.
-###getMongoObj
+###getSpecialObj
 Like "toArray" above, this returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed. This method specifically adds these features:
 * conversion of all objects with a "DateTime" lineage to MongoDB\BSON\UTCDateTime with all times assumed to be UTC;
 * all top level members with the name "id_" are assumed to be intended to be a Mongo primary key and the name is changed to "_id";
