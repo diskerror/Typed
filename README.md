@@ -10,9 +10,10 @@ Input can be an object or an array.
 ###toArray
 Returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed.
 ###getSpecialObj
-Like "toArray" above, this returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed. This method specifically adds these features:
-* conversion of all objects with a "DateTime" lineage to MongoDB\BSON\UTCDateTime with all times assumed to be UTC;
+Like "toArray" above, this returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed. This method specifically adds these default options:
+* conversion of all objects with a "DateTime" lineage to MongoDB\BSON\UTCDateTime with all times assumed to be UTC, MongoDB\BSON\UTCDateTime will remain untouched;
 * all top level members with the name "id_" are assumed to be intended to be a Mongo primary key and the name is changed to "_id";
+* objects of type Zend\Json\Expr remain untouched;
 * null or empty members are omitted to save space.
 
 ##TypedClass
