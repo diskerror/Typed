@@ -14,7 +14,7 @@ Like "toArray" above, this returns an associative array of this object with only
 * conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC, *MongoDB\BSON\UTCDateTime* objects will remain untouched;
 * all top level members with the name "id_" are assumed to be intended to be a Mongo primary key and the name is changed to "_id";
 * objects of type *Zend\Json\Expr* remain untouched;
-* null or empty members are omitted to save space.
+* null or empty members are omitted to shrink storage or transmittion needs.
 
 ##TypedClass
 The derivitives of Typed\TypedClass are contracted to do these things:
