@@ -510,8 +510,8 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 			if ( is_object($this->$k) ) {
 				// if each of these is not empty
-				if ( method_exists($this->$k, 'getMongoObj') ) {
-					$tObj = $this->$k->getMongoObj($opts);
+				if ( method_exists($this->$k, 'getSpecialObj') ) {
+					$tObj = $this->$k->getSpecialObj($opts);
 					if ( count($tObj) ) {
 						$arr[$k] = $tObj;
 					}
