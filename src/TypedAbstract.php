@@ -61,7 +61,7 @@ abstract class TypedAbstract implements Countable
 	 * Any property or index then true. (Like PHP 4)
 	 *
 	 * @param mixed $in
-	 * @return bool
+	 * @return bool|null
 	 */
 	protected static function _castToBoolean(&$in)
 	{
@@ -75,7 +75,7 @@ abstract class TypedAbstract implements Countable
 
 			case 'null':
 			case 'NULL':
-			return;
+			return null;
 
 			default:
 			return (boolean) $in;
@@ -87,12 +87,13 @@ abstract class TypedAbstract implements Countable
 	 * Any property or index then 1. (Like PHP 4)
 	 *
 	 * @param mixed $in
-	 * @return int
+	 * @return int|null
 	 */
 	protected static function _castToInteger(&$in)
 	{
 		switch ( gettype($in) ) {
 			case 'string':
+			//  http://php.net/manual/en/function.intval.php
 			return intval($in, 0);
 
 			case 'object':
@@ -100,7 +101,7 @@ abstract class TypedAbstract implements Countable
 
 			case 'null':
 			case 'NULL':
-			return;
+			return null;
 
 			default:
 			return (integer) $in;
@@ -109,24 +110,46 @@ abstract class TypedAbstract implements Countable
 
 	/**
 	 * Empty array or object (no members) is 0.0.
-	 * Any property or index then 1.0. (Like PHP 4)
+	 * Any property or index then 1.0. (Like PHP 4).
+	 * Attempts to guess appropriate international numeric input style for strings.
+	 * If the input is intended as a string of digits with a comma for the thousands separator,
+	 *    the comma will be interpreted as the decimal point like locale "de_DE" and
+	 *    will stop at the second comma.
 	 *
 	 * @param mixed $in
-	 * @return double
+	 * @return double|null
 	 */
 	protected static function _castToDouble(&$in)
 	{
 		switch ( gettype($in) ) {
+			case 'string':
+			$input = str_replace(['\'', '"', '“', '”', '‘', '’', ' '], '', $in);
+			$input = preg_replace('/^([-+0-9.,]*).*?$/', '$1', $input);
+
+			$comaPos = strpos($input, ',');
+			$dotPos = strpos($input, '.');
+
+			if ($comaPos !== false && $dotPos !== false) {
+				if ($comaPos > $dotPos) {
+				    $input = str_replace(['.', ','], ['', '.'], $input);
+				}
+				else {
+					$input = str_replace(',', '', $input);
+				}
+			}
+			elseif ($comaPos !== false) {
+				$input = str_replace(',', '.', $input);
+			}
+			return (double) $input;
+
+			case 'null':
+			case 'NULL':
+			return null;
+
 			case 'object':
 			if ( method_exists($in, 'toArray') ) {
 				return (double) $in->toArray();
 			}
-
-			return (double) (array) $in;
-
-			case 'null':
-			case 'NULL':
-			return;
 
 			default:
 			return (double) $in;
@@ -138,7 +161,7 @@ abstract class TypedAbstract implements Countable
 	 * Any property or index then "1". (Like PHP 4)
 	 *
 	 * @param mixed $in
-	 * @return string
+	 * @return string|null
 	 */
 	protected static function _castToString(&$in)
 	{
@@ -159,7 +182,7 @@ abstract class TypedAbstract implements Countable
 
 			case 'null':
 			case 'NULL':
-			return;
+			return null;
 
 			default:
 			return (string) $in;
@@ -170,9 +193,9 @@ abstract class TypedAbstract implements Countable
 	 * Cast all input to an array.
 	 *
 	 * @param mixed $in
-	 * @return array
+	 * @return array|null
 	 */
-	protected static function _castToArray(&$in)
+	protected static function _castToArray($in)
 	{
 		if ( is_object($in) && method_exists($in, 'toArray') ) {
 			return $in->toArray();

@@ -99,7 +99,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			return;
 
 			default:
-			throw new InvalidArgumentException('unknown input type ' . gettype($in));
+			throw new InvalidArgumentException('unknown input type ' . gettype($in) . ', value: "' . $in . '"');
 		}
 
 		foreach ($in as $k => $v) {

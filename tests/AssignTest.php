@@ -121,7 +121,7 @@ class AssignTest extends PHPUnit_Framework_TestCase
 
 		$c = new stdClass;
 		$t->myFloat = $c;
-		$this->assertTrue( $t->myFloat === 0.0 );
+		$this->assertFalse( $t->myFloat === 0.0 );
 		$c->aMember = 'string data';
 		$t->myFloat = $c;
 		$this->assertTrue( $t->myFloat === 1.0 );
