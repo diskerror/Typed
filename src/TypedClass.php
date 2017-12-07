@@ -96,7 +96,8 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				//	We must use `eval` because we want to handle
 				//		'__class__Date' and
 				//		'__class__DateTime("Jan 1, 2015")' with 1 or more parameters.
-				$this->_class_vars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
+// 				$this->_class_vars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
+				$this->_class_vars[$k] = eval( 'return new ' . substr($v, 9) . ';' );
 				//	Objects are always passed by reference,
 				//		but we want a separate copy so the original stays unchanged.
 				$this->{$k} = clone $this->_class_vars[$k];
@@ -244,7 +245,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			//	If the original is NULL then allow any value.
 			case 'null':
 			case 'NULL':
-			case '':
+			case '':        //  Is there a possibility that "gettype()" might return an empty string?
 			case null:
 			$this->{$k} = $v;
 			break;
@@ -297,7 +298,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				}
 				else {
 					//	Other classes might be able to absorb/convert other input,
-				//		like «DateTime::__construct("now")» accepts a string.
+				    //		like «DateTime::__construct("now")» accepts a string.
 					$class = get_class($this->_class_vars[$k]);
 					$this->{$k} = new $class($v);
 				}
