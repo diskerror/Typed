@@ -5,16 +5,9 @@ class ClassTest extends PHPUnit_Framework_TestCase
 	public function testNewTypedDate()
 	{
 		$d = new TypedDate();
-		$this->assertEquals( new DateTime, $d->date );
 
 		$d->date = 'Feb 1, 2015';
 		$this->assertEquals( new DateTime('Feb 1, 2015'), $d->date );
-
-		$d->date = null;
-		$this->assertEquals( new DateTime, $d->date );
-
-		unset($d->date);
-		$this->assertEquals( new DateTime, $d->date );
 	}
 
 	/**

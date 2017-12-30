@@ -287,6 +287,27 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 					$this->{$k}->assignObject($v);
 				}
 
+				//	Treat DateTime related objects as atomic in these next cases.
+				elseif (
+					($this->_class_vars[$k] instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
+				) {
+					$thisClassName = get_class($this->_class_vars[$k]);
+					$this->{$k} = new $thisClassName($v->toDateTime());
+				}
+				elseif (
+					($this->_class_vars[$k] instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
+				) {
+					$thisClassName = get_class($this->_class_vars[$k]);
+					$this->{$k} = new $thisClassName($v->getTimestamp()*1000);
+				}
+				//	if this->k is a DateTime object and v is any other type
+				//		then absorb v or v's properties into this->k's properties
+				//		But only if $v object has __toString.
+				elseif ($this->_class_vars[$k] instanceof \DateTimeInterface && method_exists($v, '__toString')) {
+					$thisClassName = get_class($this->_class_vars[$k]);
+					$this->{$k} = new $thisClassName($v->__toString());
+				}
+
 				//	Else give up.
 				else {
 					throw new InvalidArgumentException('cannot coerce object types');
@@ -299,13 +320,9 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				else {
 					//	Other classes might be able to absorb/convert other input,
 				    //		like «DateTime::__construct("now")» accepts a string.
-					$class = get_class($this->_class_vars[$k]);
-					$this->{$k} = new $class($v);
+				    $thisClassName = get_class($this->_class_vars[$k]);
+					$this->{$k} = new $thisClassName($v);
 				}
-//				//	Else give up.
-//				else {
-//					throw new InvalidArgumentException('cannot coerce data into object');
-//				}
 			}
 			break;
 
@@ -523,7 +540,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				elseif ( $this->$k instanceof \MongoDB\BSON\UTCDateTime && $opts['dateToBsonDate'] ) {
 					$arr[$k] = $this->$k;	// maintain the type
 				}
-				elseif ( $this->$k instanceof \DateTime && $opts['dateToBsonDate'] ) {
+				elseif ( $this->$k instanceof \DateTimeInterface && $opts['dateToBsonDate'] ) {
 					$arr[$k] = new \MongoDB\BSON\UTCDateTime( $this->$k->getTimestamp()*1000 );
 				}
 				elseif ( method_exists($v, 'toArray') ) {
