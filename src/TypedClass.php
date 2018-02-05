@@ -1,9 +1,9 @@
 <?php
 /**
  * Provides support for class members/properties maintain their initial types.
- * @name		TypedClass
- * @copyright	Copyright (c) 2012 Reid Woodbury Jr.
- * @license		http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
+ * @name        TypedClass
+ * @copyright      Copyright (c) 2012 Reid Woodbury Jr
+ * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed;
@@ -13,35 +13,51 @@ use InvalidArgumentException;
 
 /**
  * Create a child of this class with your named properties with a visibility of
- *	  protected or private, and default values of the desired type. Property
- *	  names CANNOT begin with an underscore. This maintains the Zend Framework
- *	  convention that protected and private property names should begin with an
- *	  underscore. This abstract class will expose all members whose name don't
- *	  begin with an underscore, but filter access to those class members or
- *	  properties that have a visibility of protected or private.
+ *      protected or private, and default values of the desired type. Property
+ *      names CANNOT begin with an underscore. This maintains the Zend Framework
+ *      convention that protected and private property names should begin with an
+ *      underscore. This abstract class will expose all members whose name don't
+ *      begin with an underscore, but filter access to those class members or
+ *      properties that have a visibility of protected or private.
  *
  * Input to the constructor or assignObject methods must be an array or object. Only the
- *	  values in the matching names will be filtered and copied into the object.
- *	  All input will be copied by value, not referenced.
+ *      values in the matching names will be filtered and copied into the object.
+ *      All input will be copied by value, not referenced.
  *
  * This class will adds simple casting of input values to be the same type as the
- *	  named property or member. This includes scalar values, built-in PHP classes,
- *	  and other classes, especially those derived from this class.
+ *      named property or member. This includes scalar values, built-in PHP classes,
+ *      and other classes, especially those derived from this class.
  *
  * Only properties in the original child class are allowed. This prevents erroneously
- *	  adding properties on the fly.
+ *      adding properties on the fly.
  *
  * More elaborate filtering can be done by creating methods with this naming
- *	  convention: If property is called "personName" then create a method called
- *	  "_set_personName($in)". That is, prepend "_set_" to the property name.
+ *      convention: If property is called "personName" then create a method called
+ *      "_set_personName($in)". That is, prepend "_set_" to the property name.
  *
  * The ideal usage of this abstract class is as the parent class of a data set
- *	  where the input to the constructor (or assignObject) method is an HTTP request
- *	  object. It will help with filtering and insuring the existance of default
- *	  values for missing input parameters.
+ *      where the input to the constructor (or assignObject) method is an HTTP request
+ *      object. It will help with filtering and insuring the existance of default
+ *      values for missing input parameters.
  */
 abstract class TypedClass extends TypedAbstract implements Iterator
 {
+	/**
+	 * Holds the name pairs for when different/bad key names need to point to the same data.
+	 *
+	 * @var array
+	 */
+	protected $_map = [];
+
+	/**
+	 * JSON allows NULL items to be omitted from the instance. Setting this to TRUE
+	 *   sets the instance of member objects to NULL when NULL is given rather than
+	 *   creating an object with default values. Else NULL creates a default object.
+	 *
+	 * @var bool
+	 */
+	protected $_nullCreatesNullInstance = false;
+
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
 	 *
@@ -70,13 +86,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	private $_position = 0;
 
 	/**
-	 * Holds the name pairs for when different/bad key names need to point to the same data.
-	 *
-	 * @var array
-	 */
-	protected $_map = [];
-
-	/**
 	 * Constructor.
 	 * Accepts an object, array, or JSON string.
 	 *
@@ -86,21 +95,24 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	{
 		$this->_called_class = get_called_class();
 		$this->_class_vars = get_class_vars($this->_called_class);
-		//	remove elements with names starting with underscore
-		foreach ( $this->_class_vars as $k => $v ) {
+		foreach ($this->_class_vars as $k => $v) {
+			//	remove elements with names starting with underscore
 			if ($k[0] === '_') {
 				unset($this->_class_vars[$k]);
 			}
+
+			//	Change class definition string into a real class for the defaults.
 			//	If $v is a string and has '__class__' at the start then instantiate the named object.
-			elseif ( is_string($v) && 0 === stripos($v, '__class__') ) {
+			elseif (is_string($v) && 0 === stripos($v, '__class__')) {
 				//	We must use `eval` because we want to handle
 				//		'__class__Date' and
 				//		'__class__DateTime("Jan 1, 2015")' with 1 or more parameters.
-// 				$this->_class_vars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
-				$this->_class_vars[$k] = eval( 'return new ' . substr($v, 9) . ';' );
+//				$this->_class_vars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
+				$this->_class_vars[$k] = eval('return new ' . substr($v, 9) . ';');
+
 				//	Objects are always passed by reference,
 				//		but we want a separate copy so the original stays unchanged.
-				$this->{$k} = clone $this->_class_vars[$k];
+				$this->{$k} = $this->_nullCreatesNullInstance ? null : clone $this->_class_vars[$k];
 			}
 		}
 
@@ -113,57 +125,21 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			case 'null':
 			case 'bool':
 			case 'boolean':
-			return;
+				return;
 		}
 
-		$this->assignObject( $in );
-	}
-
-	/**
-	 * All member objects will be deep cloned.
-	 */
-	public function __clone()
-	{
-		foreach ($this->_public_names as $k) {
-			if ( is_object($this->{$k}) ) {
-				$this->{$k} = clone $this->{$k};
-			}
-		}
-	}
-
-	/**
-	 * Returns true if key/prop name exists.
-	 *
-	 * @param string $k
-	 * @return bool
-	 */
-	private function _keyExists($k)
-	{
-		return ( array_key_exists($k, $this->_class_vars) || array_key_exists($k, $this->_map) );
-	}
-
-	/**
-	 * Throws exception if named property does not exist.
-	 *
-	 * @param string $k
-	 * @throws InvalidArgumentException
-	 */
-	protected function _assertPropName($k)
-	{
-		if ( !$this->_keyExists($k) ) {
-			throw new InvalidArgumentException();
-		}
+		$this->assignObject($in);
 	}
 
 	/**
 	 * Copies all matching property names while maintaining original types and
-	 *	 doing a deep copy where appropriate.
+	 *     doing a deep copy where appropriate.
 	 * This method silently ignores extra properties in $input,
-	 *	 leaves unmatched properties in this class untouched, and
-	 *	 skips names starting with an underscore.
+	 *     leaves unmatched properties in this class untouched, and
+	 *     skips names starting with an underscore.
 	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
-	 *	property (property names not starting with an underscore). Extra values
-	 *	are ignored. Unused properties are unchanged.
+	 *    property (property names not starting with an underscore). Extra values
+	 *    are ignored. Unused properties are unchanged.
 	 *
 	 * Input can be an object, or an indexed or associative array.
 	 *
@@ -171,45 +147,45 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	public function assignObject($in = null)
 	{
-		switch ( gettype($in) ) {
+		switch (gettype($in)) {
 			case 'object':
 			break;
 
 			case 'array':
-			//	Test to see if it's an indexed or an associative array.
-			//	Leave associative array as is.
-			//	Copy indexed array by position to a named array
-			if ( array_values($in) === $in ) {
-				$nameArr = $this->_class_vars;
-				$minCount = min( count($in), count($nameArr) );
-				for ( $i = 0; $i < $minCount; ++$i ) {
-					$nameArr[$this->_public_names[$i]] = $in[$i];
-				}
+				//	Test to see if it's an indexed or an associative array.
+				//	Leave associative array as is.
+				//	Copy indexed array by position to a named array
+				if (array_values($in) === $in) {
+					$nameArr = $this->_class_vars;
+					$minCount = min(count($in), count($nameArr));
+					for ($i = 0; $i < $minCount; ++$i) {
+						$nameArr[$this->_public_names[$i]] = $in[$i];
+					}
 
-				$in = $nameArr;
-			}
+					$in = $nameArr;
+				}
 			break;
 
 			case 'null':
 			case 'NULL':
 			case 'bool':
 			case 'boolean': //	a 'false' is returned by MySQL:PDO for "no results"
-			//	So, return default values;
-			if ( $in !== true ) {	//	do only if false or null. True does nothing.
-				foreach ($this->_class_vars as $k => &$v) {
-					$this->__unset($k);
-				}
+				//	So, return default values;
+				if ($in !== true) {    //	do only if false or null. True does nothing.
+					foreach ($this->_class_vars as $k => &$v) {
+						$this->__unset($k);
+					}
 
-				return;
-			}
+					return;
+				}
 			//	A boolean 'true' falls through.
 
 			default:
-			throw new InvalidArgumentException('invalid input type');
+				throw new InvalidArgumentException('invalid input type');
 		}
 
 		foreach ($in as $k => $v) {
-			if ( !$this->_keyExists($k) ) {
+			if (!$this->_keyExists($k)) {
 				continue;
 			}
 
@@ -217,176 +193,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		}
 
 		$this->_checkRelatedProperties();
-	}
-
-	/**
-	 * Set data to named variable.
-	 * Casts the incoming data ($v) to the same type as the named ($k) property.
-	 *
-	 * @param string $k
-	 * @param mixed $v
-	 * @throws InvalidArgumentException
-	 */
-	protected function _setByName($k, $v)
-	{
-		if ( array_key_exists($k, $this->_map) ) {
-			$k = $this->_map[$k];
-		}
-
-		$setter = '_set_' . $k;
-		if ( method_exists( $this->_called_class, $setter ) ) {
-			$this->$setter($v);
-
-			return;
-		}
-
-		//	Get the original type as the current member might contain null.
-		switch ( gettype($this->_class_vars[$k]) ) {
-			//	If the original is NULL then allow any value.
-			case 'null':
-			case 'NULL':
-			case '':        //  Is there a possibility that "gettype()" might return an empty string?
-			case null:
-			$this->{$k} = $v;
-			break;
-
-			case 'bool':
-			case 'boolean':
-			$this->{$k} = self::_castToBoolean($v);
-			break;
-
-			case 'int':
-			case 'integer':
-			$this->{$k} = self::_castToInteger($v);
-			break;
-
-			case 'float':
-			case 'double':
-			case 'real':
-			$this->{$k} = self::_castToDouble($v);
-			break;
-
-			case 'string':
-			$this->{$k} = self::_castToString($v);
-			break;
-
-			case 'array':
-			$this->{$k} = self::_castToArray($v);
-			break;
-
-			case 'object':
-			if ( is_object($v) ) {
-				//	if identical types then clone
-				if ( get_class($this->_class_vars[$k]) === get_class($v) ) {
-					$this->{$k} = clone $v;
-				}
-
-				//	if this->k is a TypedAbstract object and v is any other type
-				//		then absorb v or v's properties into this->k's properties
-				elseif ($this->_class_vars[$k] instanceof TypedAbstract) {
-					$this->{$k}->assignObject($v);
-				}
-
-				//	Treat DateTime related objects as atomic in these next cases.
-				elseif (
-					($this->_class_vars[$k] instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
-				) {
-					$thisClassName = get_class($this->_class_vars[$k]);
-					$this->{$k} = new $thisClassName($v->toDateTime());
-				}
-				elseif (
-					($this->_class_vars[$k] instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
-				) {
-					$thisClassName = get_class($this->_class_vars[$k]);
-					$this->{$k} = new $thisClassName($v->getTimestamp()*1000);
-				}
-				//	if this->k is a DateTime object and v is any other type
-				//		then absorb v or v's properties into this->k's properties
-				//		But only if $v object has __toString.
-				elseif ($this->_class_vars[$k] instanceof \DateTimeInterface && method_exists($v, '__toString')) {
-					$thisClassName = get_class($this->_class_vars[$k]);
-					$this->{$k} = new $thisClassName($v->__toString());
-				}
-
-				//	Else give up.
-				else {
-					throw new InvalidArgumentException('cannot coerce object types');
-				}
-			}
-			else {
-				if ( get_class($this->_class_vars[$k]) === 'stdClass' && is_array($v) ) {
-					$this->{$k} = (object) $v;
-				}
-				else {
-					//	Other classes might be able to absorb/convert other input,
-				    //		like «DateTime::__construct("now")» accepts a string.
-				    $thisClassName = get_class($this->_class_vars[$k]);
-					$this->{$k} = new $thisClassName($v);
-				}
-			}
-			break;
-
-			default:	//	resource
-			$this->{$k} = $v;
-			break;
-		}
-	}
-
-	/**
-	 * Get variable.
-	 * @param string $k
-	 * @return mixed
-	 */
-	protected function _getByName($k)
-	{
-		//	Create a method with a name like the next line and it will be called here.
-		$getter = '_get_' . $k;
-		if ( method_exists($this->_called_class, $getter ) ) {
-			return $this->$getter();
-		}
-
-		return $this->{$k};
-	}
-
-	/**
-	 * Set variable
-	 * Casts the incoming data ($v) to the same type as the named ($k) property.
-	 *
-	 * @param string $k
-	 * @param mixed $v
-	 */
-	public function __set($k, $v)
-	{
-		$this->_assertPropName($k);
-		$this->_setByName($k, $v);
-		$this->_checkRelatedProperties();
-	}
-
-	/**
-	 * Get variable.
-	 * @param string $k
-	 * @return mixed
-	 */
-	public function __get($k)
-	{
-		$this->_assertPropName($k);
-
-		return $this->_getByName($k);
-	}
-
-	/**
-	 * Is a variable set?
-	 *
-	 * @param string $k
-	 * @return bool
-	 */
-	public function __isset($k)
-	{
-		if ( $k[0] === '_' ) {
-			return false;
-		}
-
-		return isset($this->{$k});
 	}
 
 	/**
@@ -403,12 +209,234 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	}
 
 	/**
+	 * Returns true if key/prop name exists.
+	 *
+	 * @param string $k
+	 *
+	 * @return bool
+	 */
+	private function _keyExists($k)
+	{
+		return array_key_exists($k, $this->_class_vars) || array_key_exists($k, $this->_map);
+	}
+
+	/**
+	 * Set data to named variable.
+	 * Casts the incoming data ($v) to the same type as the named ($k) property.
+	 *
+	 * @param string $k
+	 * @param mixed  $v
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	protected function _setByName($k, $v)
+	{
+		if (array_key_exists($k, $this->_map)) {
+			$k = $this->_map[$k];
+		}
+
+		$setter = '_set_' . $k;
+		if (method_exists($this->_called_class, $setter)) {
+			$this->$setter($v);
+
+			return;
+		}
+
+		//	Get the original type as the current member might contain null.
+		switch (gettype($this->_class_vars[$k])) {
+			//	If the original is NULL then allow any value.
+			case 'null':
+			case 'NULL':
+			case '':        //	Is there a possibility that "gettype()" might return an empty string?
+			case null:
+				$this->{$k} = $v;
+			break;
+
+			case 'bool':
+			case 'boolean':
+				$this->{$k} = self::_castToBoolean($v);
+			break;
+
+			case 'int':
+			case 'integer':
+				$this->{$k} = self::_castToInteger($v);
+			break;
+
+			case 'float':
+			case 'double':
+			case 'real':
+				$this->{$k} = self::_castToDouble($v);
+			break;
+
+			case 'string':
+				$this->{$k} = self::_castToString($v);
+			break;
+
+			case 'array':
+				$this->{$k} = self::_castToArray($v);
+			break;
+
+			case 'object':
+				if (is_object($v)) {
+					//	if identical types then clone
+					if (get_class($this->_class_vars[$k]) === get_class($v)) {
+						$this->{$k} = clone $v;
+					}
+
+					//	if this->k is a TypedAbstract object and v is any other type
+					//		then absorb v or v's properties into this->k's properties
+					elseif ($this->_class_vars[$k] instanceof TypedAbstract) {
+						if ($this->{$k} === null) {
+							$this->{$k} = clone $this->_class_vars[$k];
+						}
+
+						$this->{$k}->assignObject($v);
+					}
+
+					//	Treat DateTime related objects as atomic in these next cases.
+					elseif (
+						($this->_class_vars[$k] instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
+					) {
+						$thisClassName = get_class($this->_class_vars[$k]);
+						$this->{$k} = new $thisClassName($v->toDateTime());
+					}
+					elseif (
+						($this->_class_vars[$k] instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
+					) {
+						$thisClassName = get_class($this->_class_vars[$k]);
+						$this->{$k} = new $thisClassName($v->getTimestamp() * 1000);
+					}
+
+					//	if this->k is a DateTime object and v is any other type
+					//		then absorb v or v's properties into this->k's properties
+					//		But only if $v object has __toString.
+					elseif ($this->_class_vars[$k] instanceof \DateTimeInterface && method_exists($v, '__toString')) {
+						$thisClassName = get_class($this->_class_vars[$k]);
+						$this->{$k} = new $thisClassName($v->__toString());
+					}
+
+					//	Else give up.
+					else {
+						throw new InvalidArgumentException('cannot coerce object types');
+					}
+				}
+				else {
+					if ($this->_nullCreatesNullInstance && $v === null) {
+						$this->{$k} = null;
+					}
+					elseif (get_class($this->_class_vars[$k]) === 'stdClass' && is_array($v)) {
+						$this->{$k} = (object)$v;
+					}
+					else {
+						//	Other classes might be able to absorb/convert other input,
+						//		like «DateTime::__construct("now")» accepts a string.
+						$thisClassName = get_class($this->_class_vars[$k]);
+						$this->{$k} = new $thisClassName($v);
+					}
+				}
+			break;
+
+			default:    //	resource
+				$this->{$k} = $v;
+			break;
+		}
+	}
+
+	/**
 	 * Override this method for additional checking such as when a start date
 	 * is required to be earlier than an end date, any range of values like
 	 * minimum and maximum, or any custom filtering not dependent on a single property.
 	 */
 	protected function _checkRelatedProperties()
 	{
+	}
+
+	/**
+	 * All member objects will be deep cloned.
+	 */
+	public function __clone()
+	{
+		foreach ($this->_public_names as $k) {
+			if (is_object($this->{$k})) {
+				$this->{$k} = clone $this->{$k};
+			}
+		}
+	}
+
+	/**
+	 * Get variable.
+	 *
+	 * @param string $k
+	 *
+	 * @return mixed
+	 */
+	public function __get($k)
+	{
+		$this->_assertPropName($k);
+
+		return $this->_getByName($k);
+	}
+
+	/**
+	 * Set variable
+	 * Casts the incoming data ($v) to the same type as the named ($k) property.
+	 *
+	 * @param string $k
+	 * @param mixed  $v
+	 */
+	public function __set($k, $v)
+	{
+		$this->_assertPropName($k);
+		$this->_setByName($k, $v);
+		$this->_checkRelatedProperties();
+	}
+
+	/**
+	 * Throws exception if named property does not exist.
+	 *
+	 * @param string $k
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	protected function _assertPropName($k)
+	{
+		if (!$this->_keyExists($k)) {
+			throw new InvalidArgumentException();
+		}
+	}
+
+	/**
+	 * Get variable.
+	 *
+	 * @param string $k
+	 *
+	 * @return mixed
+	 */
+	protected function _getByName($k)
+	{
+		//	Create a method with a name like the next line and it will be called here.
+		$getter = '_get_' . $k;
+		if (method_exists($this->_called_class, $getter)) {
+			return $this->$getter();
+		}
+
+		return $this->{$k};
+	}
+
+	/**
+	 * Is a variable set?
+	 *
+	 * @param string $k
+	 *
+	 * @return bool
+	 */
+	public function __isset($k)
+	{
+		if ($k[0] === '_') {
+			return false;
+		}
+
+		return isset($this->{$k});
 	}
 
 	/**
@@ -425,7 +453,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	final public function current()
 	{
-		return $this->_getByName( $this->_public_names[$this->_position] );
+		return $this->_getByName($this->_public_names[$this->_position]);
 	}
 
 	/**
@@ -451,7 +479,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	final public function valid()
 	{
-		return isset( $this->_public_names[$this->_position] );
+		return isset($this->_public_names[$this->_position]);
 	}
 
 	/**
@@ -460,7 +488,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	final public function count()
 	{
-		return count( $this->_class_vars );
+		return count($this->_class_vars);
 	}
 
 	/**
@@ -479,18 +507,18 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		foreach ($this->_public_names as $k) {
 			$v = $this->_getByName($k);
 
-			if ( is_object($v) ) {
-				if ( $this->$k instanceof \Zend\Json\Expr ) {
-					$arr[$k] = $this->$k;	// maintain the type
+			if (is_object($v)) {
+				if ($this->$k instanceof \Zend\Json\Expr) {
+					$arr[$k] = $this->$k;    // maintain the type
 				}
-				elseif ( method_exists($v, 'toArray') ) {
+				elseif (method_exists($v, 'toArray')) {
 					$arr[$k] = $v->toArray();
 				}
-				elseif ( method_exists($v, '__toString') ) {
+				elseif (method_exists($v, '__toString')) {
 					$arr[$k] = $v->__toString();
 				}
 				else {
-					$arr[$k] = (array) $v;
+					$arr[$k] = (array)$v;
 				}
 			}
 			else {
@@ -510,53 +538,54 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * assumed to be UTC time. Null or empty members are omitted.
 	 *
 	 * @param array $opts
+	 *
 	 * @return array
 	 */
-	final public function getSpecialObj(array $opts=[])
+	final public function getSpecialObj(array $opts = [])
 	{
 		//	Options that are passed in overwrite coded options.
-		$opts = array_merge(['dateToBsonDate'=>true, 'keepJsonExpr'=>true, 'switch_id'=>true], $opts);
+		$opts = array_merge(['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true], $opts);
 
 		$arr = [];
 		foreach ($this->_public_names as $k) {
 			$v = $this->_getByName($k);
 
-			if ( $k === 'id_' && $opts['switch_id'] ) {
+			if ($k === 'id_' && $opts['switch_id']) {
 				$arr['_id'] = $v;
 				continue;
 			}
 
-			if ( is_object($this->$k) ) {
+			if (is_object($this->$k)) {
 				// if each of these is not empty
-				if ( method_exists($this->$k, 'getSpecialObj') ) {
+				if (method_exists($this->$k, 'getSpecialObj')) {
 					$tObj = $this->$k->getSpecialObj($opts);
-					if ( count($tObj) ) {
+					if (count($tObj)) {
 						$arr[$k] = $tObj;
 					}
 				}
-				elseif ( $this->$k instanceof \Zend\Json\Expr && $opts['keepJsonExpr'] ) {
-					$arr[$k] = $this->$k;	// maintain the type
+				elseif ($this->$k instanceof \Zend\Json\Expr && $opts['keepJsonExpr']) {
+					$arr[$k] = $this->$k;    // maintain the type
 				}
-				elseif ( $this->$k instanceof \MongoDB\BSON\UTCDateTime && $opts['dateToBsonDate'] ) {
-					$arr[$k] = $this->$k;	// maintain the type
+				elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $opts['dateToBsonDate']) {
+					$arr[$k] = $this->$k;    // maintain the type
 				}
-				elseif ( $this->$k instanceof \DateTimeInterface && $opts['dateToBsonDate'] ) {
-					$arr[$k] = new \MongoDB\BSON\UTCDateTime( $this->$k->getTimestamp()*1000 );
+				elseif ($this->$k instanceof \DateTimeInterface && $opts['dateToBsonDate']) {
+					$arr[$k] = new \MongoDB\BSON\UTCDateTime($this->$k->getTimestamp() * 1000);
 				}
-				elseif ( method_exists($v, 'toArray') ) {
+				elseif (method_exists($v, 'toArray')) {
 					$vArr = $v->toArray();
-					if ( count($vArr) ) {
+					if (count($vArr)) {
 						$arr[$k] = $vArr;
 					}
 				}
-				elseif ( method_exists($v, '__toString') ) {
+				elseif (method_exists($v, '__toString')) {
 					$vStr = $v->__toString();
-					if ( $vStr !== '' ) {
+					if ($vStr !== '') {
 						$arr[$k] = $vStr;
 					}
 				}
 				else {
-					if ( count($v) ) {
+					if (count($v)) {
 						$arr[$k] = $v;
 					}
 				}
@@ -564,53 +593,52 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				continue;
 			}
 
-			switch ( gettype($v) ) {
+			switch (gettype($v)) {
 				case 'null':
 				case 'NULL':
 				case 'resource':
-				// do not copy
+					// do not copy
 				break;
 
 				case 'string':
-				//	Copy only if there is data. Should this only apply to nulls?
-				if ( '' !== $v ) {
-					$arr[$k] = $v;
-				}
+					//	Copy only if there is data. Should this only apply to nulls?
+					if ('' !== $v) {
+						$arr[$k] = $v;
+					}
 				break;
 
 				case 'object':
-				if ( method_exists($v, 'toArray') ) {
-					$vArr = $v->toArray();
-					if ( count($vArr) ) {
-						$arr[$k] = $vArr;
+					if (method_exists($v, 'toArray')) {
+						$vArr = $v->toArray();
+						if (count($vArr)) {
+							$arr[$k] = $vArr;
+						}
 					}
-				}
-				elseif ( method_exists($v, '__toString') ) {
-					$vStr = $v->__toString();
-					if ( $vStr !== '' ) {
-						$arr[$k] = $vStr;
+					elseif (method_exists($v, '__toString')) {
+						$vStr = $v->__toString();
+						if ($vStr !== '') {
+							$arr[$k] = $vStr;
+						}
 					}
-				}
-				else {
-					if ( count($v) ) {
-						$arr[$k] = $v;
+					else {
+						if (count($v)) {
+							$arr[$k] = $v;
+						}
 					}
-				}
 				break;
 
 				case 'array':
-				if ( count($v) > 0 ) {
-					$arr[$k] = $v;
-				}
+					if (count($v) > 0) {
+						$arr[$k] = $v;
+					}
 				break;
 
 				//	ints and floats
 				default:
-				$arr[$k] = $v;
+					$arr[$k] = $v;
 			}
 		}
 
 		return $arr;
 	}
-
 }

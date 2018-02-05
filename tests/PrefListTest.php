@@ -15,7 +15,7 @@ class PrefListTest extends PHPUnit_Framework_TestCase
 		);
 
 
-		$prefListList['Option ZIP']['name'] = ['sort'=>'desc'];
+		$prefListList['Option ZIP']['name'] = ['sort' => 'desc'];
 		// echo jsonEncode($prefListList['Option ZIP']->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/prefoptname.json',
@@ -24,7 +24,7 @@ class PrefListTest extends PHPUnit_Framework_TestCase
 		);
 
 
-		$prefListList['Option ZIP'] = ['state'=>['included'=>1], 'name'=>['compare'=>'!=']];
+		$prefListList['Option ZIP'] = ['state' => ['included' => 1], 'name' => ['compare' => '!=']];
 		// echo jsonEncode($prefListList->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/preftwo.json',
@@ -37,7 +37,7 @@ class PrefListTest extends PHPUnit_Framework_TestCase
 		$oldOrder = clone $prefListList['Option ZIP'];
 		$prefListList['Option ZIP'] = null;
 
-		foreach ( $order as $o ) {
+		foreach ($order as $o) {
 			$prefListList['Option ZIP'][$o] = $oldOrder[$o];
 		}
 		// echo jsonEncode($prefListList['Option ZIP']->toArray()); exit;

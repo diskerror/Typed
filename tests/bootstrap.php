@@ -4,7 +4,7 @@
  * Convert all errors into ErrorExceptions
  */
 set_error_handler(
-	function ($severity, $errstr, $errfile, $errline) {
+	function($severity, $errstr, $errfile, $errline) {
 		throw new ErrorException($errstr, 1, $severity, $errfile, $errline);
 	},
 	E_USER_ERROR
@@ -14,10 +14,10 @@ set_error_handler(
  * Set handler for uncaught exceptions.
  */
 set_exception_handler(
-	function ( Exception $e ) {
-		cerr( $e->getMessage() . PHP_EOL );
-		cerr( $e . PHP_EOL );
-		exit( $e->getCode() );
+	function(Exception $e) {
+		cerr($e->getMessage() . PHP_EOL);
+		cerr($e . PHP_EOL);
+		exit($e->getCode());
 	}
 );
 

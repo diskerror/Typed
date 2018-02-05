@@ -8,11 +8,11 @@ class PrefListList extends \Diskerror\Typed\TypedArray
 
 	public static function getDefault()
 	{
-		$d = new self( [
-			'Option Name' => PreferenceList::getDefault(),
+		$d = new self([
+			'Option Name'    => PreferenceList::getDefault(),
 			'Option Address' => PreferenceList::getDefault(),
-			'Option ZIP' => PreferenceList::getDefault()
-		] );
+			'Option ZIP'     => PreferenceList::getDefault(),
+		]);
 
 		$d['Option Name']['name']->compare = 'REGEXP';
 		$d['Option Name']['name']->find = '\w';

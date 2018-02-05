@@ -8,12 +8,12 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 	{
 		$simp = new SimpleTyped();
 
-		$this->assertTrue( is_bool($simp->myBool) );
-		$this->assertTrue( is_int($simp->myInt) );
-		$this->assertTrue( is_double($simp->myFloat) );
-		$this->assertTrue( is_string($simp->myString) );
-		$this->assertTrue( is_array($simp->myArray) );
-		$this->assertTrue( is_object($simp->myObj) );
+		$this->assertTrue(is_bool($simp->myBool));
+		$this->assertTrue(is_int($simp->myInt));
+		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_string($simp->myString));
+		$this->assertTrue(is_array($simp->myArray));
+		$this->assertTrue(is_object($simp->myObj));
 
 // 		echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
@@ -28,12 +28,12 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 		$simp->myObj->nv = 'new variable';
 		$simp->myArray = null;
 
-		$this->assertTrue( is_bool($simp->myBool) );
-		$this->assertTrue( is_int($simp->myInt) );
-		$this->assertTrue( is_double($simp->myFloat) );
-		$this->assertTrue( is_string($simp->myString) );
-		$this->assertTrue( is_array($simp->myArray) );
-		$this->assertTrue( is_object($simp->myObj) );
+		$this->assertTrue(is_bool($simp->myBool));
+		$this->assertTrue(is_int($simp->myInt));
+		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_string($simp->myString));
+		$this->assertTrue(is_array($simp->myArray));
+		$this->assertTrue(is_object($simp->myObj));
 
 		// echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
@@ -47,12 +47,12 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 	{
 		$simp = new SimpleTyped([false, 77, .5, 'simpppp2']);
 
-		$this->assertTrue( is_bool($simp->myBool) );
-		$this->assertTrue( is_int($simp->myInt) );
-		$this->assertTrue( is_double($simp->myFloat) );
-		$this->assertTrue( is_string($simp->myString) );
-		$this->assertTrue( is_array($simp->myArray) );
-		$this->assertTrue( is_object($simp->myObj) );
+		$this->assertTrue(is_bool($simp->myBool));
+		$this->assertTrue(is_int($simp->myInt));
+		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_string($simp->myString));
+		$this->assertTrue(is_array($simp->myArray));
+		$this->assertTrue(is_object($simp->myObj));
 
 		// echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
@@ -64,15 +64,15 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 
 	public function testAssocArrayConstruct()
 	{
-		$arr = ['myString'=>234445, 'myInt'=>3.14, 'myNotExist'=>'to be ignored'];
+		$arr = ['myString' => 234445, 'myInt' => 3.14, 'myNotExist' => 'to be ignored'];
 		$simp = new SimpleTyped($arr);
 
-		$this->assertTrue( is_bool($simp->myBool) );
-		$this->assertTrue( is_int($simp->myInt) );
-		$this->assertTrue( is_double($simp->myFloat) );
-		$this->assertTrue( is_string($simp->myString) );
-		$this->assertTrue( is_array($simp->myArray) );
-		$this->assertTrue( is_object($simp->myObj) );
+		$this->assertTrue(is_bool($simp->myBool));
+		$this->assertTrue(is_int($simp->myInt));
+		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_string($simp->myString));
+		$this->assertTrue(is_array($simp->myArray));
+		$this->assertTrue(is_object($simp->myObj));
 
 		// echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
@@ -95,12 +95,12 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 
 		$simp = new SimpleTyped($obj);
 
-		$this->assertTrue( is_bool($simp->myBool) );
-		$this->assertTrue( is_int($simp->myInt) );
-		$this->assertTrue( is_double($simp->myFloat) );
-		$this->assertTrue( is_string($simp->myString) );
-		$this->assertTrue( is_array($simp->myArray) );
-		$this->assertTrue( is_object($simp->myObj) );
+		$this->assertTrue(is_bool($simp->myBool));
+		$this->assertTrue(is_int($simp->myInt));
+		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_string($simp->myString));
+		$this->assertTrue(is_array($simp->myArray));
+		$this->assertTrue(is_object($simp->myObj));
 
 		$simp->myDouble = 3.14;
 		$simp->myInt = null;

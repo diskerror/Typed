@@ -13,13 +13,13 @@ class PreferenceList extends \Diskerror\Typed\TypedArray
 	 */
 	public static function getDefault()
 	{
-		return new self( [
-			'name' => [],
+		return new self([
+			'name'    => [],
 			'address' => [],
-			'city' => [],
-			'state' => [],
-			'zip' => []
-		] );
+			'city'    => [],
+			'state'   => [],
+			'zip'     => [],
+		]);
 	}
 
 }
