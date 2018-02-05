@@ -3,12 +3,15 @@ PHP classes to strictly define member structure, to control their data types, an
 
 ## TypedAbstract
 This defines the convience methods that are to be implemented in the below classes.
+
 ### assignObject
 Copies all matching member names while maintaining original types and doing a deep copy where appropriate.
 This method silently ignores extra properties in the input object, leaves unmatched properties in the current class untouched, and skips names starting with an underscore (per Zend Framework coding style).
 Input can be an object or an array.
+
 ### toArray
 Returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed.
+
 ### getSpecialObj
 Like "toArray" above, this returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed. This method specifically adds these default options:
 * conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC, *MongoDB\BSON\UTCDateTime* objects will remain untouched;
@@ -24,12 +27,12 @@ The derivitives of Typed\TypedClass are contracted to do these things:
 * Use setter methods based on property name to further handle input data, like filtering.
 * Use getter methods based on property name to handle output, like formatting.
 * Have a method to return a deeply transformed standard associative array.
-* Handle special cases of members/properties that are objects.
+* Handle special cases of members/properties that are objects with an option for handling NULL assignments.
 * Accept another object, associative or indexed array, and assign the input values to the appropriate members.
- *	Copy object or named array item by item.
- *	Copy indexed array by position.
- *  Map known erroneous names to proper names.
- *	Reset single property or entire object's members to their default values.
+  * Copy object or named array item by item.
+  * Copy indexed array by position.
+  * Map alternate names to proper names.
+  * Reset single property or entire object's members to their default values.
 
 ## TypedArray
 The instances or derivitives of Typed\TypedArray are contracted to do these things:
