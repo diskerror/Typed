@@ -277,68 +277,79 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			break;
 
 			case 'object':
-				if (is_object($v)) {
-					//	if identical types then clone
-					if (get_class($this->_class_vars[$k]) === get_class($v)) {
-						$this->{$k} = clone $v;
-					}
-
-					//	if this->k is a TypedAbstract object and v is any other type
-					//		then absorb v or v's properties into this->k's properties
-					elseif ($this->_class_vars[$k] instanceof TypedAbstract) {
-						if ($this->{$k} === null) {
-							$this->{$k} = clone $this->_class_vars[$k];
-						}
-
-						$this->{$k}->assignObject($v);
-					}
-
-					//	Treat DateTime related objects as atomic in these next cases.
-					elseif (
-						($this->_class_vars[$k] instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
-					) {
-						$thisClassName = get_class($this->_class_vars[$k]);
-						$this->{$k} = new $thisClassName($v->toDateTime());
-					}
-					elseif (
-						($this->_class_vars[$k] instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
-					) {
-						$thisClassName = get_class($this->_class_vars[$k]);
-						$this->{$k} = new $thisClassName($v->getTimestamp() * 1000);
-					}
-
-					//	if this->k is a DateTime object and v is any other type
-					//		then absorb v or v's properties into this->k's properties
-					//		But only if $v object has __toString.
-					elseif ($this->_class_vars[$k] instanceof \DateTimeInterface && method_exists($v, '__toString')) {
-						$thisClassName = get_class($this->_class_vars[$k]);
-						$this->{$k} = new $thisClassName($v->__toString());
-					}
-
-					//	Else give up.
-					else {
-						throw new InvalidArgumentException('cannot coerce object types');
-					}
-				}
-				else {
-					if ($this->_nullCreatesNullInstance && $v === null) {
-						$this->{$k} = null;
-					}
-					elseif (get_class($this->_class_vars[$k]) === 'stdClass' && is_array($v)) {
-						$this->{$k} = (object)$v;
-					}
-					else {
-						//	Other classes might be able to absorb/convert other input,
-						//		like «DateTime::__construct("now")» accepts a string.
-						$thisClassName = get_class($this->_class_vars[$k]);
-						$this->{$k} = new $thisClassName($v);
-					}
-				}
+				$this->_castToObject($k, $v);
 			break;
 
 			default:    //	resource
 				$this->{$k} = $v;
 			break;
+		}
+	}
+
+	/**
+	 * Casting to an object type that is dependent on original value and input value.
+	 *
+	 * @param string $k
+	 * @param mixed  $v
+	 */
+	protected function _castToObject($k, $v)
+	{
+		if (is_object($v)) {
+			//	if identical types then clone
+			if (get_class($this->_class_vars[$k]) === get_class($v)) {
+				$this->{$k} = clone $v;
+			}
+
+			//	if this->k is a TypedAbstract object and v is any other type
+			//		then absorb v or v's properties into this->k's properties
+			elseif ($this->_class_vars[$k] instanceof TypedAbstract) {
+				if ($this->{$k} === null) {
+					$this->{$k} = clone $this->_class_vars[$k];
+				}
+
+				$this->{$k}->assignObject($v);
+			}
+
+			//	Treat DateTime related objects as atomic in these next cases.
+			elseif (
+				($this->_class_vars[$k] instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
+			) {
+				$thisClassName = get_class($this->_class_vars[$k]);
+				$this->{$k} = new $thisClassName($v->toDateTime());
+			}
+			elseif (
+				($this->_class_vars[$k] instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
+			) {
+				$thisClassName = get_class($this->_class_vars[$k]);
+				$this->{$k} = new $thisClassName($v->getTimestamp() * 1000);
+			}
+
+			//	if this->k is a DateTime object and v is any other type
+			//		then absorb v or v's properties into this->k's properties
+			//		But only if $v object has __toString.
+			elseif ($this->_class_vars[$k] instanceof \DateTimeInterface && method_exists($v, '__toString')) {
+				$thisClassName = get_class($this->_class_vars[$k]);
+				$this->{$k} = new $thisClassName($v->__toString());
+			}
+
+			//	Else give up.
+			else {
+				throw new InvalidArgumentException('cannot coerce object types');
+			}
+		}
+		else {
+			if ($this->_nullCreatesNullInstance && $v === null) {
+				$this->{$k} = null;
+			}
+			elseif (get_class($this->_class_vars[$k]) === 'stdClass' && is_array($v)) {
+				$this->{$k} = (object)$v;
+			}
+			else {
+				//	Other classes might be able to absorb/convert other input,
+				//		like «DateTime::__construct("now")» accepts a string.
+				$thisClassName = get_class($this->_class_vars[$k]);
+				$this->{$k} = new $thisClassName($v);
+			}
 		}
 	}
 
