@@ -74,7 +74,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public function assignObject($in = null)
+	public function assignObject(&$in = null)
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -84,7 +84,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			case 'null':
 			case 'NULL':
 				$this->_container = [];
-
 				return;
 
 			default:
@@ -110,7 +109,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * There are 3 conditions involving $offset:
 	 * # $offset is null;
 	 * # $offset is set and exists;
-	 * # $offset is set and does not exist;
+	 * # $offset is set and does not exist (null);
 	 *
 	 * There are 4 conditions for handling $value:
 	 * # $value is null (replace current scalar values with null, reset non-scalars);
@@ -168,7 +167,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 							clone $v :
 							new $this->_type($v);
 				}
-				//	Else it's an instance of our special type.
+				//	Else it is an instance of our special type.
 				else {
 					$this->_container[$k]->assignObject($v);
 
@@ -201,18 +200,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * Required by the ArrayAccess interface.
 	 *
 	 * @param string|int $offset
-	 *
-	 * @return bool
-	 */
-	public function offsetExists($offset)
-	{
-		return isset($this->_container[$offset]);
-	}
-
-	/**
-	 * Required by the ArrayAccess interface.
-	 *
-	 * @param string|int $offset
 	 */
 	public function offsetUnset($offset)
 	{
@@ -231,7 +218,23 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 */
 	public function &offsetGet($offset)
 	{
+		if (!$this->offsetExists($offset)) {
+			$this->_container[$offset] = new $this->_type();
+		}
+
 		return $this->_container[$offset];
+	}
+
+	/**
+	 * Required by the ArrayAccess interface.
+	 *
+	 * @param string|int $offset
+	 *
+	 * @return bool
+	 */
+	public function offsetExists($offset): bool
+	{
+		return isset($this->_container[$offset]);
 	}
 
 	/**
@@ -239,7 +242,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return int
 	 */
-	public function count()
+	public function count(): int
 	{
 		return count($this->_container);
 	}
@@ -249,7 +252,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return ArrayIterator
 	 */
-	public function getIterator()
+	public function getIterator(): iterable
 	{
 		return new ArrayIterator($this->_container);
 	}
@@ -259,7 +262,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return array
 	 */
-	public function keys()
+	public function keys(): array
 	{
 		return array_keys($this->_container);
 	}
@@ -272,7 +275,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * @return TypedArray
 	 * @throws LengthException
 	 */
-	public function combine(array $keys)
+	public function combine(array $keys): self
 	{
 		if (count($keys) !== count($this->_container)) {
 			throw new LengthException('array counts do not match');
@@ -284,13 +287,23 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	}
 
 	/**
+	 * Behave like array_shift.
+	 *
+	 * @return mixed
+	 */
+	public function shift()
+	{
+		return array_shift($this->_container);
+	}
+
+	/**
 	 * Returns an array with all members checked for a "toArray" method so
 	 * that any member of type "Typed" will also be returned.
 	 * Use "__get" and "__set", or $var[$member] to access individual names.
 	 *
 	 * @return array
 	 */
-	public function toArray()
+	public function toArray(): array
 	{
 		switch ($this->_type) {
 			case 'bool':
@@ -337,7 +350,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return array
 	 */
-	final public function getSpecialObj(array $opts = [])
+	final public function getSpecialObj(array $opts = []): array
 	{
 		//	Options that are passed in overwrite coded options.
 		$opts = array_merge(['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true], $opts);

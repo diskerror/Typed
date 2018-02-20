@@ -63,20 +63,20 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @var string
 	 */
-	private $_called_class;
+	private $_calledClass;
 
 	/**
 	 * Holds the default values of the called class to-be-public properties in associative array.
 	 * @var array
 	 */
-	private $_class_vars;
+	private $_defaultVars;
 
 	/**
 	 * Holds the names of the called class' to-be-public properties in an indexed array.
 	 *
 	 * @var array
 	 */
-	private $_public_names;
+	private $_publicNames;
 
 	/**
 	 * Holds the position for Iterator.
@@ -91,14 +91,17 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @param mixed $in -OPTIONAL
 	 */
-	public function __construct($in = null)
+	public function __construct(&$in = null)
 	{
-		$this->_called_class = get_called_class();
-		$this->_class_vars = get_class_vars($this->_called_class);
-		foreach ($this->_class_vars as $k => $v) {
-			//	remove elements with names starting with underscore
+		$this->_calledClass = get_called_class();
+
+		//	Build array of default values.
+		//	First get all class properties then remove elements with names starting with underscore.
+		//	Then convert strings with class names into actual instances.
+		$this->_defaultVars = get_class_vars($this->_calledClass);
+		foreach ($this->_defaultVars as $k => $v) {
 			if ($k[0] === '_') {
-				unset($this->_class_vars[$k]);
+				unset($this->_defaultVars[$k]);
 			}
 
 			//	Change class definition string into a real class for the defaults.
@@ -107,16 +110,16 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				//	We must use `eval` because we want to handle
 				//		'__class__Date' and
 				//		'__class__DateTime("Jan 1, 2015")' with 1 or more parameters.
-//				$this->_class_vars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
-				$this->_class_vars[$k] = eval('return new ' . substr($v, 9) . ';');
+//				$this->_defaultVars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
+				$this->_defaultVars[$k] = eval('return new ' . substr($v, 9) . ';');
 
 				//	Objects are always passed by reference,
 				//		but we want a separate copy so the original stays unchanged.
-				$this->{$k} = $this->_nullCreatesNullInstance ? null : clone $this->_class_vars[$k];
+				$this->{$k} = $this->_nullCreatesNullInstance ? null : clone $this->_defaultVars[$k];
 			}
 		}
 
-		$this->_public_names = array_keys($this->_class_vars);
+		$this->_publicNames = array_keys($this->_defaultVars);
 
 		//	Don't waste time with assignObject if input is one of these.
 		//		Just return leaving the default values.
@@ -145,7 +148,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
 	 */
-	public function assignObject($in = null)
+	public function assignObject(&$in = null)
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -156,10 +159,10 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				//	Leave associative array as is.
 				//	Copy indexed array by position to a named array
 				if (array_values($in) === $in) {
-					$nameArr = $this->_class_vars;
+					$nameArr = $this->_defaultVars;
 					$minCount = min(count($in), count($nameArr));
 					for ($i = 0; $i < $minCount; ++$i) {
-						$nameArr[$this->_public_names[$i]] = $in[$i];
+						$nameArr[$this->_publicNames[$i]] = $in[$i];
 					}
 
 					$in = $nameArr;
@@ -172,7 +175,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			case 'boolean': //	a 'false' is returned by MySQL:PDO for "no results"
 				//	So, return default values;
 				if ($in !== true) {    //	do only if false or null. True does nothing.
-					foreach ($this->_class_vars as $k => &$v) {
+					foreach ($this->_defaultVars as $k => &$v) {
 						$this->__unset($k);
 					}
 
@@ -203,163 +206,9 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	public function __unset($k)
 	{
 		//	rather than unsetting, we set to default value
-		$this->{$k} = is_object($this->_class_vars[$k]) ?
-			clone $this->_class_vars[$k] :
-			$this->_class_vars[$k];
-	}
-
-	/**
-	 * Returns true if key/prop name exists.
-	 *
-	 * @param string $k
-	 *
-	 * @return bool
-	 */
-	private function _keyExists($k)
-	{
-		return array_key_exists($k, $this->_class_vars) || array_key_exists($k, $this->_map);
-	}
-
-	/**
-	 * Set data to named variable.
-	 * Casts the incoming data ($v) to the same type as the named ($k) property.
-	 *
-	 * @param string $k
-	 * @param mixed  $v
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	protected function _setByName($k, $v)
-	{
-		if (array_key_exists($k, $this->_map)) {
-			$k = $this->_map[$k];
-		}
-
-		$setter = '_set_' . $k;
-		if (method_exists($this->_called_class, $setter)) {
-			$this->$setter($v);
-
-			return;
-		}
-
-		//	Get the original type as the current member might contain null.
-		switch (gettype($this->_class_vars[$k])) {
-			//	If the original is NULL then allow any value.
-			case 'null':
-			case 'NULL':
-			case '':        //	Is there a possibility that "gettype()" might return an empty string?
-			case null:
-				$this->{$k} = $v;
-			break;
-
-			case 'bool':
-			case 'boolean':
-				$this->{$k} = self::_castToBoolean($v);
-			break;
-
-			case 'int':
-			case 'integer':
-				$this->{$k} = self::_castToInteger($v);
-			break;
-
-			case 'float':
-			case 'double':
-			case 'real':
-				$this->{$k} = self::_castToDouble($v);
-			break;
-
-			case 'string':
-				$this->{$k} = self::_castToString($v);
-			break;
-
-			case 'array':
-				$this->{$k} = self::_castToArray($v);
-			break;
-
-			case 'object':
-				$this->_castToObject($k, $v);
-			break;
-
-			default:    //	resource
-				$this->{$k} = $v;
-			break;
-		}
-	}
-
-	/**
-	 * Casting to an object type that is dependent on original value and input value.
-	 *
-	 * @param string $k
-	 * @param mixed  $v
-	 */
-	protected function _castToObject($k, $v)
-	{
-		if (is_object($v)) {
-			//	if identical types then clone
-			if (get_class($this->_class_vars[$k]) === get_class($v)) {
-				$this->{$k} = clone $v;
-			}
-
-			//	if this->k is a TypedAbstract object and v is any other type
-			//		then absorb v or v's properties into this->k's properties
-			elseif ($this->_class_vars[$k] instanceof TypedAbstract) {
-				if ($this->{$k} === null) {
-					$this->{$k} = clone $this->_class_vars[$k];
-				}
-
-				$this->{$k}->assignObject($v);
-			}
-
-			//	Treat DateTime related objects as atomic in these next cases.
-			elseif (
-				($this->_class_vars[$k] instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
-			) {
-				$thisClassName = get_class($this->_class_vars[$k]);
-				$this->{$k} = new $thisClassName($v->toDateTime());
-			}
-			elseif (
-				($this->_class_vars[$k] instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
-			) {
-				$thisClassName = get_class($this->_class_vars[$k]);
-				$this->{$k} = new $thisClassName($v->getTimestamp() * 1000);
-			}
-
-			//	if this->k is a DateTime object and v is any other type
-			//		then absorb v or v's properties into this->k's properties
-			//		But only if $v object has __toString.
-			elseif ($this->_class_vars[$k] instanceof \DateTimeInterface && method_exists($v, '__toString')) {
-				$thisClassName = get_class($this->_class_vars[$k]);
-				$this->{$k} = new $thisClassName($v->__toString());
-			}
-
-			//	Else give up.
-			else {
-				throw new InvalidArgumentException('cannot coerce object types');
-			}
-		}
-		else {
-			if ($this->_nullCreatesNullInstance && $v === null) {
-				$this->{$k} = null;
-			}
-			elseif (get_class($this->_class_vars[$k]) === 'stdClass' && is_array($v)) {
-				$this->{$k} = (object)$v;
-			}
-			else {
-				//	Other classes might be able to absorb/convert other input,
-				//		like «DateTime::__construct("now")» accepts a string.
-				$thisClassName = get_class($this->_class_vars[$k]);
-				$this->{$k} = new $thisClassName($v);
-			}
-		}
-	}
-
-	/**
-	 * Override this method for additional checking such as when a start date
-	 * is required to be earlier than an end date, any range of values like
-	 * minimum and maximum, or any custom filtering not dependent on a single property.
-	 */
-	protected function _checkRelatedProperties()
-	{
+		$this->{$k} = is_object($this->_defaultVars[$k]) ?
+			clone $this->_defaultVars[$k] :
+			$this->_defaultVars[$k];
 	}
 
 	/**
@@ -367,7 +216,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	public function __clone()
 	{
-		foreach ($this->_public_names as $k) {
+		foreach ($this->_publicNames as $k) {
 			if (is_object($this->{$k})) {
 				$this->{$k} = clone $this->{$k};
 			}
@@ -384,7 +233,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	public function __get($k)
 	{
 		$this->_assertPropName($k);
-
 		return $this->_getByName($k);
 	}
 
@@ -403,45 +251,13 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	}
 
 	/**
-	 * Throws exception if named property does not exist.
-	 *
-	 * @param string $k
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	protected function _assertPropName($k)
-	{
-		if (!$this->_keyExists($k)) {
-			throw new InvalidArgumentException();
-		}
-	}
-
-	/**
-	 * Get variable.
-	 *
-	 * @param string $k
-	 *
-	 * @return mixed
-	 */
-	protected function _getByName($k)
-	{
-		//	Create a method with a name like the next line and it will be called here.
-		$getter = '_get_' . $k;
-		if (method_exists($this->_called_class, $getter)) {
-			return $this->$getter();
-		}
-
-		return $this->{$k};
-	}
-
-	/**
 	 * Is a variable set?
 	 *
 	 * @param string $k
 	 *
 	 * @return bool
 	 */
-	public function __isset($k)
+	public function __isset($k): bool
 	{
 		if ($k[0] === '_') {
 			return false;
@@ -464,7 +280,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	final public function current()
 	{
-		return $this->_getByName($this->_public_names[$this->_position]);
+		return $this->_getByName($this->_publicNames[$this->_position]);
 	}
 
 	/**
@@ -473,7 +289,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	final public function key()
 	{
-		return $this->_public_names[$this->_position];
+		return $this->_publicNames[$this->_position];
 	}
 
 	/**
@@ -488,18 +304,18 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * Required method for Iterator.
 	 * @return bool
 	 */
-	final public function valid()
+	final public function valid(): bool
 	{
-		return isset($this->_public_names[$this->_position]);
+		return isset($this->_publicNames[$this->_position]);
 	}
 
 	/**
 	 * Required method for Countable.
 	 * @return int
 	 */
-	final public function count()
+	final public function count(): int
 	{
-		return count($this->_class_vars);
+		return count($this->_defaultVars);
 	}
 
 	/**
@@ -511,11 +327,11 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @return array
 	 */
-	final public function toArray()
+	final public function toArray(): array
 	{
 		$arr = [];
 
-		foreach ($this->_public_names as $k) {
+		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);
 
 			if (is_object($v)) {
@@ -552,13 +368,13 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @return array
 	 */
-	final public function getSpecialObj(array $opts = [])
+	final public function getSpecialObj(array $opts = []): array
 	{
 		//	Options that are passed in overwrite coded options.
 		$opts = array_merge(['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true], $opts);
 
 		$arr = [];
-		foreach ($this->_public_names as $k) {
+		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);
 
 			if ($k === 'id_' && $opts['switch_id']) {
@@ -651,5 +467,193 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		}
 
 		return $arr;
+	}
+
+	/**
+	 * Set data to named variable.
+	 * Casts the incoming data ($v) to the same type as the named ($k) property.
+	 *
+	 * @param string $k
+	 * @param mixed  $v
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	protected function _setByName($k, &$v)
+	{
+		if (array_key_exists($k, $this->_map)) {
+			$k = $this->_map[$k];
+		}
+
+		$setter = '_set_' . $k;
+		if (method_exists($this->_calledClass, $setter)) {
+			$this->$setter($v);
+
+			return;
+		}
+
+		//	Get the original type as the current member might contain null.
+		switch (gettype($this->_defaultVars[$k])) {
+			//	If the original is NULL then allow any value.
+			case 'null':
+			case 'NULL':
+			case '':        //	Is there a possibility that "gettype()" might return an empty string?
+			case null:
+				$this->{$k} = $v;
+			break;
+
+			case 'bool':
+			case 'boolean':
+				$this->{$k} = self::_castToBoolean($v);
+			break;
+
+			case 'int':
+			case 'integer':
+				$this->{$k} = self::_castToInteger($v);
+			break;
+
+			case 'float':
+			case 'double':
+			case 'real':
+				$this->{$k} = self::_castToDouble($v);
+			break;
+
+			case 'string':
+				$this->{$k} = self::_castToString($v);
+			break;
+
+			case 'array':
+				$this->{$k} = self::_castToArray($v);
+			break;
+
+			case 'object':
+				$this->_castToObject($k, $v);
+			break;
+
+			default:    //	resource
+				$this->{$k} = $v;
+			break;
+		}
+	}
+
+	/**
+	 * Casting to an object type that is dependent on original value and input value.
+	 *
+	 * @param string $k
+	 * @param mixed  $v
+	 */
+	protected function _castToObject($k, &$v)
+	{
+		$propertyDefaultClass = $this->_defaultVars[$k];
+		$propertyClassType = get_class($propertyDefaultClass);
+
+		if (is_object($v)) {
+			//	if identical types then clone
+			if ($propertyClassType === get_class($v)) {
+				$this->{$k} = clone $v;
+			}
+
+			//	if this->k is a TypedAbstract object and v is any other type
+			//		then absorb v or v's properties into this->k's properties
+			elseif ($propertyDefaultClass instanceof TypedAbstract) {
+				if ($this->{$k} === null) {
+					$this->{$k} = clone $propertyDefaultClass; //	cloned for possible default values
+				}
+
+				$this->{$k}->assignObject($v);
+			}
+
+			//	Treat DateTime related objects as atomic in these next cases.
+			elseif (
+				($propertyDefaultClass instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
+			) {
+				$this->{$k} = new $propertyClassType($v->toDateTime());
+			}
+			elseif (
+				($propertyDefaultClass instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
+			) {
+				$this->{$k} = new $propertyClassType($v->getTimestamp() * 1000);
+			}
+
+			//	if this->k is a DateTime object and v is any other type
+			//		then absorb v or v's properties into this->k's properties
+			//		But only if $v object has __toString.
+			elseif ($propertyDefaultClass instanceof \DateTimeInterface && method_exists($v, '__toString')) {
+				$this->{$k} = new $propertyClassType($v->__toString());
+			}
+
+			//	Else give up.
+			else {
+				throw new InvalidArgumentException('cannot coerce object types');
+			}
+		}
+		else {
+			if ($this->_nullCreatesNullInstance && $v === null) {
+				$this->{$k} = null;
+			}
+//			elseif($propertyDefaultClass instanceof TypedArray){
+//				$this->{$k}[] = $v;
+//			}
+			elseif ($propertyClassType === 'stdClass' && is_array($v)) {
+				$this->{$k} = (object)$v;
+			}
+			else {
+				//	Other classes might be able to absorb/convert other input,
+				//		like «DateTime::__construct("now")» accepts a string.
+				$this->{$k} = new $propertyClassType($v);
+			}
+		}
+	}
+
+	/**
+	 * Override this method for additional checking such as when a start date
+	 * is required to be earlier than an end date, any range of values like
+	 * minimum and maximum, or any custom filtering not dependent on a single property.
+	 */
+	protected function _checkRelatedProperties()
+	{
+	}
+
+	/**
+	 * Throws exception if named property does not exist.
+	 *
+	 * @param string $k
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	protected function _assertPropName($k)
+	{
+		if (!$this->_keyExists($k)) {
+			throw new InvalidArgumentException();
+		}
+	}
+
+	/**
+	 * Get variable.
+	 *
+	 * @param string $k
+	 *
+	 * @return mixed
+	 */
+	protected function _getByName($k)
+	{
+		//	Create a method with a name like the next line and it will be called here.
+		$getter = '_get_' . $k;
+		if (method_exists($this->_calledClass, $getter)) {
+			return $this->$getter();
+		}
+
+		return $this->{$k};
+	}
+
+	/**
+	 * Returns true if key/prop name exists.
+	 *
+	 * @param string $k
+	 *
+	 * @return bool
+	 */
+	private function _keyExists($k): bool
+	{
+		return array_key_exists($k, $this->_defaultVars) || array_key_exists($k, $this->_map);
 	}
 }

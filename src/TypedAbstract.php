@@ -23,7 +23,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @return bool|null
 	 */
-	protected static function _castToBoolean(&$in)
+	protected static function _castToBoolean(&$in): ?bool
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -50,7 +50,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @return int|null
 	 */
-	protected static function _castToInteger(&$in)
+	protected static function _castToInteger(&$in): ?int
 	{
 		switch (gettype($in)) {
 			case 'string':
@@ -81,7 +81,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @return float|null
 	 */
-	protected static function _castToDouble(&$in)
+	protected static function _castToDouble(&$in): ?float
 	{
 		switch (gettype($in)) {
 			case 'string':
@@ -127,7 +127,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @return string|null
 	 */
-	protected static function _castToString(&$in)
+	protected static function _castToString(&$in): ?string
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -155,12 +155,13 @@ abstract class TypedAbstract implements Countable
 
 	/**
 	 * Cast all input to an array.
+	 * A null input returns an empty array.
 	 *
 	 * @param mixed $in
 	 *
-	 * @return array|null
+	 * @return array
 	 */
-	protected static function _castToArray($in)
+	protected static function _castToArray(&$in): array
 	{
 		if (is_object($in) && method_exists($in, 'toArray')) {
 			return $in->toArray();
@@ -186,7 +187,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @param mixed $in -OPTIONAL
 	 */
-	abstract public function assignObject($in = null);
+	abstract public function assignObject(&$in = null);
 
 	/**
 	 * Returns an array of this object with only the appropriate members.
