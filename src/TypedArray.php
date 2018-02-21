@@ -428,8 +428,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			}
 		}
 		else {
+			//	else this is some generic object then copy non-null/non-empty members or properties
 			foreach ($this->_container as $k => $v) {
-				if (count($v)) {
+				if ($v !== null && $v !== '') {
 					$arr[$k] = $v;
 				}
 			}
