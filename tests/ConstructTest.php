@@ -45,7 +45,8 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 
 	public function testIndexedArrayConstruct()
 	{
-		$simp = new SimpleTyped([false, 77, .5, 'simpppp2']);
+		$input = [false, 77, .5, 'simpppp2'];
+		$simp = new SimpleTyped($input);
 
 		$this->assertTrue(is_bool($simp->myBool));
 		$this->assertTrue(is_int($simp->myInt));

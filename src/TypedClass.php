@@ -50,15 +50,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	protected $_map = [];
 
 	/**
-	 * JSON allows NULL items to be omitted from the instance. Setting this to TRUE
-	 *   sets the instance of member objects to NULL when NULL is given rather than
-	 *   creating an object with default values. Else NULL creates a default object.
-	 *
-	 * @var bool
-	 */
-	protected $_nullCreatesNullInstance = false;
-
-	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
 	 *
 	 * @var string
@@ -115,7 +106,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 				//	Objects are always passed by reference,
 				//		but we want a separate copy so the original stays unchanged.
-				$this->{$k} = $this->_nullCreatesNullInstance ? null : clone $this->_defaultVars[$k];
+				$this->{$k} = clone $this->_defaultVars[$k];
 			}
 		}
 
@@ -212,6 +203,162 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	}
 
 	/**
+	 * Returns true if key/prop name exists.
+	 *
+	 * @param string $k
+	 *
+	 * @return bool
+	 */
+	private function _keyExists($k): bool
+	{
+		return array_key_exists($k, $this->_defaultVars) || array_key_exists($k, $this->_map);
+	}
+
+	/**
+	 * Set data to named variable.
+	 * Casts the incoming data ($v) to the same type as the named ($k) property.
+	 *
+	 * @param string $k
+	 * @param mixed  $v
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	protected function _setByName($k, &$v)
+	{
+		if (array_key_exists($k, $this->_map)) {
+			$k = $this->_map[$k];
+		}
+
+		$setter = '_set_' . $k;
+		if (method_exists($this->_calledClass, $setter)) {
+			$this->$setter($v);
+
+			return;
+		}
+
+		//	Get the original type as the current member might contain null.
+		switch (gettype($this->_defaultVars[$k])) {
+			//	If the original is NULL then allow any value.
+			case 'null':
+			case 'NULL':
+			case '':        //	Is there a possibility that "gettype()" might return an empty string?
+			case null:
+				$this->{$k} = $v;
+			break;
+
+			case 'bool':
+			case 'boolean':
+				$this->{$k} = self::_castToBoolean($v);
+			break;
+
+			case 'int':
+			case 'integer':
+				$this->{$k} = self::_castToInteger($v);
+			break;
+
+			case 'float':
+			case 'double':
+			case 'real':
+				$this->{$k} = self::_castToDouble($v);
+			break;
+
+			case 'string':
+				$this->{$k} = self::_castToString($v);
+			break;
+
+			case 'array':
+				$this->{$k} = self::_castToArray($v);
+			break;
+
+			case 'object':
+				$this->_castToObject($k, $v);
+			break;
+
+			default:    //	resource
+				$this->{$k} = $v;
+			break;
+		}
+	}
+
+	/**
+	 * Casting to an object type that is dependent on original value and input value.
+	 *
+	 * @param string $k
+	 * @param mixed  $v
+	 */
+	protected function _castToObject($k, &$v)
+	{
+		$propertyDefaultClass = $this->_defaultVars[$k];
+		$propertyClassType = get_class($propertyDefaultClass);
+
+		if (is_object($v)) {
+			//	if identical types then clone
+			if ($propertyClassType === get_class($v)) {
+				$this->{$k} = clone $v;
+			}
+
+			//	if this->k is a TypedAbstract object and v is any other type
+			//		then absorb v or v's properties into this->k's properties
+			elseif ($propertyDefaultClass instanceof TypedAbstract) {
+				if ($this->{$k} === null) {
+					$this->{$k} = clone $propertyDefaultClass; //	cloned for possible default values
+				}
+
+				$this->{$k}->assignObject($v);
+			}
+
+			//	Treat DateTime related objects as atomic in these next cases.
+			elseif (
+				($propertyDefaultClass instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
+			) {
+				$this->{$k} = new $propertyClassType($v->toDateTime());
+			}
+			elseif (
+				($propertyDefaultClass instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
+			) {
+				$this->{$k} = new $propertyClassType($v->getTimestamp() * 1000);
+			}
+
+			//	if this->k is a DateTime object and v is any other type
+			//		then absorb v or v's properties into this->k's properties
+			//		But only if $v object has __toString.
+			elseif ($propertyDefaultClass instanceof \DateTimeInterface && method_exists($v, '__toString')) {
+				$this->{$k} = new $propertyClassType($v->__toString());
+			}
+
+			//	Else give up.
+			else {
+				throw new InvalidArgumentException('cannot coerce object types');
+			}
+		}
+		else {
+			if ($v === null) {
+				$this->{$k} = clone $this->_defaultVars[$k];
+			}
+//			elseif($propertyDefaultClass instanceof TypedArray){
+//				$this->{$k}[] = $v;
+//			}
+			elseif ($propertyClassType === 'stdClass' && is_array($v)) {
+				$this->{$k} = (object)$v;
+			}
+			else {
+				//	Other classes might be able to absorb/convert other input,
+				//		like «DateTime::__construct("now")» accepts a string.
+				$this->{$k} = new $propertyClassType($v);
+			}
+		}
+	}
+
+	/**
+	 * Override this method for additional checking such as when a start date
+	 * is required to be earlier than an end date, any range of values like
+	 * minimum and maximum, or any custom filtering not dependent on a single property.
+	 */
+	protected function _checkRelatedProperties()
+	{
+	}
+
+	/**
 	 * All member objects will be deep cloned.
 	 */
 	public function __clone()
@@ -248,6 +395,38 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		$this->_assertPropName($k);
 		$this->_setByName($k, $v);
 		$this->_checkRelatedProperties();
+	}
+
+	/**
+	 * Throws exception if named property does not exist.
+	 *
+	 * @param string $k
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	protected function _assertPropName($k)
+	{
+		if (!$this->_keyExists($k)) {
+			throw new InvalidArgumentException();
+		}
+	}
+
+	/**
+	 * Get variable.
+	 *
+	 * @param string $k
+	 *
+	 * @return mixed
+	 */
+	protected function _getByName($k)
+	{
+		//	Create a method with a name like the next line and it will be called here.
+		$getter = '_get_' . $k;
+		if (method_exists($this->_calledClass, $getter)) {
+			return $this->$getter();
+		}
+
+		return $this->{$k};
 	}
 
 	/**
@@ -467,193 +646,5 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		}
 
 		return $arr;
-	}
-
-	/**
-	 * Set data to named variable.
-	 * Casts the incoming data ($v) to the same type as the named ($k) property.
-	 *
-	 * @param string $k
-	 * @param mixed  $v
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	protected function _setByName($k, &$v)
-	{
-		if (array_key_exists($k, $this->_map)) {
-			$k = $this->_map[$k];
-		}
-
-		$setter = '_set_' . $k;
-		if (method_exists($this->_calledClass, $setter)) {
-			$this->$setter($v);
-
-			return;
-		}
-
-		//	Get the original type as the current member might contain null.
-		switch (gettype($this->_defaultVars[$k])) {
-			//	If the original is NULL then allow any value.
-			case 'null':
-			case 'NULL':
-			case '':        //	Is there a possibility that "gettype()" might return an empty string?
-			case null:
-				$this->{$k} = $v;
-			break;
-
-			case 'bool':
-			case 'boolean':
-				$this->{$k} = self::_castToBoolean($v);
-			break;
-
-			case 'int':
-			case 'integer':
-				$this->{$k} = self::_castToInteger($v);
-			break;
-
-			case 'float':
-			case 'double':
-			case 'real':
-				$this->{$k} = self::_castToDouble($v);
-			break;
-
-			case 'string':
-				$this->{$k} = self::_castToString($v);
-			break;
-
-			case 'array':
-				$this->{$k} = self::_castToArray($v);
-			break;
-
-			case 'object':
-				$this->_castToObject($k, $v);
-			break;
-
-			default:    //	resource
-				$this->{$k} = $v;
-			break;
-		}
-	}
-
-	/**
-	 * Casting to an object type that is dependent on original value and input value.
-	 *
-	 * @param string $k
-	 * @param mixed  $v
-	 */
-	protected function _castToObject($k, &$v)
-	{
-		$propertyDefaultClass = $this->_defaultVars[$k];
-		$propertyClassType = get_class($propertyDefaultClass);
-
-		if (is_object($v)) {
-			//	if identical types then clone
-			if ($propertyClassType === get_class($v)) {
-				$this->{$k} = clone $v;
-			}
-
-			//	if this->k is a TypedAbstract object and v is any other type
-			//		then absorb v or v's properties into this->k's properties
-			elseif ($propertyDefaultClass instanceof TypedAbstract) {
-				if ($this->{$k} === null) {
-					$this->{$k} = clone $propertyDefaultClass; //	cloned for possible default values
-				}
-
-				$this->{$k}->assignObject($v);
-			}
-
-			//	Treat DateTime related objects as atomic in these next cases.
-			elseif (
-				($propertyDefaultClass instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
-			) {
-				$this->{$k} = new $propertyClassType($v->toDateTime());
-			}
-			elseif (
-				($propertyDefaultClass instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
-			) {
-				$this->{$k} = new $propertyClassType($v->getTimestamp() * 1000);
-			}
-
-			//	if this->k is a DateTime object and v is any other type
-			//		then absorb v or v's properties into this->k's properties
-			//		But only if $v object has __toString.
-			elseif ($propertyDefaultClass instanceof \DateTimeInterface && method_exists($v, '__toString')) {
-				$this->{$k} = new $propertyClassType($v->__toString());
-			}
-
-			//	Else give up.
-			else {
-				throw new InvalidArgumentException('cannot coerce object types');
-			}
-		}
-		else {
-			if ($this->_nullCreatesNullInstance && $v === null) {
-				$this->{$k} = null;
-			}
-//			elseif($propertyDefaultClass instanceof TypedArray){
-//				$this->{$k}[] = $v;
-//			}
-			elseif ($propertyClassType === 'stdClass' && is_array($v)) {
-				$this->{$k} = (object)$v;
-			}
-			else {
-				//	Other classes might be able to absorb/convert other input,
-				//		like «DateTime::__construct("now")» accepts a string.
-				$this->{$k} = new $propertyClassType($v);
-			}
-		}
-	}
-
-	/**
-	 * Override this method for additional checking such as when a start date
-	 * is required to be earlier than an end date, any range of values like
-	 * minimum and maximum, or any custom filtering not dependent on a single property.
-	 */
-	protected function _checkRelatedProperties()
-	{
-	}
-
-	/**
-	 * Throws exception if named property does not exist.
-	 *
-	 * @param string $k
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	protected function _assertPropName($k)
-	{
-		if (!$this->_keyExists($k)) {
-			throw new InvalidArgumentException();
-		}
-	}
-
-	/**
-	 * Get variable.
-	 *
-	 * @param string $k
-	 *
-	 * @return mixed
-	 */
-	protected function _getByName($k)
-	{
-		//	Create a method with a name like the next line and it will be called here.
-		$getter = '_get_' . $k;
-		if (method_exists($this->_calledClass, $getter)) {
-			return $this->$getter();
-		}
-
-		return $this->{$k};
-	}
-
-	/**
-	 * Returns true if key/prop name exists.
-	 *
-	 * @param string $k
-	 *
-	 * @return bool
-	 */
-	private function _keyExists($k): bool
-	{
-		return array_key_exists($k, $this->_defaultVars) || array_key_exists($k, $this->_map);
 	}
 }
