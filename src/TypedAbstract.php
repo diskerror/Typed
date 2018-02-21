@@ -155,10 +155,11 @@ abstract class TypedAbstract implements Countable
 
 	/**
 	 * Cast all input to an array.
+	 * A null input returns an empty array.
 	 *
 	 * @param mixed $in
 	 *
-	 * @return array|null
+	 * @return array
 	 */
 	protected static function _castToArray($in)
 	{

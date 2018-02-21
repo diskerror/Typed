@@ -84,7 +84,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			case 'null':
 			case 'NULL':
 				$this->_container = [];
-
 				return;
 
 			default:
@@ -110,7 +109,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * There are 3 conditions involving $offset:
 	 * # $offset is null;
 	 * # $offset is set and exists;
-	 * # $offset is set and does not exist;
+	 * # $offset is set and does not exist (null);
 	 *
 	 * There are 4 conditions for handling $value:
 	 * # $value is null (replace current scalar values with null, reset non-scalars);
@@ -168,7 +167,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 							clone $v :
 							new $this->_type($v);
 				}
-				//	Else it's an instance of our special type.
+				//	Else it is an instance of our special type.
 				else {
 					$this->_container[$k]->assignObject($v);
 
@@ -201,18 +200,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * Required by the ArrayAccess interface.
 	 *
 	 * @param string|int $offset
-	 *
-	 * @return bool
-	 */
-	public function offsetExists($offset)
-	{
-		return isset($this->_container[$offset]);
-	}
-
-	/**
-	 * Required by the ArrayAccess interface.
-	 *
-	 * @param string|int $offset
 	 */
 	public function offsetUnset($offset)
 	{
@@ -231,7 +218,23 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 */
 	public function &offsetGet($offset)
 	{
+		if (!$this->offsetExists($offset)) {
+			$this->_container[$offset] = new $this->_type();
+		}
+
 		return $this->_container[$offset];
+	}
+
+	/**
+	 * Required by the ArrayAccess interface.
+	 *
+	 * @param string|int $offset
+	 *
+	 * @return bool
+	 */
+	public function offsetExists($offset)
+	{
+		return isset($this->_container[$offset]);
 	}
 
 	/**
@@ -281,6 +284,16 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		$this->_container = array_combine($keys, $this->_container);
 
 		return $this;
+	}
+
+	/**
+	 * Behave like array_shift.
+	 *
+	 * @return mixed
+	 */
+	public function shift()
+	{
+		return array_shift($this->_container);
 	}
 
 	/**
