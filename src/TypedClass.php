@@ -82,7 +82,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @param mixed $in -OPTIONAL
 	 */
-	public function __construct(&$in = null)
+	public function __construct($in = null)
 	{
 		$this->_calledClass = get_called_class();
 
@@ -139,7 +139,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
 	 */
-	public function assignObject(&$in = null)
+	public function assignObject($in = null)
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -157,6 +157,15 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 					}
 
 					$in = $nameArr;
+				}
+			break;
+
+			case 'string':
+				try {
+					$in = self::_json_decode($in);
+				}
+				catch (\Throwable $t) {
+					throw new InvalidArgumentException('invalid input type (string)');
 				}
 			break;
 
@@ -291,20 +300,20 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		$propertyDefaultClass = $this->_defaultVars[$k];
 		$propertyClassType = get_class($propertyDefaultClass);
 
-		if (is_object($v)) {
+		//	if this->k is a TypedAbstract object and v is any other type
+		//		then absorb v or v's properties into this->k's properties
+		if ($propertyDefaultClass instanceof TypedAbstract) {
+			if ($this->{$k} === null) {
+				$this->{$k} = clone $propertyDefaultClass; //	cloned for possible default values
+			}
+
+			$this->{$k}->assignObject($v);
+		}
+
+		elseif (is_object($v)) {
 			//	if identical types then clone
 			if ($propertyClassType === get_class($v)) {
 				$this->{$k} = clone $v;
-			}
-
-			//	if this->k is a TypedAbstract object and v is any other type
-			//		then absorb v or v's properties into this->k's properties
-			elseif ($propertyDefaultClass instanceof TypedAbstract) {
-				if ($this->{$k} === null) {
-					$this->{$k} = clone $propertyDefaultClass; //	cloned for possible default values
-				}
-
-				$this->{$k}->assignObject($v);
 			}
 
 			//	Treat DateTime related objects as atomic in these next cases.
@@ -331,9 +340,10 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				throw new InvalidArgumentException('cannot coerce object types');
 			}
 		}
+
 		else {
 			if ($v === null) {
-				$this->{$k} = clone $this->_defaultVars[$k];
+				$this->{$k} = clone $propertyDefaultClass;
 			}
 //			elseif($propertyDefaultClass instanceof TypedArray){
 //				$this->{$k}[] = $v;

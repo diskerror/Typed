@@ -74,11 +74,15 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public function assignObject(&$in = null)
+	public function assignObject($in = null)
 	{
 		switch (gettype($in)) {
 			case 'object':
 			case 'array':
+			break;
+
+			case 'string':
+				$in = self::_json_decode($in);
 			break;
 
 			case 'null':
@@ -194,6 +198,10 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 				$this->_container[$k] = clone $v;
 			}
 		}
+	}
+
+	public function &getContainerReference() {
+		return $this->_container;
 	}
 
 	/**

@@ -23,7 +23,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @return bool|null
 	 */
-	protected static function _castToBoolean(&$in): ?bool
+	protected static function _castToBoolean($in): ?bool
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -50,7 +50,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @return int|null
 	 */
-	protected static function _castToInteger(&$in): ?int
+	protected static function _castToInteger($in): ?int
 	{
 		switch (gettype($in)) {
 			case 'string':
@@ -81,7 +81,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @return float|null
 	 */
-	protected static function _castToDouble(&$in): ?float
+	protected static function _castToDouble($in): ?float
 	{
 		switch (gettype($in)) {
 			case 'string':
@@ -127,7 +127,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @return string|null
 	 */
-	protected static function _castToString(&$in): ?string
+	protected static function _castToString($in): ?string
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -142,7 +142,7 @@ abstract class TypedAbstract implements Countable
 				}
 			//	other objects fall through, object to array falls through
 			case 'array':
-				return json_encode($in);
+				return self::_json_encode($in);
 
 			case 'null':
 			case 'NULL':
@@ -161,14 +161,44 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @return array
 	 */
-	protected static function _castToArray(&$in): array
+	protected static function _castToArray($in): array
 	{
 		if (is_object($in) && method_exists($in, 'toArray')) {
 			return $in->toArray();
 		}
 
+		if (is_string($in)) {
+			return self::_json_decode($in);
+		}
+
 		return (array)$in;
 	}
+
+	/**
+	 * @param     $value
+	 * @param int $options
+	 * @param int $depth
+	 *
+	 * @return string
+	 */
+	protected static function _json_encode($value, int $options = 0, $depth = 512): string
+	{
+		return json_encode($value, $options, $depth);
+	}
+
+	/**
+	 * @param string $json
+	 * @param bool   $assoc
+	 * @param int    $depth
+	 * @param int    $options
+	 *
+	 * @return mixed
+	 */
+	protected static function _json_decode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
+	{
+		return json_decode($json, $assoc, $depth, $options);
+	}
+
 
 	/**
 	 * Required method for Countable.
@@ -187,7 +217,7 @@ abstract class TypedAbstract implements Countable
 	 *
 	 * @param mixed $in -OPTIONAL
 	 */
-	abstract public function assignObject(&$in = null);
+	abstract public function assignObject($in = null);
 
 	/**
 	 * Returns an array of this object with only the appropriate members.

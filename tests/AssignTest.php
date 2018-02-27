@@ -173,9 +173,6 @@ class AssignTest extends PHPUnit_Framework_TestCase
 		$t->myArray = 3.14150;
 		$this->assertEquals([3.1415], $t->myArray);
 
-		$t->myArray = 'meaningful string';
-		$this->assertEquals(['meaningful string'], $t->myArray);
-
 		$t->myArray = true;
 		$this->assertEquals([true], $t->myArray);
 
