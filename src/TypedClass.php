@@ -82,7 +82,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @param mixed $in -OPTIONAL
 	 */
-	public function __construct(&$in = null)
+	public function __construct($in = null)
 	{
 		$this->_calledClass = get_called_class();
 
@@ -139,7 +139,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
 	 */
-	public function assignObject(&$in = null)
+	public function assignObject($in = null)
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -157,6 +157,15 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 					}
 
 					$in = $nameArr;
+				}
+			break;
+
+			case 'string':
+				try {
+					$in = self::_json_decode($in);
+				}
+				catch (\Exception $e) {
+					throw new InvalidArgumentException('invalid input type (string)');
 				}
 			break;
 
@@ -291,20 +300,20 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		$propertyDefaultClass = $this->_defaultVars[$k];
 		$propertyClassType = get_class($propertyDefaultClass);
 
-		if (is_object($v)) {
+		//	if this->k is a TypedAbstract object and v is any other type
+		//		then absorb v or v's properties into this->k's properties
+		if ($propertyDefaultClass instanceof TypedAbstract) {
+			if ($this->{$k} === null) {
+				$this->{$k} = clone $propertyDefaultClass; //	cloned for possible default values
+			}
+
+			$this->{$k}->assignObject($v);
+		}
+
+		elseif (is_object($v)) {
 			//	if identical types then clone
 			if ($propertyClassType === get_class($v)) {
 				$this->{$k} = clone $v;
-			}
-
-			//	if this->k is a TypedAbstract object and v is any other type
-			//		then absorb v or v's properties into this->k's properties
-			elseif ($propertyDefaultClass instanceof TypedAbstract) {
-				if ($this->{$k} === null) {
-					$this->{$k} = clone $propertyDefaultClass; //	cloned for possible default values
-				}
-
-				$this->{$k}->assignObject($v);
 			}
 
 			//	Treat DateTime related objects as atomic in these next cases.
@@ -331,9 +340,10 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				throw new InvalidArgumentException('cannot coerce object types');
 			}
 		}
+
 		else {
 			if ($v === null) {
-				$this->{$k} = clone $this->_defaultVars[$k];
+				$this->{$k} = clone $propertyDefaultClass;
 			}
 //			elseif($propertyDefaultClass instanceof TypedArray){
 //				$this->{$k}[] = $v;
@@ -468,7 +478,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	final public function key()
 	{
-		return $this->_public_names[$this->_position];
+		return $this->_publicNames[$this->_position];
 	}
 
 	/**
@@ -553,7 +563,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		$opts = array_merge(['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true], $opts);
 
 		$arr = [];
-		$allAreNull = true;
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);
 
@@ -568,39 +577,32 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 					$tObj = $this->$k->getSpecialObj($opts);
 					if (count($tObj)) {
 						$arr[$k] = $tObj;
-						$allAreNull = false;
 					}
 				}
 				elseif ($this->$k instanceof \Zend\Json\Expr && $opts['keepJsonExpr']) {
 					$arr[$k] = $this->$k;    // maintain the type
-					$allAreNull = false;
 				}
 				elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $opts['dateToBsonDate']) {
 					$arr[$k] = $this->$k;    // maintain the type
-					$allAreNull = false;
 				}
 				elseif ($this->$k instanceof \DateTimeInterface && $opts['dateToBsonDate']) {
 					$arr[$k] = new \MongoDB\BSON\UTCDateTime($this->$k->getTimestamp() * 1000);
-					$allAreNull = false;
 				}
 				elseif (method_exists($v, 'toArray')) {
 					$vArr = $v->toArray();
 					if (count($vArr)) {
 						$arr[$k] = $vArr;
-						$allAreNull = false;
 					}
 				}
 				elseif (method_exists($v, '__toString')) {
 					$vStr = $v->__toString();
 					if ($vStr !== '') {
 						$arr[$k] = $vStr;
-						$allAreNull = false;
 					}
 				}
 				else {
 					if (count($v)) {
 						$arr[$k] = $v;
-						$allAreNull = false;
 					}
 				}
 
@@ -618,7 +620,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 					//	Copy only if there is data. Should this only apply to nulls?
 					if ('' !== $v) {
 						$arr[$k] = $v;
-						$allAreNull = false;
 					}
 				break;
 
@@ -627,20 +628,17 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 						$vArr = $v->toArray();
 						if (count($vArr)) {
 							$arr[$k] = $vArr;
-							$allAreNull = false;
 						}
 					}
 					elseif (method_exists($v, '__toString')) {
 						$vStr = $v->__toString();
 						if ($vStr !== '') {
 							$arr[$k] = $vStr;
-							$allAreNull = false;
 						}
 					}
 					else {
 						if (count($v)) {
 							$arr[$k] = $v;
-							$allAreNull = false;
 						}
 					}
 				break;
@@ -648,7 +646,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				case 'array':
 					if (count($v) > 0) {
 						$arr[$k] = $v;
-						$allAreNull = false;
 					}
 				break;
 
@@ -656,10 +653,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				default:
 					$arr[$k] = $v;
 			}
-		}
-
-		if($allAreNull) {
-			return null;
 		}
 
 		return $arr;
