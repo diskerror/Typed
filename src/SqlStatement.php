@@ -11,9 +11,8 @@
 namespace Diskerror\Typed;
 
 use InvalidArgumentException;
+use UnexpectedValueException;
 use function json_encode;
-use Phalcon\Exception;
-use function stat;
 
 class SqlStatement
 {
