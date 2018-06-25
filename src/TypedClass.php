@@ -564,7 +564,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		);
 		extract($opts, EXTR_OVERWRITE, '');
 
-		static $ZJEstring = '\\Zend\\Json\\Expr';
+		static $ZJE_STRING = '\\Zend\\Json\\Expr';
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
@@ -575,49 +575,11 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				continue;
 			}
 
-			if (is_object($this->$k)) {
-				// if each of these is not empty
-				if (method_exists($this->$k, 'getSpecialObj')) {
-					$tObj = $this->$k->getSpecialObj($opts);
-					if (count($tObj)) {
-						$arr[$k] = $tObj;
-					}
-				}
-				elseif (($this->$k instanceof $ZJEstring) && $_keepJsonExpr) {
-					$arr[$k] = $this->$k;    // maintain the type
-				}
-				elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $_dateToBsonDate) {
-					$arr[$k] = $this->$k;    // maintain the type
-				}
-				elseif ($this->$k instanceof \DateTimeInterface && $_dateToBsonDate) {
-					$arr[$k] = new \MongoDB\BSON\UTCDateTime($this->$k->getTimestamp() * 1000);
-				}
-				elseif (method_exists($v, 'toArray')) {
-					$vArr = $v->toArray();
-					if (count($vArr) || !$_omitEmpty) {
-						$arr[$k] = $vArr;
-					}
-				}
-				elseif (method_exists($v, '__toString')) {
-					$vStr = $v->__toString();
-					if ($vStr !== '' || !$_omitEmpty) {
-						$arr[$k] = $vStr;
-					}
-				}
-				else {
-					if (count($v) || !$_omitEmpty) {
-						$arr[$k] = $v;
-					}
-				}
-
-				continue;
-			}
-
 			switch (gettype($v)) {
 				case 'null':
 				case 'NULL':
 					if (!$_omitEmpty) {
-						$arr[$k] = NULL;
+						$arr[$k] = null;
 					}
 				break;
 
@@ -626,14 +588,28 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				break;
 
 				case 'string':
-					//	Copy only if there is data. Should this only apply to nulls?
 					if ('' !== $v || !$_omitEmpty) {
 						$arr[$k] = $v;
 					}
 				break;
 
 				case 'object':
-					if (method_exists($v, 'toArray')) {
+					if (method_exists($this->$k, 'getSpecialObj')) {
+						$tObj = $this->$k->getSpecialObj($opts);
+						if (count($tObj)) {
+							$arr[$k] = $tObj;
+						}
+					}
+					elseif (($this->$k instanceof $ZJE_STRING) && $_keepJsonExpr) {
+						$arr[$k] = $this->$k;    // maintain the type
+					}
+					elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $_dateToBsonDate) {
+						$arr[$k] = $this->$k;    // maintain the type
+					}
+					elseif ($this->$k instanceof \DateTimeInterface && $_dateToBsonDate) {
+						$arr[$k] = new \MongoDB\BSON\UTCDateTime($this->$k->getTimestamp() * 1000);
+					}
+					elseif (method_exists($v, 'toArray')) {
 						$vArr = $v->toArray();
 						if (count($vArr) || !$_omitEmpty) {
 							$arr[$k] = $vArr;
@@ -661,6 +637,11 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				//	ints and floats
 				default:
 					$arr[$k] = $v;
+			}
+
+			if ($k === 'id_' && $_switch_id) {
+				$arr['_id'] = &$arr['id_'];
+				unset($arr['id_']);
 			}
 		}
 
