@@ -557,14 +557,20 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	final public function getSpecialArr(array $opts = []) : array
 	{
-		//	Options that are passed in overwrite coded options.
-		$opts = array_merge(['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true], $opts);
+		//	Options that are passed in overwrite hard coded options.
+		$opts = array_merge(
+			['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true, 'omitEmpty' => true],
+			$opts
+		);
+		extract($opts, EXTR_OVERWRITE, '');
+
+		static $ZJEstring = '\\Zend\\Json\\Expr';
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);
 
-			if ($k === 'id_' && $opts['switch_id']) {
+			if ($k === 'id_' && $_switch_id) {
 				$arr['_id'] = $v;
 				continue;
 			}
@@ -577,29 +583,29 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 						$arr[$k] = $tObj;
 					}
 				}
-				elseif ($this->$k instanceof \Zend\Json\Expr && $opts['keepJsonExpr']) {
+				elseif (($this->$k instanceof $ZJEstring) && $_keepJsonExpr) {
 					$arr[$k] = $this->$k;    // maintain the type
 				}
-				elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $opts['dateToBsonDate']) {
+				elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $_dateToBsonDate) {
 					$arr[$k] = $this->$k;    // maintain the type
 				}
-				elseif ($this->$k instanceof \DateTimeInterface && $opts['dateToBsonDate']) {
+				elseif ($this->$k instanceof \DateTimeInterface && $_dateToBsonDate) {
 					$arr[$k] = new \MongoDB\BSON\UTCDateTime($this->$k->getTimestamp() * 1000);
 				}
 				elseif (method_exists($v, 'toArray')) {
 					$vArr = $v->toArray();
-					if (count($vArr)) {
+					if (count($vArr) || !$_omitEmpty) {
 						$arr[$k] = $vArr;
 					}
 				}
 				elseif (method_exists($v, '__toString')) {
 					$vStr = $v->__toString();
-					if ($vStr !== '') {
+					if ($vStr !== '' || !$_omitEmpty) {
 						$arr[$k] = $vStr;
 					}
 				}
 				else {
-					if (count($v)) {
+					if (count($v) || !$_omitEmpty) {
 						$arr[$k] = $v;
 					}
 				}
@@ -610,13 +616,18 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			switch (gettype($v)) {
 				case 'null':
 				case 'NULL':
+					if (!$_omitEmpty) {
+						$arr[$k] = NULL;
+					}
+				break;
+
 				case 'resource':
 					// do not copy
 				break;
 
 				case 'string':
 					//	Copy only if there is data. Should this only apply to nulls?
-					if ('' !== $v) {
+					if ('' !== $v || !$_omitEmpty) {
 						$arr[$k] = $v;
 					}
 				break;
@@ -624,25 +635,25 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				case 'object':
 					if (method_exists($v, 'toArray')) {
 						$vArr = $v->toArray();
-						if (count($vArr)) {
+						if (count($vArr) || !$_omitEmpty) {
 							$arr[$k] = $vArr;
 						}
 					}
 					elseif (method_exists($v, '__toString')) {
 						$vStr = $v->__toString();
-						if ($vStr !== '') {
+						if ($vStr !== '' || !$_omitEmpty) {
 							$arr[$k] = $vStr;
 						}
 					}
 					else {
-						if (count($v)) {
+						if (count($v) || !$_omitEmpty) {
 							$arr[$k] = $v;
 						}
 					}
 				break;
 
 				case 'array':
-					if (count($v) > 0) {
+					if (count($v) || !$_omitEmpty) {
 						$arr[$k] = $v;
 					}
 				break;

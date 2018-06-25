@@ -211,7 +211,7 @@ abstract class TypedAbstract implements Countable
 	abstract public function toArray();
 
 	/**
-	 * This is simmilar to "toArray" above except that some conversions are
+	 * This is similar to "toArray" above except that some conversions are
 	 * made to be more compatible to MongoDB or communication to a web browser.
 	 *
 	 * @param array $opts
@@ -219,4 +219,26 @@ abstract class TypedAbstract implements Countable
 	 * @return array
 	 */
 	abstract public function getSpecialArr(array $opts = []);
+
+	/**
+	 * This is similar to "toArray" above except that some conversions are
+	 * made to be more compatible to MongoDB.
+	 *
+	 * @return array
+	 */
+	public function getArrForMongo()
+	{
+	 	return $this->getSpecialArr(['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true, 'omitEmpty' => true]);
+	}
+
+	/**
+	 * This is similar to "toArray" above except that some conversions are
+	 * made to be more suitable to RESTful web responses.
+	 *
+	 * @return array
+	 */
+	public function getArrForRest()
+	{
+		return $this->getSpecialArr(['dateToBsonDate' => false, 'keepJsonExpr' => false, 'switch_id' => true, 'omitEmpty' => true]);
+	}
 }
