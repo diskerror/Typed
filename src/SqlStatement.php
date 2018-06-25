@@ -1,85 +1,49 @@
 <?php
 /**
  * SQL statement generator.
+ * Converts associative arrays and objects into partial SQL statements.
+ *
  * @name        SqlStatement
- * @copyright      Copyright (c) 2015 Reid Woodbury Jr
- * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
+ * @copyright   Copyright (c) 2018 Reid Woodbury Jr
+ * @license     http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed;
 
 use InvalidArgumentException;
+use function json_encode;
+use function stat;
 
-/**
- * Converts associative arrays and objects into partial SQL statements.
- */
 class SqlStatement
 {
 	/**
-	 * Holds the subject as an associative array for building queries.
-	 * @var array
-	 */
-	protected $_input;
-
-	/**
-	 * Constructor.
-	 * Accepts an object or an associative array.
-	 *
-	 * @param mixed $in -OPTIONAL
-	 */
-	public function __construct($in = null)
-	{
-		if (null !== $in) {
-			$this->setInput($in);
-		}
-	}
-
-	/**
-	 * Accepts an object or an associative array.
-	 *
-	 * @param mixed $in
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	public function setInput($in)
-	{
-		if (is_object($in)) {
-			$this->_input =
-				method_exists($in, 'toArray') ?
-					$in->toArray() :
-					(array)$in;
-		}
-		//	If is an array but not an indexed array...
-		elseif (is_array($in) && array_values($in) !== $in) {
-			$this->_input = $in;
-		}
-		else {
-			throw new InvalidArgumentException('input must be an associative array or an object');
-		}
-	}
-
-	/**
 	 * Returns a string formatted for an SQL insert or update.
 	 *
-	 * Accepts an array where the values are the names of the desired properties.
-	 * An empty array means to use all.
+	 * Accepts an associative array and
+	 * an array where the values are the names of the desired keys.
+	 * An empty "include" array means to use all.
 	 *
+	 * @param array $input
 	 * @param array $include
 	 *
 	 * @return string
 	 */
-	public function getSqlInsert(array $include = [])
+	public static function toInsert(array $input, array $include = [])
 	{
+		if (array_values($input) === $input) {
+			throw new InvalidArgumentException('input must be an associative array');
+		}
+
 		if (count($include)) {
 			$arr = [];
 			foreach ($include as $i) {
-				if (array_key_exists($i, $this->_input)) {
-					$arr[$i] &= $this->_input[$i];
+				if (array_key_exists($i, $input)) {
+					$arr[$i] &= $input[$i];
 				}
 			}
 		}
 		else {
-			$arr = &$this->_input;
+			$arr = &$input;
 		}
 
 		$sqlStrs = [];
@@ -99,28 +63,30 @@ class SqlStatement
 				break;
 
 				case 'string':
+					//	if $v is a string that contains the text 'NULL' then
 					if ($v === 'NULL') {
 						$sqlStrs[] = $kEq . 'NULL';
 					}
-					elseif ($v === '') {
-						//	This condition is required with bin2hex() as only '0x' is not allowed.
-						$sqlStrs[] = $kEq . '""';
-					}
+//					elseif ($v === '') {
+//						//	This condition is required with bin2hex() as we can't use only '0x'.
+//						$sqlStrs[] = $kEq . '""';
+//				}
 					else {
-						//					$sqlStrs[] = $kEq . '"' . preg_replace('/([\x00\n\r\\\\\'"\x1a])/u', '\\\\$1', $v); . '"';
-//						$sqlStrs[] = $kEq . '"' . addslashes($v) . '"';
-						$sqlStrs[] = $kEq . '0x' . bin2hex($v);
+						$sqlStrs[] = $kEq . '"' . addslashes($v) . '"';
+//						$sqlStrs[] = $kEq . '0x' . bin2hex($v);
 					}
 				break;
 
 				case 'null':
 				case 'NULL':
+					//	if $v is a NULL
 					$sqlStrs[] = $kEq . 'NULL';
 				break;
 
 				case 'array':
 				case 'object':
-					$sqlStrs[] = $kEq . '0x' . bin2hex(json_encode($v));
+					$sqlStrs[] = $kEq . '"' . addslashes(self::_json_encode($v)) . '"';
+//					$sqlStrs[] = $kEq . '0x' . bin2hex(self::_json_encode($v));
 				break;
 
 				//	resource, just ignore these
@@ -133,40 +99,55 @@ class SqlStatement
 	}
 
 	/**
+	 * Uses the Zend Json encoder if available.
+	 */
+	protected static function _json_encode($v)
+	{
+		static $hasEncoder;
+		if (!isset($hasEncoder)) {
+			$hasEncoder = class_exists('\\Zend\\Json\\Encoder');
+		}
+
+		if ($hasEncoder) {
+			return \Zend\Json\Encoder::encode($v);
+		}
+		return json_encode($v);
+	}
+
+	/**
 	 * Returns a string formatted for an SQL
 	 * "ON DUPLICATE KEY UPDATE" statement.
 	 *
-	 * Accepts an array where the values are the names of the desired properties.
-	 * An empty array means to use all.
+	 * Accepts an associative array and
+	 * an array where the values are the names of the desired keys.
+	 * An empty "include" array means to use all.
 	 *
+	 * @param array $input
 	 * @param array $include
 	 *
 	 * @return string
 	 */
-	public function getSqlValues(array $include = [])
+	public static function toValues(array $input, array $include = [])
 	{
+		if (array_values($input) === $input) {
+			throw new InvalidArgumentException('input must be an associative array');
+		}
+
 		$sqlStrs = [];
 
 		if (count($include)) {
 			foreach ($include as $i) {
-				if (array_key_exists($i, $this->_input)) {
+				if (array_key_exists($i, $input)) {
 					$sqlStrs[] = '`' . $i . '` = VALUES(`' . $i . '`)';
 				}
 			}
 		}
 		else {
-			foreach ($this->_input as $k => &$v) {
+			foreach ($input as $k => &$v) {
 				$sqlStrs[] = '`' . $k . '` = VALUES(`' . $k . '`)';
 			}
 		}
 
 		return implode(",\n", $sqlStrs);
-	}
-
-	/**
-	 * Disallow clone.
-	 */
-	private function __clone()
-	{
 	}
 }
