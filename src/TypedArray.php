@@ -365,8 +365,12 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 */
 	final public function getSpecialArr(array $opts = []) : array
 	{
-		//	Options that are passed in overwrite coded options.
-		$opts = array_merge(['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true], $opts);
+		//	Options that are passed in overwrite coded options. (keepJsonExpr is ignored)
+		$opts = array_merge(
+			['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true, 'omitEmpty' => true],
+			$opts
+		);
+		extract($opts, EXTR_OVERWRITE, '');
 
 		$arr = [];
 		switch ($this->_type) {
@@ -379,7 +383,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			case 'real':
 			case 'resource':
 				foreach ($this->_container as $k => &$v) {
-					if ($v !== null) {
+					if ($v !== null || !$_omitEmpty) {
 						$arr[$k] = $v;
 					}
 				}
@@ -388,7 +392,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 
 			case 'string':
 				foreach ($this->_container as $k => &$v) {
-					if ($v !== '' && $v !== null) {
+					if (($v !== '' && $v !== null) || !$_omitEmpty) {
 						$arr[$k] = $v;
 					}
 				}
@@ -397,7 +401,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 
 			case 'array':
 				foreach ($this->_container as $k => &$v) {
-					if (count($v) && $v !== null) {
+					if ((count($v) && $v !== null) || !$_omitEmpty) {
 						$arr[$k] = $v;
 					}
 				}
@@ -409,17 +413,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		if (method_exists($this->_type, 'getSpecialArr')) {
 			foreach ($this->_container as $k => $v) {
 				$tObj = $v->getSpecialArr($opts);
-				if (count($tObj)) {
+				if (count($tObj) || !$_omitEmpty) {
 					$arr[$k] = $tObj;
 				}
 			}
 		}
-		elseif ($this->_type instanceof \DateTime && $opts['dateToBsonDate']) {
+		elseif ($this->_type instanceof \DateTime && $_dateToBsonDate) {
 			foreach ($this->_container as $k => $v) {
 				$arr[$k] = new \MongoDB\BSON\UTCDateTime($v->getTimestamp() * 1000);
 			}
 		}
-		elseif ($this->_type instanceof \MongoDB\BSON\UTCDateTime && $opts['dateToBsonDate']) {
+		elseif ($this->_type instanceof \MongoDB\BSON\UTCDateTime && $_dateToBsonDate) {
 			foreach ($this->_container as $k => $v) {
 				$arr[$k] = $v;
 			}
@@ -427,7 +431,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		elseif (method_exists($this->_type, 'toArray')) {
 			foreach ($this->_container as $k => $v) {
 				$vArr = $v->toArray();
-				if (count($vArr)) {
+				if (count($vArr) || !$_omitEmpty) {
 					$arr[$k] = $vArr;
 				}
 			}
@@ -435,7 +439,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		elseif (method_exists($this->_type, '__toString')) {
 			foreach ($this->_container as $k => $v) {
 				$vStr = $v->__toString();
-				if ($vStr !== '') {
+				if ($vStr !== '' || !$_omitEmpty) {
 					$arr[$k] = $vStr;
 				}
 			}
@@ -443,13 +447,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		else {
 			//	else this is some generic object then copy non-null/non-empty members or properties
 			foreach ($this->_container as $k => $v) {
-				if ($v !== null && $v !== '') {
+				if (($v !== null && $v !== '') || !$_omitEmpty) {
 					$arr[$k] = $v;
 				}
 			}
 		}
 
-		if ($opts['switch_id'] && array_key_exists('id_', $arr)) {
+		if ($_switch_id && array_key_exists('id_', $arr)) {
 			$arr['_id'] = &$arr['id_'];
 			unset($arr['id_']);
 		}
