@@ -2,8 +2,8 @@
 /**
  * Create an array where members must be the same type.
  * @name        TypedArray
- * @copyright      Copyright (c) 2012 Reid Woodbury Jr
- * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
+ * @copyright   Copyright (c) 2012 Reid Woodbury Jr
+ * @license     http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed;
@@ -82,7 +82,11 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 			break;
 
 			case 'string':
-				$in = self::_json_decode($in);
+				$in = json_decode($in);
+				$jsonLastErr = json_last_error();
+				if ($jsonLastErr !== JSON_ERROR_NONE) {
+					throw new \UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
+				}
 			break;
 
 			case 'null':
@@ -200,7 +204,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		}
 	}
 
-	public function &getContainerReference() {
+	public function &getContainerReference()
+	{
 		return $this->_container;
 	}
 
@@ -240,7 +245,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return bool
 	 */
-	public function offsetExists($offset): bool
+	public function offsetExists($offset) : bool
 	{
 		return isset($this->_container[$offset]);
 	}
@@ -250,7 +255,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return int
 	 */
-	public function count(): int
+	public function count() : int
 	{
 		return count($this->_container);
 	}
@@ -260,7 +265,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return ArrayIterator
 	 */
-	public function getIterator(): iterable
+	public function getIterator() : iterable
 	{
 		return new ArrayIterator($this->_container);
 	}
@@ -270,7 +275,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return array
 	 */
-	public function keys(): array
+	public function keys() : array
 	{
 		return array_keys($this->_container);
 	}
@@ -283,7 +288,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 * @return TypedArray
 	 * @throws LengthException
 	 */
-	public function combine(array $keys): self
+	public function combine(array $keys) : self
 	{
 		if (count($keys) !== count($this->_container)) {
 			throw new LengthException('array counts do not match');
@@ -311,7 +316,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return array
 	 */
-	public function toArray(): array
+	public function toArray() : array
 	{
 		switch ($this->_type) {
 			case 'bool':
@@ -358,7 +363,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 	 *
 	 * @return array
 	 */
-	final public function getSpecialObj(array $opts = []): array
+	final public function getSpecialArr(array $opts = []) : array
 	{
 		//	Options that are passed in overwrite coded options.
 		$opts = array_merge(['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true], $opts);
@@ -401,9 +406,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		}
 
 		//	At this point all items are some type of object.
-		if (method_exists($this->_type, 'getSpecialObj')) {
+		if (method_exists($this->_type, 'getSpecialArr')) {
 			foreach ($this->_container as $k => $v) {
-				$tObj = $v->getSpecialObj($opts);
+				$tObj = $v->getSpecialArr($opts);
 				if (count($tObj)) {
 					$arr[$k] = $tObj;
 				}
@@ -445,7 +450,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess, IteratorAggregate
 		}
 
 		if ($opts['switch_id'] && array_key_exists('id_', $arr)) {
-			$arr['_id'] = $arr['id_'];
+			$arr['_id'] = &$arr['id_'];
 			unset($arr['id_']);
 		}
 

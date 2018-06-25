@@ -12,6 +12,7 @@ namespace Diskerror\Typed;
 
 use InvalidArgumentException;
 use function json_encode;
+use Phalcon\Exception;
 use function stat;
 
 class SqlStatement
@@ -85,8 +86,12 @@ class SqlStatement
 
 				case 'array':
 				case 'object':
-					$sqlStrs[] = $kEq . '"' . addslashes(self::_json_encode($v)) . '"';
-//					$sqlStrs[] = $kEq . '0x' . bin2hex(self::_json_encode($v));
+					$sqlStrs[] = $kEq . '"' . addslashes(json_encode($v)) . '"';
+//					$sqlStrs[] = $kEq . '0x' . bin2hex(json_encode($v));
+					$jsonLastErr = json_last_error();
+					if ($jsonLastErr !== JSON_ERROR_NONE) {
+						throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
+					}
 				break;
 
 				//	resource, just ignore these
@@ -96,22 +101,6 @@ class SqlStatement
 		}
 
 		return implode(",\n", $sqlStrs);
-	}
-
-	/**
-	 * Uses the Zend Json encoder if available.
-	 */
-	protected static function _json_encode($v)
-	{
-		static $hasEncoder;
-		if (!isset($hasEncoder)) {
-			$hasEncoder = class_exists('\\Zend\\Json\\Encoder');
-		}
-
-		if ($hasEncoder) {
-			return \Zend\Json\Encoder::encode($v);
-		}
-		return json_encode($v);
 	}
 
 	/**

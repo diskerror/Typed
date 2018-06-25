@@ -161,11 +161,13 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			break;
 
 			case 'string':
-				try {
-					$in = self::_json_decode($in);
-				}
-				catch (\Throwable $t) {
-					throw new InvalidArgumentException('invalid input type (string)');
+				$in = json_decode($in);
+				$jsonLastErr = json_last_error();
+				if ($jsonLastErr !== JSON_ERROR_NONE) {
+					throw new \UnexpectedValueException(
+						'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
+						$jsonLastErr
+					);
 				}
 			break;
 
@@ -205,7 +207,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	public function __unset($k)
 	{
-		//	rather than unsetting, we set to default value
 		$this->{$k} = is_object($this->_defaultVars[$k]) ?
 			clone $this->_defaultVars[$k] :
 			$this->_defaultVars[$k];
@@ -218,7 +219,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @return bool
 	 */
-	private function _keyExists($k): bool
+	private function _keyExists($k) : bool
 	{
 		return array_key_exists($k, $this->_defaultVars) || array_key_exists($k, $this->_map);
 	}
@@ -446,7 +447,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @return bool
 	 */
-	public function __isset($k): bool
+	public function __isset($k) : bool
 	{
 		if ($k[0] === '_') {
 			return false;
@@ -493,7 +494,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * Required method for Iterator.
 	 * @return bool
 	 */
-	final public function valid(): bool
+	final public function valid() : bool
 	{
 		return isset($this->_publicNames[$this->_position]);
 	}
@@ -502,7 +503,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * Required method for Countable.
 	 * @return int
 	 */
-	final public function count(): int
+	final public function count() : int
 	{
 		return count($this->_defaultVars);
 	}
@@ -512,11 +513,11 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * object that DO NOT begin with an underscore. This allows protected or
 	 * private properties to be treated as if they were public. This supports the
 	 * convention that protected and private property names begin with an
-	 * underscore (_). Use "__get" and "__set" to access individual names.
+	 * underscore (_).
 	 *
 	 * @return array
 	 */
-	final public function toArray(): array
+	final public function toArray() : array
 	{
 		$arr = [];
 
@@ -524,10 +525,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			$v = $this->_getByName($k);
 
 			if (is_object($v)) {
-				if ($this->$k instanceof \Zend\Json\Expr) {
-					$arr[$k] = $this->$k;    // maintain the type
-				}
-				elseif (method_exists($v, 'toArray')) {
+				if (method_exists($v, 'toArray')) {
 					$arr[$k] = $v->toArray();
 				}
 				elseif (method_exists($v, '__toString')) {
@@ -557,7 +555,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @return array
 	 */
-	final public function getSpecialObj(array $opts = []): array
+	final public function getSpecialArr(array $opts = []) : array
 	{
 		//	Options that are passed in overwrite coded options.
 		$opts = array_merge(['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true], $opts);
