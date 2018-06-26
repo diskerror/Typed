@@ -562,7 +562,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true, 'omitEmpty' => true],
 			$opts
 		);
-		extract($opts, EXTR_OVERWRITE, '');
+		extract($opts);
 
 		static $ZJE_STRING = '\\Zend\\Json\\Expr';
 
@@ -570,7 +570,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);
 
-			if ($k === 'id_' && $_switch_id) {
+			if ($k === 'id_' && $switch_id) {
 				$arr['_id'] = $v;
 				continue;
 			}
@@ -578,7 +578,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			switch (gettype($v)) {
 				case 'null':
 				case 'NULL':
-					if (!$_omitEmpty) {
+					if (!$omitEmpty) {
 						$arr[$k] = null;
 					}
 				break;
@@ -588,7 +588,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				break;
 
 				case 'string':
-					if ('' !== $v || !$_omitEmpty) {
+					if ('' !== $v || !$omitEmpty) {
 						$arr[$k] = $v;
 					}
 				break;
@@ -600,36 +600,36 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 							$arr[$k] = $tObj;
 						}
 					}
-					elseif (($this->$k instanceof $ZJE_STRING) && $_keepJsonExpr) {
+					elseif (($this->$k instanceof $ZJE_STRING) && $keepJsonExpr) {
 						$arr[$k] = $this->$k;    // maintain the type
 					}
-					elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $_dateToBsonDate) {
+					elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $dateToBsonDate) {
 						$arr[$k] = $this->$k;    // maintain the type
 					}
-					elseif ($this->$k instanceof \DateTimeInterface && $_dateToBsonDate) {
+					elseif ($this->$k instanceof \DateTimeInterface && $dateToBsonDate) {
 						$arr[$k] = new \MongoDB\BSON\UTCDateTime($this->$k->getTimestamp() * 1000);
 					}
 					elseif (method_exists($v, 'toArray')) {
 						$vArr = $v->toArray();
-						if (count($vArr) || !$_omitEmpty) {
+						if (count($vArr) || !$omitEmpty) {
 							$arr[$k] = $vArr;
 						}
 					}
 					elseif (method_exists($v, '__toString')) {
 						$vStr = $v->__toString();
-						if ($vStr !== '' || !$_omitEmpty) {
+						if ($vStr !== '' || !$omitEmpty) {
 							$arr[$k] = $vStr;
 						}
 					}
 					else {
-						if (count($v) || !$_omitEmpty) {
+						if (count($v) || !$omitEmpty) {
 							$arr[$k] = $v;
 						}
 					}
 				break;
 
 				case 'array':
-					if (count($v) || !$_omitEmpty) {
+					if (count($v) || !$omitEmpty) {
 						$arr[$k] = $v;
 					}
 				break;
@@ -639,7 +639,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 					$arr[$k] = $v;
 			}
 
-			if ($k === 'id_' && $_switch_id) {
+			if ($k === 'id_' && $switch_id) {
 				$arr['_id'] = &$arr['id_'];
 				unset($arr['id_']);
 			}
