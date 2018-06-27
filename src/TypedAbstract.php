@@ -244,7 +244,7 @@ abstract class TypedAbstract implements Countable
 	public function getArrForRest()
 	{
 		return $this->getSpecialArr(
-			['dateToBsonDate' => false, 'keepJsonExpr' => false, 'switch_id' => true, 'omitEmpty' => true]
+			['dateToBsonDate' => false, 'keepJsonExpr' => true, 'switch_id' => true, 'omitEmpty' => true]
 		);
 	}
 }
