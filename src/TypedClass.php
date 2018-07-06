@@ -570,11 +570,6 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);
 
-			if ($k === 'id_' && $switch_id) {
-				$arr['_id'] = $v;
-				continue;
-			}
-
 			switch (gettype($v)) {
 				case 'null':
 				case 'NULL':
