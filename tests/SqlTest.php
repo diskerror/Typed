@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/classes/SimpleTyped.php';
 
-class SqlTest extends PHPUnit_Framework_TestCase
+class SqlTest extends PHPUnit\Framework\TestCase
 {
 	public function testSql()
 	{
@@ -14,7 +14,7 @@ class SqlTest extends PHPUnit_Framework_TestCase
 `myFloat` = 3.14,
 `myString` = "",
 `myArray` = "[]",
-`myObj` = "[]",
+`myObj` = "{}",
 `myTypedArray` = "[]"',
 			\Diskerror\Typed\SqlStatement::toInsert($simp->toArray())
 		);

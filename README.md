@@ -4,7 +4,7 @@ PHP classes to strictly define member structure, to control their data types, an
 ## TypedAbstract
 This defines the convience methods that are to be implemented in the below classes.
 
-### assignObject
+### assign
 Copies all matching member names while maintaining original types and doing a deep copy where appropriate.
 This method silently ignores extra properties in the input object, leaves unmatched properties in the current class untouched, and skips names starting with an underscore (per Zend Framework coding style).
 Input can be an object or an array.

@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/classes/PrefListList.php';
 
-class PrefListTest extends PHPUnit_Framework_TestCase
+class PrefListTest extends PHPUnit\Framework\TestCase
 {
 	public function testComplex()
 	{

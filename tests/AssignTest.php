@@ -2,9 +2,9 @@
 
 require_once __DIR__ . '/classes/SimpleTyped.php';
 
-class AssignTest extends PHPUnit_Framework_TestCase
+class AssignTest extends PHPUnit\Framework\TestCase
 {
-	public function testAssignments()
+	public function testAssignBool()
 	{
 		$t = new SimpleTyped();
 
@@ -33,16 +33,20 @@ class AssignTest extends PHPUnit_Framework_TestCase
 		$t->myBool = ['a'];
 		$this->assertTrue($t->myBool);
 
-		$c = new stdClass();
+		$c         = new stdClass();
 		$t->myBool = $c;
 		$this->assertFalse($t->myBool);
 		$c->aMember = 'string data';
-		$t->myBool = $c;
+		$t->myBool  = $c;
 		$this->assertTrue($t->myBool);
 
 		unset($t->myBool);
 		$this->assertTrue($t->myBool);
+	}
 
+		public function testAssignInt()
+	{
+		$t = new SimpleTyped();
 
 		////////////////////////////////////////////////////////////////////////
 		//	Integer.
@@ -87,7 +91,11 @@ class AssignTest extends PHPUnit_Framework_TestCase
 
 		unset($t->myInt);
 		$this->assertEquals(0, $t->myInt);
+	}
 
+	public function testAssignFloat()
+	{
+		$t = new SimpleTyped();
 
 		////////////////////////////////////////////////////////////////////////
 		//	Float.
@@ -121,14 +129,18 @@ class AssignTest extends PHPUnit_Framework_TestCase
 
 		$c = new stdClass();
 		$t->myFloat = $c;
-		$this->assertFalse($t->myFloat === 0.0);
+		$this->assertTrue($t->myFloat === 0.0);
 		$c->aMember = 'string data';
 		$t->myFloat = $c;
 		$this->assertTrue($t->myFloat === 1.0);
 
 		unset($t->myFloat);
 		$this->assertEquals(3.14, $t->myFloat);
+	}
 
+	public function testAssignString()
+	{
+		$t = new SimpleTyped();
 
 		////////////////////////////////////////////////////////////////////////
 		//	String.
@@ -161,7 +173,11 @@ class AssignTest extends PHPUnit_Framework_TestCase
 
 		unset($t->myString);
 		$this->assertEquals('', $t->myString);
+	}
 
+	public function testAssignArray()
+	{
+		$t = new SimpleTyped();
 
 		////////////////////////////////////////////////////////////////////////
 		//	Array.
@@ -190,7 +206,11 @@ class AssignTest extends PHPUnit_Framework_TestCase
 
 		unset($t->myArray);
 		$this->assertEquals([], $t->myArray);
+	}
 
+	public function testAssignObject()
+	{
+		$t = new SimpleTyped();
 
 		////////////////////////////////////////////////////////////////////////
 		//	Generic object.
@@ -203,7 +223,10 @@ class AssignTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(new stdClass(), $t->myObj);
 
 		$t->myObj = ['first' => 'a', 'second' => 'b'];
-		$this->assertEquals((object)['first' => 'a', 'second' => 'b'], $t->myObj);
+		$obj = new stdClass();
+		$obj->first = 'a';
+		$obj->second = 'b';
+		$this->assertEquals($obj, $t->myObj);
 
 		$c = new stdClass();
 		$c->aMember = 'string data';
@@ -212,7 +235,6 @@ class AssignTest extends PHPUnit_Framework_TestCase
 
 		unset($t->myObj);
 		$this->assertEquals(new stdClass(), $t->myObj);
-
 	}
 
 }

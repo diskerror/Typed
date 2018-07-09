@@ -14,10 +14,10 @@ set_error_handler(
  * Set handler for uncaught exceptions.
  */
 set_exception_handler(
-	function(Exception $e) {
-		cerr($e->getMessage() . PHP_EOL);
-		cerr($e . PHP_EOL);
-		exit($e->getCode());
+	function(Throwable $t) {
+		fwrite(STDERR, $t->getMessage() . PHP_EOL);
+		fwrite(STDERR, $t . PHP_EOL);
+		exit($t->getCode());
 	}
 );
 

@@ -14,8 +14,17 @@ use InvalidArgumentException;
 use UnexpectedValueException;
 use function json_encode;
 
+/**
+ * Class SqlStatement
+ * @package Diskerror\Typed
+ */
 class SqlStatement
 {
+	/**
+	 * Ya don't need to make an instance of this class to use the static methods.
+	 */
+	protected function __construct() { }
+
 	/**
 	 * Returns a string formatted for an SQL insert or update.
 	 *

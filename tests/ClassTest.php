@@ -1,6 +1,6 @@
 <?php
 
-class ClassTest extends PHPUnit_Framework_TestCase
+class ClassTest extends PHPUnit\Framework\TestCase
 {
 	public function testNewTypedDate()
 	{

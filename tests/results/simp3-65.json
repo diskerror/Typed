@@ -1,9 +1,1 @@
-{
-    "myBool": true,
-    "myInt": 3,
-    "myFloat": 3.14,
-    "myString": "234445",
-    "myArray": [],
-    "myObj": [],
-    "myTypedArray": []
-}
+{"myBool":true,"myInt":3,"myFloat":3.14,"myString":"234445","myArray":[],"myObj":{},"myTypedArray":[]}

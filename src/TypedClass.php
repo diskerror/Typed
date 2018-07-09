@@ -9,6 +9,7 @@
 namespace Diskerror\Typed;
 
 use Iterator;
+use Countable;
 use InvalidArgumentException;
 
 /**
@@ -20,7 +21,7 @@ use InvalidArgumentException;
  *      begin with an underscore, but filter access to those class members or
  *      properties that have a visibility of protected or private.
  *
- * Input to the constructor or assignObject methods must be an array or object. Only the
+ * Input to the constructor or assign methods must be an array or object. Only the
  *      values in the matching names will be filtered and copied into the object.
  *      All input will be copied by value, not referenced.
  *
@@ -36,11 +37,11 @@ use InvalidArgumentException;
  *      "_set_personName($in)". That is, prepend "_set_" to the property name.
  *
  * The ideal usage of this abstract class is as the parent class of a data set
- *      where the input to the constructor (or assignObject) method is an HTTP request
+ *      where the input to the constructor (or assign) method is an HTTP request
  *      object. It will help with filtering and insuring the existance of default
  *      values for missing input parameters.
  */
-abstract class TypedClass extends TypedAbstract implements Iterator
+abstract class TypedClass implements TypedInterface, Iterator, Countable
 {
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
@@ -48,6 +49,12 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 * @var array
 	 */
 	protected $_map = [];
+
+	/**
+	 * Holds options for "toArray" customizations.
+	 * @var \Diskerror\Typed\ArrayOptions
+	 */
+	protected $_arrayOptions;
 
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
@@ -84,6 +91,8 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	public function __construct($in = null)
 	{
+		$this->_arrayOptions = new ArrayOptions();
+
 		$this->_calledClass = get_called_class();
 
 		//	Build array of default values.
@@ -112,7 +121,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 		$this->_publicNames = array_keys($this->_defaultVars);
 
-		//	Don't waste time with assignObject if input is one of these.
+		//	Don't waste time with assign if input is one of these.
 		//		Just return leaving the default values.
 		switch (gettype($in)) {
 			case 'NULL':
@@ -122,7 +131,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				return;
 		}
 
-		$this->assignObject($in);
+		$this->assign($in);
 	}
 
 	/**
@@ -139,7 +148,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
 	 */
-	public function assignObject($in = null)
+	public function assign($in = null)
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -150,7 +159,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				//	Leave associative array as is.
 				//	Copy indexed array by position to a named array
 				if (array_values($in) === $in) {
-					$nameArr = $this->_defaultVars;
+					$nameArr  = $this->_defaultVars;
 					$minCount = min(count($in), count($nameArr));
 					for ($i = 0; $i < $minCount; ++$i) {
 						$nameArr[$this->_publicNames[$i]] = $in[$i];
@@ -161,7 +170,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 			break;
 
 			case 'string':
-				$in = json_decode($in);
+				$in          = json_decode($in);
 				$jsonLastErr = json_last_error();
 				if ($jsonLastErr !== JSON_ERROR_NONE) {
 					throw new \UnexpectedValueException(
@@ -258,26 +267,26 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 
 			case 'bool':
 			case 'boolean':
-				$this->{$k} = self::_castToBoolean($v);
+				$this->{$k} = Cast::toBoolean($v);
 			break;
 
 			case 'int':
 			case 'integer':
-				$this->{$k} = self::_castToInteger($v);
+				$this->{$k} = Cast::toInteger($v);
 			break;
 
 			case 'float':
 			case 'double':
 			case 'real':
-				$this->{$k} = self::_castToDouble($v);
+				$this->{$k} = Cast::toDouble($v);
 			break;
 
 			case 'string':
-				$this->{$k} = self::_castToString($v);
+				$this->{$k} = Cast::toString($v);
 			break;
 
 			case 'array':
-				$this->{$k} = self::_castToArray($v);
+				$this->{$k} = Cast::toArray($v);
 			break;
 
 			case 'object':
@@ -291,6 +300,15 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	}
 
 	/**
+	 * Override this method for additional checking such as when a start date
+	 * is required to be earlier than an end date, any range of values like
+	 * minimum and maximum, or any custom filtering dependent on more than a single property.
+	 */
+	protected function _checkRelatedProperties()
+	{
+	}
+
+	/**
 	 * Casting to an object type that is dependent on original value and input value.
 	 *
 	 * @param string $k
@@ -299,16 +317,16 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	protected function _castToObject($k, &$v)
 	{
 		$propertyDefaultClass = $this->_defaultVars[$k];
-		$propertyClassType = get_class($propertyDefaultClass);
+		$propertyClassType    = get_class($propertyDefaultClass);
 
 		//	if this->k is a TypedAbstract object and v is any other type
 		//		then absorb v or v's properties into this->k's properties
-		if ($propertyDefaultClass instanceof TypedAbstract) {
+		if ($propertyDefaultClass instanceof TypedInterface) {
 			if ($this->{$k} === null) {
 				$this->{$k} = clone $propertyDefaultClass; //	cloned for possible default values
 			}
 
-			$this->{$k}->assignObject($v);
+			$this->{$k}->assign($v);
 		}
 
 		elseif (is_object($v)) {
@@ -360,13 +378,14 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 		}
 	}
 
-	/**
-	 * Override this method for additional checking such as when a start date
-	 * is required to be earlier than an end date, any range of values like
-	 * minimum and maximum, or any custom filtering not dependent on a single property.
-	 */
-	protected function _checkRelatedProperties()
+	public function getArrayOptions() : int
 	{
+		return $this->_arrayOptions->get();
+	}
+
+	public function setArrayOptions(int $opts)
+	{
+		$this->_arrayOptions->set($opts);
 	}
 
 	/**
@@ -519,50 +538,11 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 	 */
 	final public function toArray() : array
 	{
-		$arr = [];
-
-		foreach ($this->_publicNames as $k) {
-			$v = $this->_getByName($k);
-
-			if (is_object($v)) {
-				if (method_exists($v, 'toArray')) {
-					$arr[$k] = $v->toArray();
-				}
-				elseif (method_exists($v, '__toString')) {
-					$arr[$k] = $v->__toString();
-				}
-				else {
-					$arr[$k] = (array)$v;
-				}
-			}
-			else {
-				$arr[$k] = $v;
-			}
-		}
-
-		return $arr;
-	}
-
-	/**
-	 * This is simmilar to "toArray" above except that some conversions are
-	 * made to be more compatible to MongoDB. All objects with a lineage
-	 * of DateTime are converted to MongoDB\BSON\UTCDateTime, and all top
-	 * level members with the name "id_" are assumed to be intended to be a
-	 * Mongo primary key and the name is changed to "_id". All times are
-	 * assumed to be UTC time. Null or empty members are omitted.
-	 *
-	 * @param array $opts
-	 *
-	 * @return array
-	 */
-	final public function getSpecialArr(array $opts = []) : array
-	{
-		//	Options that are passed in overwrite hard coded options.
-		$opts = array_merge(
-			['dateToBsonDate' => true, 'keepJsonExpr' => true, 'switch_id' => true, 'omitEmpty' => true],
-			$opts
-		);
-		extract($opts);
+		$omitEmpty    = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$omitResource = $this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE);
+		$switchID     = $this->_arrayOptions->has(ArrayOptions::SWITCH_ID);
+		$keepJsonExpr = $this->_arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+		$bsonDate     = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
 
 		static $ZJE_STRING = '\\Zend\\Json\\Expr';
 
@@ -579,7 +559,9 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				break;
 
 				case 'resource':
-					// do not copy
+					if (!$omitResource) {
+						$arr[$k] = $v;
+					}
 				break;
 
 				case 'string':
@@ -589,35 +571,40 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 				break;
 
 				case 'object':
-					if (method_exists($this->$k, 'getSpecialObj')) {
-						$tObj = $this->$k->getSpecialObj($opts);
-						if (count($tObj)) {
-							$arr[$k] = $tObj;
-						}
-					}
-					elseif (($this->$k instanceof $ZJE_STRING) && $keepJsonExpr) {
+					if (($this->$k instanceof $ZJE_STRING) && $keepJsonExpr) {
 						$arr[$k] = $this->$k;    // maintain the type
 					}
-					elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $dateToBsonDate) {
+					elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $bsonDate) {
 						$arr[$k] = $this->$k;    // maintain the type
 					}
-					elseif ($this->$k instanceof \DateTimeInterface && $dateToBsonDate) {
+					elseif ($this->$k instanceof \DateTimeInterface && $bsonDate) {
 						$arr[$k] = new \MongoDB\BSON\UTCDateTime($this->$k->getTimestamp() * 1000);
 					}
 					elseif (method_exists($v, 'toArray')) {
-						$vArr = $v->toArray();
-						if (count($vArr) || !$omitEmpty) {
-							$arr[$k] = $vArr;
+						if (method_exists($v, 'getArrayOptions')) {
+							$vOrigOpts = $v->getArrayOptions();
+							$v->setArrayOptions($this->_arrayOptions->get());
+						}
+
+						$arr[$k] = $v->toArray();
+
+						if (isset($vOrigOpts)) {
+							$v->setArrayOptions($vOrigOpts);
+							unset($vOrigOpts);
+						}
+
+						if (count($arr[$k]) === 0 && $omitEmpty) {
+							unset($arr[$k]);
 						}
 					}
 					elseif (method_exists($v, '__toString')) {
-						$vStr = $v->__toString();
-						if ($vStr !== '' || !$omitEmpty) {
-							$arr[$k] = $vStr;
+						$arr[$k] = $v->__toString();
+						if ($arr[$k] === '' && $omitEmpty) {
+							unset($arr[$k]);
 						}
 					}
 					else {
-						if (count($v) || !$omitEmpty) {
+						if (count((array)$v) || !$omitEmpty) {
 							$arr[$k] = $v;
 						}
 					}
@@ -634,7 +621,7 @@ abstract class TypedClass extends TypedAbstract implements Iterator
 					$arr[$k] = $v;
 			}
 
-			if ($k === 'id_' && $switch_id) {
+			if ($k === 'id_' && $switchID) {
 				$arr['_id'] = &$arr['id_'];
 				unset($arr['id_']);
 			}

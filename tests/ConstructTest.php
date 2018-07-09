@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/classes/SimpleTyped.php';
 
-class ConstructTest extends PHPUnit_Framework_TestCase
+class ConstructTest extends PHPUnit\Framework\TestCase
 {
 	public function testEmptyConstructor()
 	{
@@ -15,11 +15,10 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue(is_array($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
 
-// 		echo jsonEncode($simp->toArray()); exit;
+// 		echo json_encode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-15.json',
-			json_encode($simp->toArray()),
-			'Creation of basic object.'
+			json_encode($simp->toArray())
 		);
 
 
@@ -38,8 +37,7 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 		// echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-32.json',
-			json_encode($simp->toArray()),
-			'Change basic member values.'
+			json_encode($simp->toArray())
 		);
 	}
 
@@ -58,8 +56,7 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 		// echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp2-48.json',
-			json_encode($simp->toArray()),
-			'Create from indexed array.'
+			json_encode($simp->toArray())
 		);
 	}
 
@@ -78,8 +75,7 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 		// echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp3-65.json',
-			json_encode($simp->toArray()),
-			'Create from associative array.'
+			json_encode($simp->toArray())
 		);
 	}
 
@@ -110,8 +106,7 @@ class ConstructTest extends PHPUnit_Framework_TestCase
 		// echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp4-93.json',
-			json_encode($simp->toArray()),
-			'Create from standard class.'
+			json_encode($simp->toArray())
 		);
 	}
 
