@@ -10,14 +10,13 @@ This method silently ignores extra properties in the input object, leaves unmatc
 Input can be an object or an array.
 
 ### toArray
-Returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed.
+Returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed. Options can be set for the returned array.
 
-### getSpecialObj
-Like "toArray" above, this returns an associative array of this object with only the appropriate members. A deep copy/converstion to an associative array from objects is also performed. This method specifically adds these default options:
-* conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC, *MongoDB\BSON\UTCDateTime* objects will remain untouched;
-* all top level members with the name "id_" are assumed to be intended to be a Mongo primary key and the name is changed to "_id";
-* objects of type *Zend\Json\Expr* remain untouched;
-* null or empty members are omitted to shrink storage or transmittion needs.
+* OMIT_EMPTY: null or empty members are omitted to shrink storage or transmittion needs.
+* OMIT_RESOURCE: resource IDs are meaningless for transmitted data.
+* SWITCH_ID: a top level member with the name "id_" is assumed to be intended to be a Mongo primary key and the name is changed to "_id";
+* KEEP_JSON_EXPR: objects of type *Zend\Json\Expr* remain untouched;
+* TO_BSON_DATE: conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC, *MongoDB\BSON\UTCDateTime* objects will remain untouched;
 
 ## TypedClass
 The derivitives of Typed\TypedClass are contracted to do these things:
