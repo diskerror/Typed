@@ -67,9 +67,4 @@ final class ArrayOptions
 	{
 		return (bool) $this->_options & $opt;
 	}
-
-	public function __invoke(int $opt) : bool
-	{
-		return (bool) $this->_options & $opt;
-	}
 }

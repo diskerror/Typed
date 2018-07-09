@@ -67,6 +67,9 @@ class Cast
 				return intval($in, 0);
 
 			case 'object':
+				if (method_exists($in, 'toArray')) {
+					return (int)$in->toArray();
+				}
 				return (int)(array)$in;
 
 			case 'null':
@@ -184,11 +187,12 @@ class Cast
 	 */
 	public static function toArray($in) : array
 	{
-		if (is_object($in) && method_exists($in, 'toArray')) {
-			return $in->toArray();
+		if (is_object($in)) {
+			if (method_exists($in, 'toArray')) {
+				return $in->toArray();
+			}
 		}
-
-		if (is_string($in)) {
+		elseif (is_string($in)) {
 			if (strtolower($in) === 'null') {
 				return null;
 			}
