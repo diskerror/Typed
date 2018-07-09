@@ -59,3 +59,8 @@ Accepts an array where the values are the names of members to include. An empty 
 ```
 > composer require diskerror/typed
 ```
+
+# PHPUnit
+```
+> vendor/bin/phpunit --coverage-text
+```
