@@ -45,7 +45,15 @@ final class ArrayOptions
 	/**
 	 * @var int
 	 */
-	private $_options = 0;
+	private $_options;
+
+	/**
+	 * @param int $opts
+	 */
+	public function __construct(int $opts = 0)
+	{
+		$this->_options = $opts;
+	}
 
 	/**
 	 * @return int
@@ -65,6 +73,6 @@ final class ArrayOptions
 
 	public function has(int $opt) : bool
 	{
-		return (bool) $this->_options & $opt;
+		return (bool)$this->_options & $opt;
 	}
 }

@@ -91,9 +91,11 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 */
 	public function __construct($in = null)
 	{
-		$this->_arrayOptions = new ArrayOptions();
-
 		$this->_calledClass = get_called_class();
+
+		if(!isset($this->_arrayOptions)) {
+			$this->_arrayOptions = new ArrayOptions();
+		}
 
 		//	Build array of default values.
 		//	First get all class properties then remove elements with names starting with underscore.

@@ -49,7 +49,9 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 	 */
 	public function __construct($values = null, $type = null)
 	{
-		$this->_arrayOptions = new ArrayOptions();
+		if(!isset($this->_arrayOptions)) {
+			$this->_arrayOptions = new ArrayOptions();
+		}
 
 		if (isset($this->_type)) {
 			if (null !== $type) {
