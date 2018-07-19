@@ -40,6 +40,9 @@ The instances or derivatives of *Typed\TypedArray* are contracted to do these th
 * Silently cast assigned data in the most obvious way when input is of a different type.
 * Impliment “toArray” to return a deeply transformed associative array.
 
+## DateTime and Date
+These two classes have been moved from [Utilities](https://github.com/diskerror/Utilities) and that repository is now considered obsolete. These classes add convenience methods to the built-in PHP *DateTime* class. This includes the *__toString* method that returns a date-time string formatted for the default MySQL date-time format, and also adds handling of *DateTime* for MongoDB.
+
 # Classes for autoload
 These next two classes are best thought of as namespaces of functions. Class design is used to activate the autoload feature of PHP.
 
@@ -58,9 +61,4 @@ Accepts an array where the values are the names of members to include. An empty 
 # Composer
 ```
 > composer require diskerror/typed
-```
-
-# PHPUnit
-```
-> vendor/bin/phpunit --coverage-text
 ```
