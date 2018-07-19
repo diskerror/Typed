@@ -10,10 +10,6 @@
 
 namespace Diskerror\Typed;
 
-use InvalidArgumentException;
-use UnexpectedValueException;
-use function json_encode;
-
 /**
  * Class SqlStatement
  * @package Diskerror\Typed
@@ -40,7 +36,7 @@ class SqlStatement
 	public static function toInsert(array $input, array $include = [])
 	{
 		if (array_values($input) === $input) {
-			throw new InvalidArgumentException('input must be an associative array');
+			throw new \InvalidArgumentException('input must be an associative array');
 		}
 
 		if (count($include)) {
@@ -98,7 +94,7 @@ class SqlStatement
 //					$sqlStrs[] = $kEq . '0x' . bin2hex(json_encode($v));
 					$jsonLastErr = json_last_error();
 					if ($jsonLastErr !== JSON_ERROR_NONE) {
-						throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
+						throw new \UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 					}
 				break;
 
@@ -127,7 +123,7 @@ class SqlStatement
 	public static function toValues(array $input, array $include = [])
 	{
 		if (array_values($input) === $input) {
-			throw new InvalidArgumentException('input must be an associative array');
+			throw new \InvalidArgumentException('input must be an associative array');
 		}
 
 		$sqlStrs = [];

@@ -8,19 +8,12 @@
 
 namespace Diskerror\Typed;
 
-use ArrayAccess;
-use IteratorAggregate;
-use ArrayIterator;
-use InvalidArgumentException;
-use LogicException;
-use LengthException;
-
 /**
  * Provides support for an array's elements to all have the same type.
  * If type is defined as null then any element can have any type but
  *      deep copying of objects is always available.
  */
-class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
+class TypedArray implements TypedInterface, \ArrayAccess, \IteratorAggregate
 {
 	/**
 	 * A string that specifies the type of values in the container.
@@ -46,16 +39,18 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 	 *
 	 * @param array|object|string|null $values OPTIONAL null
 	 * @param string                   $type   OPTIONAL null
+	 *
+	 * @throws \LogicException
 	 */
 	public function __construct($values = null, $type = null)
 	{
-		if(!isset($this->_arrayOptions)) {
+		if (!isset($this->_arrayOptions)) {
 			$this->_arrayOptions = new ArrayOptions();
 		}
 
 		if (isset($this->_type)) {
 			if (null !== $type) {
-				throw new LogicException('Can\'t set type when type is set in child class.');
+				throw new \LogicException('Can\'t set type when type is set in child class.');
 			}
 		}
 		else {
@@ -82,7 +77,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 	 *
 	 * @param object|array|string|null $in OPTIONAL null
 	 *
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function assign($in = null)
 	{
@@ -105,7 +100,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 				return;
 
 			default:
-				throw new InvalidArgumentException('unknown input type ' . gettype($in) . ', value: "' . $in . '"');
+				throw new \InvalidArgumentException('unknown input type ' . gettype($in) . ', value: "' . $in . '"');
 		}
 
 		foreach ($in as $k => $v) {
@@ -283,11 +278,11 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 	/**
 	 * Required by the IteratorAggregate interface.
 	 *
-	 * @return ArrayIterator
+	 * @return \ArrayIterator
 	 */
 	public function getIterator() : iterable
 	{
-		return new ArrayIterator($this->_container);
+		return new \ArrayIterator($this->_container);
 	}
 
 	/**
@@ -306,12 +301,12 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate
 	 * @param array $keys
 	 *
 	 * @return TypedArray
-	 * @throws LengthException
+	 * @throws \LengthException
 	 */
 	public function combine(array $keys) : self
 	{
 		if (count($keys) !== count($this->_container)) {
-			throw new LengthException('array counts do not match');
+			throw new \LengthException('array counts do not match');
 		}
 
 		$this->_container = array_combine($keys, $this->_container);

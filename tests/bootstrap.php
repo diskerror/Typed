@@ -21,7 +21,8 @@ set_exception_handler(
 	}
 );
 
-function jsonPrint($in){
+function jsonPrint($in)
+{
 	fwrite(STDOUT, json_encode($in, JSON_PRETTY_PRINT) . "\n");
 }
 

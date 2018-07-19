@@ -244,7 +244,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _setByName($k, &$v)
+	protected function _setByName($k, $v)
 	{
 		if (array_key_exists($k, $this->_map)) {
 			$k = $this->_map[$k];
@@ -316,7 +316,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 * @param string $k
 	 * @param mixed  $v
 	 */
-	protected function _castToObject($k, &$v)
+	protected function _castToObject($k, $v)
 	{
 		$propertyDefaultClass = $this->_defaultVars[$k];
 		$propertyClassType    = get_class($propertyDefaultClass);
@@ -588,7 +588,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 							$vOrigOpts  = $v->getArrayOptions();
 							$thisArrOpt = $this->_arrayOptions->get();
 							if (!$switchNestedID) {
-								if(($vOrigOpts & ArrayOptions::SWITCH_ID) > 0){
+								if (($vOrigOpts & ArrayOptions::SWITCH_ID) > 0) {
 									$thisArrOpt |= ArrayOptions::SWITCH_ID;
 								}
 								else {

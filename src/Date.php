@@ -62,7 +62,7 @@ class Date extends \Diskerror\Typed\DateTime
 	 *
 	 * @return Date
 	 */
-	public function add(\DateInterval $interval)
+	public function add($interval)
 	{
 		parent::add($interval);
 		parent::setTime(12, 0, 0);
@@ -78,7 +78,7 @@ class Date extends \Diskerror\Typed\DateTime
 	 *
 	 * @return Date
 	 */
-	public function sub(\DateInterval $interval)
+	public function sub($interval)
 	{
 		parent::sub($interval);
 		parent::setTime(12, 0, 0);
