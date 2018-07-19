@@ -21,4 +21,8 @@ set_exception_handler(
 	}
 );
 
+function jsonPrint($in){
+	fwrite(STDOUT, json_encode($in, JSON_PRETTY_PRINT) . "\n");
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';

@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/classes/SimpleTyped.php';
-
 class AssignTest extends PHPUnit\Framework\TestCase
 {
 	public function testAssignBool()
@@ -44,7 +42,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$this->assertTrue($t->myBool);
 	}
 
-		public function testAssignInt()
+	public function testAssignInt()
 	{
 		$t = new SimpleTyped();
 
@@ -82,11 +80,11 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$t->myInt = ['a', 'b'];
 		$this->assertEquals(1, $t->myInt);
 
-		$c = new stdClass();
+		$c        = new stdClass();
 		$t->myInt = $c;
 		$this->assertEquals(0, $t->myInt);
 		$c->aMember = 'string data';
-		$t->myInt = $c;
+		$t->myInt   = $c;
 		$this->assertEquals(1, $t->myInt);
 
 		unset($t->myInt);
@@ -127,7 +125,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$t->myFloat = ['a', 'b'];
 		$this->assertTrue($t->myFloat === 1.0);
 
-		$c = new stdClass();
+		$c          = new stdClass();
 		$t->myFloat = $c;
 		$this->assertTrue($t->myFloat === 0.0);
 		$c->aMember = 'string data';
@@ -166,8 +164,8 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$t->myString = ['a', 'b'];
 		$this->assertEquals('["a","b"]', $t->myString);
 
-		$c = new stdClass();
-		$c->aMember = 'string data';
+		$c           = new stdClass();
+		$c->aMember  = 'string data';
 		$t->myString = $c;
 		$this->assertEquals('{"aMember":"string data"}', $t->myString);
 
@@ -199,7 +197,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$t->myArray = ['a', 'b'];
 		$this->assertEquals(['a', 'b'], $t->myArray);
 
-		$c = new stdClass();
+		$c          = new stdClass();
 		$c->aMember = 'string data';
 		$t->myArray = $c;
 		$this->assertEquals(['aMember' => 'string data'], $t->myArray);
@@ -222,15 +220,15 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$t->myObj = null;
 		$this->assertEquals(new stdClass(), $t->myObj);
 
-		$t->myObj = ['first' => 'a', 'second' => 'b'];
-		$obj = new stdClass();
-		$obj->first = 'a';
+		$t->myObj    = ['first' => 'a', 'second' => 'b'];
+		$obj         = new stdClass();
+		$obj->first  = 'a';
 		$obj->second = 'b';
 		$this->assertEquals($obj, $t->myObj);
 
-		$c = new stdClass();
+		$c          = new stdClass();
 		$c->aMember = 'string data';
-		$t->myObj = $c;    //	$c is cloned into myObj so don't use ===
+		$t->myObj   = $c;    //	$c is cloned into myObj so don't use ===
 		$this->assertTrue($t->myObj == $c);
 
 		unset($t->myObj);

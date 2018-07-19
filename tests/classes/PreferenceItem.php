@@ -1,20 +1,20 @@
 <?php
 
-class PreferenceItem extends \Diskerror\Typed\TypedClass
+class PreferenceItem extends Diskerror\Typed\TypedClass
 {
 	const BOOLEAN = 'AND|OR';
 	const COMPARE = '|=|!=|<|>|>=|<=|LIKE|NOT LIKE|REGEXP|NOT REGEXP|IN';
-	const SORT = '|ASC|DESC';
+	const SORT    = '|ASC|DESC';
 
 	protected $included = true; //	Include this in the view.
 
-	protected $boolean = 'AND'; //	AND, OR
+	protected $boolean  = 'AND'; //	AND, OR
 
-	protected $compare = '';    //	=, <, >, LIKE, REGEXP, IN, etc. or nothing
+	protected $compare  = '';    //	=, <, >, LIKE, REGEXP, IN, etc. or nothing
 
-	protected $find = '';        //	search string
+	protected $find     = '';        //	search string
 
-	protected $sort = '';        //	ASC, DESC, sort direction or nothing
+	protected $sort     = '';        //	ASC, DESC, sort direction or nothing
 
 	protected function _set_boolean($v)
 	{

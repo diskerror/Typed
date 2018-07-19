@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/classes/PrefListList.php';
-
 class PrefListTest extends PHPUnit\Framework\TestCase
 {
 	public function testComplex()
@@ -33,8 +31,8 @@ class PrefListTest extends PHPUnit\Framework\TestCase
 		);
 
 
-		$order = ['zip', 'name', 'address', 'city', 'state'];
-		$oldOrder = clone $prefListList['Option ZIP'];
+		$order                      = ['zip', 'name', 'address', 'city', 'state'];
+		$oldOrder                   = clone $prefListList['Option ZIP'];
 		$prefListList['Option ZIP'] = null;
 
 		foreach ($order as $o) {

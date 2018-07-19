@@ -93,7 +93,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	{
 		$this->_calledClass = get_called_class();
 
-		if(!isset($this->_arrayOptions)) {
+		if (!isset($this->_arrayOptions)) {
 			$this->_arrayOptions = new ArrayOptions();
 		}
 
@@ -540,11 +540,12 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 */
 	final public function toArray() : array
 	{
-		$omitEmpty    = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$omitResource = $this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE);
-		$switchID     = $this->_arrayOptions->has(ArrayOptions::SWITCH_ID);
-		$keepJsonExpr = $this->_arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$bsonDate     = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
+		$omitEmpty      = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$omitResource   = $this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE);
+		$switchID       = $this->_arrayOptions->has(ArrayOptions::SWITCH_ID);
+		$keepJsonExpr   = $this->_arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+		$bsonDate       = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
+		$switchNestedID = $this->_arrayOptions->has(ArrayOptions::SWITCH_NESTED_ID);
 
 		static $ZJE_STRING = '\\Zend\\Json\\Expr';
 
@@ -584,8 +585,17 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 					}
 					elseif (method_exists($v, 'toArray')) {
 						if (method_exists($v, 'getArrayOptions')) {
-							$vOrigOpts = $v->getArrayOptions();
-							$v->setArrayOptions($this->_arrayOptions->get());
+							$vOrigOpts  = $v->getArrayOptions();
+							$thisArrOpt = $this->_arrayOptions->get();
+							if (!$switchNestedID) {
+								if(($vOrigOpts & ArrayOptions::SWITCH_ID) > 0){
+									$thisArrOpt |= ArrayOptions::SWITCH_ID;
+								}
+								else {
+									$thisArrOpt &= ~ArrayOptions::SWITCH_ID;
+								}
+							}
+							$v->setArrayOptions($thisArrOpt);
 						}
 
 						$arr[$k] = $v->toArray();

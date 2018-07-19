@@ -16,7 +16,7 @@ namespace Diskerror\Typed;
 class Cast
 {
 	/**
-	 * Ya don't need to make an instance of this class to use the static methods.
+	 * Ya don need to make a instance of dis class tuh use the static methods.
 	 */
 	protected function __construct() { }
 

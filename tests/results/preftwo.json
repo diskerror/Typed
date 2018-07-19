@@ -1,113 +1,113 @@
 {
-    "Option Name": {
-        "name": {
-            "included": true,
-            "boolean": "AND",
-            "compare": "REGEXP",
-            "find": "\\w",
-            "sort": "ASC"
-        },
-        "address": {
-            "included": false,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        },
-        "city": {
-            "included": false,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        },
-        "state": {
-            "included": false,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        },
-        "zip": {
-            "included": false,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        }
-    },
-    "Option Address": {
-        "name": {
-            "included": true,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        },
-        "address": {
-            "included": true,
-            "boolean": "AND",
-            "compare": "!=",
-            "find": "",
-            "sort": "ASC"
-        },
-        "city": {
-            "included": false,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        },
-        "state": {
-            "included": false,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        },
-        "zip": {
-            "included": false,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        }
-    },
-    "Option ZIP": {
-        "name": {
-            "included": true,
-            "boolean": "AND",
-            "compare": "!=",
-            "find": "",
-            "sort": "DESC"
-        },
-        "address": {
-            "included": false,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        },
-        "city": {
-            "included": false,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        },
-        "state": {
-            "included": true,
-            "boolean": "AND",
-            "compare": "",
-            "find": "",
-            "sort": ""
-        },
-        "zip": {
-            "included": true,
-            "boolean": "AND",
-            "compare": "!=",
-            "find": "",
-            "sort": "ASC"
-        }
-    }
+	"Option Name": {
+		"name": {
+			"included": true,
+			"boolean": "AND",
+			"compare": "REGEXP",
+			"find": "\\w",
+			"sort": "ASC"
+		},
+		"address": {
+			"included": false,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		},
+		"city": {
+			"included": false,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		},
+		"state": {
+			"included": false,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		},
+		"zip": {
+			"included": false,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		}
+	},
+	"Option Address": {
+		"name": {
+			"included": true,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		},
+		"address": {
+			"included": true,
+			"boolean": "AND",
+			"compare": "!=",
+			"find": "",
+			"sort": "ASC"
+		},
+		"city": {
+			"included": false,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		},
+		"state": {
+			"included": false,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		},
+		"zip": {
+			"included": false,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		}
+	},
+	"Option ZIP": {
+		"name": {
+			"included": true,
+			"boolean": "AND",
+			"compare": "!=",
+			"find": "",
+			"sort": "DESC"
+		},
+		"address": {
+			"included": false,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		},
+		"city": {
+			"included": false,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		},
+		"state": {
+			"included": true,
+			"boolean": "AND",
+			"compare": "",
+			"find": "",
+			"sort": ""
+		},
+		"zip": {
+			"included": true,
+			"boolean": "AND",
+			"compare": "!=",
+			"find": "",
+			"sort": "ASC"
+		}
+	}
 }

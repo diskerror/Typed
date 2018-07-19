@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/classes/SimpleTyped.php';
-
 class SqlTest extends PHPUnit\Framework\TestCase
 {
 	public function testSql()

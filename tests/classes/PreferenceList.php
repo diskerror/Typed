@@ -1,8 +1,6 @@
 <?php
 
-require_once 'PreferenceItem.php';
-
-class PreferenceList extends \Diskerror\Typed\TypedArray
+class PreferenceList extends Diskerror\Typed\TypedArray
 {
 	protected $_type = 'PreferenceItem';
 

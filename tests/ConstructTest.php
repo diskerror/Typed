@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/classes/SimpleTyped.php';
-
 class ConstructTest extends PHPUnit\Framework\TestCase
 {
 	public function testEmptyConstructor()
@@ -22,10 +20,10 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		);
 
 
-		$simp->myBool = 76;
-		$simp->myFloat = 4;
+		$simp->myBool    = 76;
+		$simp->myFloat   = 4;
 		$simp->myObj->nv = 'new variable';
-		$simp->myArray = null;
+		$simp->myArray   = null;
 
 		$this->assertTrue(is_bool($simp->myBool));
 		$this->assertTrue(is_int($simp->myInt));
@@ -44,7 +42,7 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 	public function testIndexedArrayConstruct()
 	{
 		$input = [false, 77, .5, 'simpppp2'];
-		$simp = new SimpleTyped($input);
+		$simp  = new SimpleTyped($input);
 
 		$this->assertTrue(is_bool($simp->myBool));
 		$this->assertTrue(is_int($simp->myInt));
@@ -62,7 +60,7 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 
 	public function testAssocArrayConstruct()
 	{
-		$arr = ['myString' => 234445, 'myInt' => 3.14, 'myNotExist' => 'to be ignored'];
+		$arr  = ['myString' => 234445, 'myInt' => 3.14, 'myNotExist' => 'to be ignored'];
 		$simp = new SimpleTyped($arr);
 
 		$this->assertTrue(is_bool($simp->myBool));
@@ -81,14 +79,14 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 
 	public function testWithClassConstruct()
 	{
-		$obj = new stdClass();
-		$obj->myNothing = 'ignored';
-		$obj->myDouble = '314 dropped';
-		$obj->myString = 'very complicated';
-		$obj->myArray = ['a', 'b', 'c'];
-		$obj->myObj = new stdClass();
+		$obj                  = new stdClass();
+		$obj->myNothing       = 'ignored';
+		$obj->myDouble        = '314 dropped';
+		$obj->myString        = 'very complicated';
+		$obj->myArray         = ['a', 'b', 'c'];
+		$obj->myObj           = new stdClass();
 		$obj->myObj->anything = 'ha!';
-		$obj->myObj->more = 'much!';
+		$obj->myObj->more     = 'much!';
 
 		$simp = new SimpleTyped($obj);
 
@@ -100,8 +98,8 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		$this->assertTrue(is_object($simp->myObj));
 
 		$simp->myDouble = 3.14;
-		$simp->myInt = null;
-		$simp->myInt = 2.54;
+		$simp->myInt    = null;
+		$simp->myInt    = 2.54;
 
 		// echo jsonEncode($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(

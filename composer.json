@@ -29,5 +29,10 @@
 		"psr-4": {
 			"Diskerror\\Typed\\": "src/"
 		}
+	},
+	"autoload-dev": {
+		"classmap": [
+			"tests/classes/"
+		]
 	}
 }

@@ -9,7 +9,7 @@
 namespace Diskerror\Typed;
 
 /**
- *  Options
+ * Class ArrayOptions
  * @package Diskerror\Typed
  */
 final class ArrayOptions
@@ -43,6 +43,11 @@ final class ArrayOptions
 	const TO_BSON_DATE = 16;
 
 	/**
+	 * This tells toArray() to pass the current SWITCH_ID state to nested classes.
+	 */
+	const SWITCH_NESTED_ID = 256;
+
+	/**
 	 * @var int
 	 */
 	private $_options;
@@ -71,8 +76,13 @@ final class ArrayOptions
 		$this->_options = $opts;
 	}
 
+	/**
+	 * @param int $opt
+	 *
+	 * @return bool
+	 */
 	public function has(int $opt) : bool
 	{
-		return (bool)$this->_options & $opt;
+		return ($this->_options & $opt) > 0;
 	}
 }

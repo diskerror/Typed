@@ -1,0 +1,52 @@
+{
+	"retweeted_status": {
+		"id_": 0,
+		"created_at": "2018-07-18 17:10:28",
+		"favorite_count": 0,
+		"filter_level": "low",
+		"is_quote_status": false,
+		"lang": "en",
+		"possibly_sensitive": false,
+		"retweet_count": 0,
+		"truncated": false,
+		"user": {
+			"id": 0,
+			"contributors_enabled": false,
+			"created_at": "2018-07-18 17:10:28",
+			"favourites_count": 0,
+			"followers_count": 0,
+			"friends_count": 0,
+			"geo_enabled": false,
+			"is_translator": false,
+			"lang": "en",
+			"listed_count": 0,
+			"protected": false,
+			"statuses_count": 0,
+			"verified": false
+		}
+	},
+	"_id": 0,
+	"created_at": "2018-07-18 17:10:28",
+	"favorite_count": 0,
+	"filter_level": "low",
+	"is_quote_status": false,
+	"lang": "en",
+	"possibly_sensitive": false,
+	"retweet_count": 0,
+	"truncated": false,
+	"user": {
+		"id": 0,
+		"contributors_enabled": false,
+		"created_at": "2018-07-18 17:10:28",
+		"favourites_count": 0,
+		"followers_count": 0,
+		"friends_count": 0,
+		"geo_enabled": false,
+		"is_translator": false,
+		"lang": "en",
+		"listed_count": 0,
+		"protected": false,
+		"statuses_count": 0,
+		"verified": false
+	}
+}
