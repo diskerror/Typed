@@ -14,9 +14,10 @@ Returns an associative array of this object with only the appropriate members. A
 
 * OMIT_EMPTY: null or empty members are omitted to shrink storage or transmission needs.
 * OMIT_RESOURCE: resource IDs are meaningless for transmitted data.
-* SWITCH_ID: a top level member with the name "id_" is assumed to be intended to be a Mongo primary key and the name is changed to "_id";
-* KEEP_JSON_EXPR: objects of type *Zend\Json\Expr* remain untouched;
-* TO_BSON_DATE: conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC, *MongoDB\BSON\UTCDateTime* objects will remain untouched;
+* SWITCH_ID: a top level member with the name "id_" is assumed to be intended to be a Mongo primary key and the name is changed to "_id".
+* KEEP_JSON_EXPR: objects of type *Zend\Json\Expr* remain untouched.
+* TO_BSON_DATE: conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC. *MongoDB\BSON\UTCDateTime* objects will remain untouched.
+* SWITCH_NESTED_ID: pass the current SWITCH_ID state to nested objects.
 
 ## TypedClass
 The derivitives of *Typed\TypedClass* are contracted to do these things:
@@ -47,16 +48,16 @@ These two classes have been moved from [Utilities](https://github.com/diskerror/
 These next two classes are best thought of as namespaces of functions. Class design is used to activate the autoload feature of PHP.
 
 ## Cast
-*Cast* contains methods to return the input cast to the basic scalars or an array.
+*Cast* contains static methods to return the input cast to the basic scalars or an array.
 
 ## SqlStatement
-Utility class that outputs properly formatted partial SQL strings based on the input data.
-### getSqlInsert
+Utility class that outputs properly formatted partial SQL strings based on the input data. Both accept an input array, and an array where the values are the names of members to include from the first array. An empty array means to use all members.
+### toInsert
 Returns a string formatted for an SQL INSERT or UPDATE statement.
 Accepts an array where the values are the names of members to include. An empty array means to use all members.
-### getSqlValues
+### toValues
 Returns a string formatted for an SQL "ON DUPLICATE KEY UPDATE" statement.
-Accepts an array where the values are the names of members to include. An empty array means to use all members.
+
 
 # Composer
 ```
