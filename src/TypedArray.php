@@ -8,12 +8,16 @@
 
 namespace Diskerror\Typed;
 
+use ArrayAccess;
+use IteratorAggregate;
+use Countable;
+
 /**
  * Provides support for an array's elements to all have the same type.
  * If type is defined as null then any element can have any type but
  *      deep copying of objects is always available.
  */
-class TypedArray implements TypedInterface, \ArrayAccess, \IteratorAggregate
+class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Countable
 {
 	/**
 	 * A string that specifies the type of values in the container.
