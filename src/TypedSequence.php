@@ -10,14 +10,14 @@ namespace Diskerror\Typed;
 
 use ArrayAccess;
 use IteratorAggregate;
-use Countable;
+use Ds\Sequence;
 
 /**
  * Provides support for an array's elements to all have the same type.
  * If type is defined as null then any element can have any type but
  *      deep copying of objects is always available.
  */
-class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Countable
+class TypedSequence implements TypedInterface, ArrayAccess, IteratorAggregate, Sequence
 {
 	/**
 	 * A string that specifies the type of values in the container.
@@ -33,10 +33,17 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	protected $_arrayOptions;
 
 	/**
-	 * An array that contains the items of interest.
-	 * @var array
+     * Can be a Ds\Vector or Ds\Deque.
+     * @var string
+     */
+	protected $_containerType;
+
+	/**
+	 * A Ds\Sequence container that contains the items of interest.
+     * Can be a Ds\Vector or Ds\Deque.
+	 * @var \Ds\Sequence
 	 */
-	private $_container;
+    private $_container;
 
 	/**
 	 * Constructor.
@@ -46,10 +53,20 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	 *
 	 * @throws \LogicException
 	 */
-	public function __construct($values = null, $type = null)
+	public function __construct($values = null, $type = null, $containerType = null)
 	{
 		if (!isset($this->_arrayOptions)) {
 			$this->_arrayOptions = new ArrayOptions();
+		}
+
+		if (isset($this->_containerType)) {
+			if (null !== $containerType && '' !== $containerType) {
+				throw new \LogicException('Can\'t set container type when type is set in child class.');
+			}
+		}
+		else {
+			$this->_containerType = strtolower($containerType);
+			$this->_setContainer();
 		}
 
 		if (isset($this->_type)) {
@@ -66,9 +83,22 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 			}
 		}
 
-		$this->_container = [];
-
 		$this->assign($values);
+	}
+
+	private function _setContainer()
+	{
+		if ('deque' === $this->_containerType) {
+			$this->_container = new \Ds\Deque();
+		}
+		else {
+			$this->_container = new \Ds\Vector();
+		}
+	}
+
+	public function __call($name, $arguments)
+	{
+		return call_user_func_array([$this->_container, $name], $arguments);
 	}
 
 	/**
@@ -100,7 +130,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 
 			case 'null':
 			case 'NULL':
-				$this->_container = [];
+				$this->_setContainer();
 				return;
 
 			default:
@@ -378,13 +408,15 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 				return $output;
 		}
 
+		$MBDateTime = '\\MongoDB\\BSON\\UTCDateTime';
+
 		//	At this point all items are some type of object.
 		if ($this->_type instanceof \DateTime && $bsonDate) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = new \MongoDB\BSON\UTCDateTime($v->getTimestamp() * 1000);
 			}
 		}
-		elseif ($this->_type instanceof \MongoDB\BSON\UTCDateTime && $bsonDate) {
+		elseif ($this->_type instanceof $MBDateTime && $bsonDate) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}
