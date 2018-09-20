@@ -378,15 +378,13 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 				return $output;
 		}
 
-		$MBDateTime = '\\MongoDB\\BSON\\UTCDateTime';
-
 		//	At this point all items are some type of object.
 		if ($this->_type instanceof \DateTime && $bsonDate) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = new \MongoDB\BSON\UTCDateTime($v->getTimestamp() * 1000);
 			}
 		}
-		elseif ($this->_type instanceof $MBDateTime && $bsonDate) {
+		elseif ($this->_type instanceof \MongoDB\BSON\UTCDateTime && $bsonDate) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}

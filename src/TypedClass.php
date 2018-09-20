@@ -547,7 +547,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 		$bsonDate       = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
 		$switchNestedID = $this->_arrayOptions->has(ArrayOptions::SWITCH_NESTED_ID);
 
-		static $ZJE_STRING = '\\Zend\\Json\\Expr';
+		$ZJE_STRING = '\\Zend\\Json\\Expr';
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
