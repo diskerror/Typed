@@ -88,7 +88,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 		switch (gettype($in)) {
 			case 'object':
 			case 'array':
-			break;
+				break;
 
 			case 'string':
 				$in          = json_decode($in);
@@ -96,7 +96,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 				if ($jsonLastErr !== JSON_ERROR_NONE) {
 					throw new \UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 				}
-			break;
+				break;
 
 			case 'null':
 			case 'NULL':
@@ -150,31 +150,31 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 				else {
 					$newValue = $v;
 				}
-			break;
+				break;
 
 			case 'bool':
 			case 'boolean':
 				$newValue = Cast::toBoolean($v);
-			break;
+				break;
 
 			case 'int':
 			case 'integer':
 				$newValue = Cast::toInteger($v);
-			break;
+				break;
 
 			case 'float':
 			case 'double':
 			case 'real':
 				$newValue = Cast::toDouble($v);
-			break;
+				break;
 
 			case 'string':
 				$newValue = Cast::toString($v);
-			break;
+				break;
 
 			case 'array':
 				$newValue = Cast::toArray($v);
-			break;
+				break;
 
 			//	All object and class types.
 			default:
@@ -190,7 +190,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 
 					return; //	value already assigned to container
 				}
-			break;
+				break;
 		}
 
 		if (null === $k) {
@@ -201,7 +201,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 		}
 	}
 
-	public function getArrayOptions() : int
+	public function getArrayOptions(): int
 	{
 		return $this->_arrayOptions->get();
 	}
@@ -264,7 +264,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	 *
 	 * @return bool
 	 */
-	public function offsetExists($offset) : bool
+	public function offsetExists($offset): bool
 	{
 		return isset($this->_container[$offset]);
 	}
@@ -274,19 +274,35 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	 *
 	 * @return int
 	 */
-	public function count() : int
+	public function count(): int
 	{
 		return count($this->_container);
 	}
 
 	/**
 	 * Required by the IteratorAggregate interface.
+	 * Every value is checked for change during iteration.
 	 *
-	 * @return \ArrayIterator
+	 * @return \Traversable
 	 */
-	public function getIterator() : iterable
+	public function getIterator(): \Traversable
 	{
-		return new \ArrayIterator($this->_container);
+		return (function &() {
+			foreach ($this->_container as $k => &$v) {
+				$tmpV = $v;
+				yield $k => $tmpV;
+
+				//	Check to see if $tmpV type changed.
+				if ((is_object($tmpV) ? get_class($tmpV) : gettype($tmpV)) === $this->_type) {
+					//	If not then copy the value.
+					$v = $tmpV;
+				}
+				else {
+					// If so then cast back.
+					$this->offsetSet($k, $tmpV);
+				}
+			}
+		})();
 	}
 
 	/**
@@ -294,7 +310,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	 *
 	 * @return array
 	 */
-	public function keys() : array
+	public function keys(): array
 	{
 		return array_keys($this->_container);
 	}
@@ -307,7 +323,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	 * @return TypedArray
 	 * @throws \LengthException
 	 */
-	public function combine(array $keys) : self
+	public function combine(array $keys): self
 	{
 		if (count($keys) !== count($this->_container)) {
 			throw new \LengthException('array counts do not match');
@@ -335,7 +351,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	 *
 	 * @return array
 	 */
-	public function toArray() : array
+	public function toArray(): array
 	{
 		$omitEmpty = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
 		$switchID  = $this->_arrayOptions->has(ArrayOptions::SWITCH_ID);
