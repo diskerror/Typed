@@ -18,7 +18,9 @@ class Cast
 	/**
 	 * Ya don need to make a instance of dis class tuh use the static methods.
 	 */
-	protected function __construct() { }
+	protected function __construct()
+	{
+	}
 
 	/**
 	 * Empty array or object (no members) is false.
@@ -28,7 +30,7 @@ class Cast
 	 *
 	 * @return bool|null
 	 */
-	public static function toBoolean($in) : ?bool
+	public static function toBoolean($in): ?bool
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -41,10 +43,9 @@ class Cast
 			case 'null':
 			case 'NULL':
 				return null;
-
-			default:
-				return (bool)$in;
 		}
+
+		return (bool)$in;
 	}
 
 	/**
@@ -55,11 +56,12 @@ class Cast
 	 *
 	 * @return int|null
 	 */
-	public static function toInteger($in) : ?int
+	public static function toInteger($in): ?int
 	{
 		switch (gettype($in)) {
 			case 'string':
-				if (strtolower($in) === 'null') {
+				$in = trim(strtolower($in), "\x00..\x20\x7F");
+				if ($in === '' || $in === 'null') {
 					return null;
 				}
 
@@ -75,10 +77,9 @@ class Cast
 			case 'null':
 			case 'NULL':
 				return null;
-
-			default:
-				return (int)$in;
 		}
+
+		return (int)$in;
 	}
 
 	/**
@@ -93,12 +94,12 @@ class Cast
 	 *
 	 * @return float|null
 	 */
-	public static function toDouble($in) : ?float
+	public static function toDouble($in): ?float
 	{
 		switch (gettype($in)) {
 			case 'string':
-				$in = trim(strtolower($in));
-				if ($in === 'null' || $in === 'nan') {
+				$in = trim(strtolower($in), "\x00..\x20\x7F");
+				if ($in === '' || $in === 'null' || $in === 'nan') {
 					return null;
 				}
 
@@ -131,22 +132,21 @@ class Cast
 					return (float)$in->toArray();
 				}
 				return (float)(array)$in;
-
-			default:
-				return (float)$in;
 		}
+
+		return (float)$in;
 	}
 
 	/**
 	 * Objects or arrays become JSON if they don't have a "__toString" or "format" method.
 	 *
-	 * We differentiate between a null string and an empty string. Null is NULL and empty is ''.
+	 * We differentiate between a null string and an empty string only here. Null is NULL and empty is ''.
 	 *
 	 * @param mixed $in
 	 *
 	 * @return string|null
 	 */
-	public static function toString($in) : ?string
+	public static function toString($in): ?string
 	{
 		switch (gettype($in)) {
 			case 'object':
@@ -171,10 +171,9 @@ class Cast
 			case 'null':
 			case 'NULL':
 				return null;
-
-			default:
-				return (string)$in;
 		}
+
+		return (string)$in;
 	}
 
 	/**
@@ -185,7 +184,7 @@ class Cast
 	 *
 	 * @return array
 	 */
-	public static function toArray($in) : array
+	public static function toArray($in): array
 	{
 		if (is_object($in)) {
 			if (method_exists($in, 'toArray')) {
@@ -193,7 +192,8 @@ class Cast
 			}
 		}
 		elseif (is_string($in)) {
-			if (strtolower($in) === 'null') {
+			$inTmp = trim(strtolower($in), "\x00..\x20\x7F");
+			if ($inTmp === '' || $inTmp === 'null') {
 				return null;
 			}
 
