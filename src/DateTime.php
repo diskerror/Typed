@@ -185,7 +185,7 @@ class DateTime extends \DateTime
 	 *
 	 * @return DateTime
 	 */
-	public static function createFromFormat($formatOrTime, $time = '', $timezone = null)
+	public static function createFromFormat($formatOrTime, $time = '', $timezone = null): self
 	{
 		if ($time === '') {
 			$parsed = date_parse($formatOrTime);
