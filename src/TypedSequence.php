@@ -464,4 +464,14 @@ class TypedSequence implements TypedInterface, ArrayAccess, IteratorAggregate, S
 
 		return $output;
 	}
+
+	/**
+	 * Be sure json_encode get's our prepared array.
+	 *
+	 * @return array
+	 */
+	public function jsonSerialize()
+	{
+		return $this->toArray();
+	}
 }

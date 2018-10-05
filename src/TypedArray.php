@@ -345,6 +345,16 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	}
 
 	/**
+	 * Be sure json_encode get's our prepared array.
+	 *
+	 * @return array
+	 */
+	public function jsonSerialize()
+	{
+		return $this->toArray();
+	}
+
+	/**
 	 * Returns an array with all members checked for a "toArray" method so
 	 * that any member of type "Typed" will also be returned.
 	 * Use "__get" and "__set", or $var[$member] to access individual names.

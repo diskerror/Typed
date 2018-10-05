@@ -13,7 +13,7 @@ namespace Diskerror\Typed;
  * Provides common interface TypedClass and TypedArray.
  * @package Diskerror\Typed
  */
-interface TypedInterface
+interface TypedInterface extends \JsonSerializable
 {
 	/**
 	 * Copies all matching member names while maintaining original types and
