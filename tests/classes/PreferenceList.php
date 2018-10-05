@@ -7,9 +7,9 @@ class PreferenceList extends Diskerror\Typed\TypedArray
 	/**
 	 * Return new default set of fields with each call.
 	 *
-	 * @return Application_Model_ColumnOrder
+	 * @return PreferenceList
 	 */
-	public static function getDefault()
+	public static function getDefault() : PreferenceList
 	{
 		return new self([
 			'name'    => [],
