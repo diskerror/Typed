@@ -13,10 +13,10 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		$this->assertTrue(is_array($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
 
-// 		echo json_encode($simp->toArray()); exit;
+// 		echo json_encode($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-15.json',
-			json_encode($simp->toArray())
+			json_encode($simp)
 		);
 
 
@@ -32,10 +32,10 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		$this->assertTrue(is_array($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
 
-		// echo jsonEncode($simp->toArray()); exit;
+		// echo jsonEncode($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-32.json',
-			json_encode($simp->toArray())
+			json_encode($simp)
 		);
 	}
 
@@ -51,10 +51,10 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		$this->assertTrue(is_array($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
 
-		// echo jsonEncode($simp->toArray()); exit;
+		// echo jsonEncode($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp2-48.json',
-			json_encode($simp->toArray())
+			json_encode($simp)
 		);
 	}
 
@@ -70,10 +70,10 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		$this->assertTrue(is_array($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
 
-		// echo jsonEncode($simp->toArray()); exit;
+		// echo jsonEncode($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp3-65.json',
-			json_encode($simp->toArray())
+			json_encode($simp)
 		);
 	}
 
@@ -101,10 +101,10 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		$simp->myInt    = null;
 		$simp->myInt    = 2.54;
 
-		// echo jsonEncode($simp->toArray()); exit;
+		// echo jsonEncode($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp4-93.json',
-			json_encode($simp->toArray())
+			json_encode($simp)
 		);
 	}
 

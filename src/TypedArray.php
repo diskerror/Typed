@@ -289,18 +289,28 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	{
 		return (function &() {
 			foreach ($this->_container as $k => &$v) {
-				$tmpV = $v;
+				if(is_object($v)){
+					$tmpV = clone $v;
+				}
+				else {
+					$tmpV = $v;
+				}
+
 				yield $k => $tmpV;
 
 				//	Check to see if $tmpV type changed.
-				if ((is_object($tmpV) ? get_class($tmpV) : gettype($tmpV)) === $this->_type) {
-					//	If not then copy the value.
-					$v = $tmpV;
+				if ($tmpV != $v) {
+					if ((is_object($tmpV) ? get_class($tmpV) : gettype($tmpV)) === $this->_type) {
+						//	If not then copy the value.
+						$v = $tmpV;
+					}
+					else {
+						// If so then cast back.
+						$this->offsetSet($k, $tmpV);
+					}
 				}
-				else {
-					// If so then cast back.
-					$this->offsetSet($k, $tmpV);
-				}
+
+				unset($tmpV);
 			}
 		})();
 	}
