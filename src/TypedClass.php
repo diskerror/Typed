@@ -112,7 +112,6 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 				//	We must use `eval` because we want to handle
 				//		'__class__Date' and
 				//		'__class__DateTime("Jan 1, 2015")' with 1 or more parameters.
-//				$this->_defaultVars[$k] = eval( preg_replace('/^__class__(.*)$/iu', 'return new $1;', $v) );
 				$this->_defaultVars[$k] = eval('return new ' . substr($v, 9) . ';');
 
 				//	Objects are always passed by reference,
@@ -154,7 +153,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	{
 		switch (gettype($in)) {
 			case 'object':
-			break;
+				break;
 
 			case 'array':
 				//	Test to see if it's an indexed or an associative array.
@@ -169,7 +168,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 
 					$in = $nameArr;
 				}
-			break;
+				break;
 
 			case 'string':
 				$in          = json_decode($in);
@@ -180,7 +179,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 						$jsonLastErr
 					);
 				}
-			break;
+				break;
 
 			case 'null':
 			case 'NULL':
@@ -230,9 +229,10 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 *
 	 * @return bool
 	 */
-	private function _keyExists($k) : bool
+	private function _keyExists($k): bool
 	{
-		return array_key_exists($k, $this->_defaultVars) || array_key_exists($k, $this->_map);
+		return array_key_exists($k, $this->_defaultVars) ||
+			(array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
 	}
 
 	/**
@@ -265,49 +265,40 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 			case '':        //	Is there a possibility that "gettype()" might return an empty string?
 			case null:
 				$this->{$k} = $v;
-			break;
+				break;
 
 			case 'bool':
 			case 'boolean':
 				$this->{$k} = Cast::toBoolean($v);
-			break;
+				break;
 
 			case 'int':
 			case 'integer':
 				$this->{$k} = Cast::toInteger($v);
-			break;
+				break;
 
 			case 'float':
 			case 'double':
 			case 'real':
 				$this->{$k} = Cast::toDouble($v);
-			break;
+				break;
 
 			case 'string':
 				$this->{$k} = Cast::toString($v);
-			break;
+				break;
 
 			case 'array':
 				$this->{$k} = Cast::toArray($v);
-			break;
+				break;
 
 			case 'object':
 				$this->_castToObject($k, $v);
-			break;
+				break;
 
 			default:    //	resource
 				$this->{$k} = $v;
-			break;
+				break;
 		}
-	}
-
-	/**
-	 * Override this method for additional checking such as when a start date
-	 * is required to be earlier than an end date, any range of values like
-	 * minimum and maximum, or any custom filtering dependent on more than a single property.
-	 */
-	protected function _checkRelatedProperties()
-	{
 	}
 
 	/**
@@ -380,7 +371,16 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 		}
 	}
 
-	public function getArrayOptions() : int
+	/**
+	 * Override this method for additional checking such as when a start date
+	 * is required to be earlier than an end date, any range of values like
+	 * minimum and maximum, or any custom filtering dependent on more than a single property.
+	 */
+	protected function _checkRelatedProperties()
+	{
+	}
+
+	public function getArrayOptions(): int
 	{
 		return $this->_arrayOptions->get();
 	}
@@ -468,7 +468,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 *
 	 * @return bool
 	 */
-	public function __isset($k) : bool
+	public function __isset($k): bool
 	{
 		if ($k[0] === '_') {
 			return false;
@@ -515,7 +515,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 * Required method for Iterator.
 	 * @return bool
 	 */
-	final public function valid() : bool
+	final public function valid(): bool
 	{
 		return isset($this->_publicNames[$this->_position]);
 	}
@@ -524,9 +524,19 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 * Required method for Countable.
 	 * @return int
 	 */
-	final public function count() : int
+	final public function count(): int
 	{
 		return count($this->_defaultVars);
+	}
+
+	/**
+	 * Be sure json_encode get's our prepared array.
+	 *
+	 * @return array
+	 */
+	public function jsonSerialize()
+	{
+		return $this->toArray();
 	}
 
 	/**
@@ -538,7 +548,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 *
 	 * @return array
 	 */
-	final public function toArray() : array
+	final public function toArray(): array
 	{
 		$omitEmpty      = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
 		$omitResource   = $this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE);
@@ -559,19 +569,19 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 					if (!$omitEmpty) {
 						$arr[$k] = null;
 					}
-				break;
+					break;
 
 				case 'resource':
 					if (!$omitResource) {
 						$arr[$k] = $v;
 					}
-				break;
+					break;
 
 				case 'string':
 					if ('' !== $v || !$omitEmpty) {
 						$arr[$k] = $v;
 					}
-				break;
+					break;
 
 				case 'object':
 					if (($this->$k instanceof $ZJE_STRING) && $keepJsonExpr) {
@@ -620,13 +630,13 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 							$arr[$k] = $v;
 						}
 					}
-				break;
+					break;
 
 				case 'array':
 					if (count($v) || !$omitEmpty) {
 						$arr[$k] = $v;
 					}
-				break;
+					break;
 
 				//	ints and floats
 				default:
@@ -640,15 +650,5 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 		}
 
 		return $arr;
-	}
-
-	/**
-	 * Be sure json_encode get's our prepared array.
-	 *
-	 * @return array
-	 */
-	public function jsonSerialize()
-	{
-		return $this->toArray();
 	}
 }
