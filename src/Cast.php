@@ -186,20 +186,18 @@ class Cast
 	 */
 	public static function toArray($in): array
 	{
-		if (is_object($in)) {
-			if (method_exists($in, 'toArray')) {
-				return $in->toArray();
-			}
+		if (is_object($in) && method_exists($in, 'toArray')) {
+			return $in->toArray();
 		}
 		elseif (is_string($in)) {
 			$inTmp = trim(strtolower($in), "\x00..\x20\x7F");
-			if ($inTmp === '' || $inTmp === 'null') {
-				return null;
+			if ($inTmp === 'null') {
+				return [];
 			}
 
 			$tmpArr = json_decode($in, true);
 			if (json_last_error() === JSON_ERROR_NONE) {
-				return $tmpArr;
+				return (array)$tmpArr;
 			}
 		}
 
