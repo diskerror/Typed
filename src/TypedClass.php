@@ -372,8 +372,8 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	}
 
 	/**
-	 * Override this method for additional checking such as when a start date
-	 * is required to be earlier than an end date, any range of values like
+	 * Override this method for additional checking such as when a start-date
+	 * is required to be earlier than an end-date, any range of values like
 	 * minimum and maximum, or any custom filtering dependent on more than a single property.
 	 */
 	protected function _checkRelatedProperties()
