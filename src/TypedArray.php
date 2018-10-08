@@ -46,7 +46,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	 *
 	 * @throws \LogicException
 	 */
-	public function __construct($values = null, $type = null)
+	public function __construct($values = null, string $type = null)
 	{
 		if (!isset($this->_arrayOptions)) {
 			$this->_arrayOptions = new ArrayOptions();
@@ -58,12 +58,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 			}
 		}
 		else {
-			if ('' !== $type && null !== $type) {
-				$this->_type = (string)$type;
-			}
-			else {
-				$this->_type = null;
-			}
+			$this->_type = ('' === $type || null === $type) ? 'null' : $type;
 		}
 
 		$this->_container = [];
@@ -85,7 +80,8 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	 */
 	public function assign($in = null)
 	{
-		switch (gettype($in)) {
+		$inputType = gettype($in);
+		switch ($inputType) {
 			case 'object':
 			case 'array':
 				break;
@@ -100,11 +96,11 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 
 			case 'null':
 			case 'NULL':
-				$this->_container = [];
+				$this->_container = [];    //	remove all current values
 				return;
 
 			default:
-				throw new \InvalidArgumentException('unknown input type ' . gettype($in) . ', value: "' . $in . '"');
+				throw new \InvalidArgumentException('bad input type ' . $inputType . ', value: "' . $in . '"');
 		}
 
 		foreach ($in as $k => $v) {
@@ -212,20 +208,13 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	}
 
 	/**
-	 * Make sure object is deep copied.
+	 * Be sure json_encode gets our prepared array.
+	 *
+	 * @return array
 	 */
-	public function __clone()
+	public function jsonSerialize()
 	{
-		foreach ($this->_container as $k => $v) {
-			if (is_object($v)) {
-				$this->_container[$k] = clone $v;
-			}
-		}
-	}
-
-	public function &getContainerReference()
-	{
-		return $this->_container;
+		return $this->toArray();
 	}
 
 	/**
@@ -251,7 +240,32 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	public function &offsetGet($offset)
 	{
 		if (!$this->offsetExists($offset)) {
-			$this->_container[$offset] = new $this->_type();
+			//	Be sure offset exists before accessing it.
+			switch (strtolower($this->_type)) {
+				case 'bool':
+				case 'boolean':	//	'' -> false
+				case 'int':
+				case 'integer':	//	'' -> 0
+				case 'float':
+				case 'double':
+				case 'real':	//	'' -> 0.0
+				case 'string':	//	'' -> ''
+					//	We don't need the value that this sets into the container,
+					//		but do we need the good offset created by this for scalars?
+					$this->offsetSet($offset, '');
+					break;
+
+				default:	//	arrays or objects
+					$this->offsetSet($offset, []);
+					break;
+
+			}
+
+			//	Returns new offset created by ::offsetSet().
+			if (null === $offset) {
+				end($this->_container);
+				$offset = key($this->_container);
+			}
 		}
 
 		return $this->_container[$offset];
@@ -267,101 +281,6 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	public function offsetExists($offset): bool
 	{
 		return isset($this->_container[$offset]);
-	}
-
-	/**
-	 * Required by the Countable interface.
-	 *
-	 * @return int
-	 */
-	public function count(): int
-	{
-		return count($this->_container);
-	}
-
-	/**
-	 * Required by the IteratorAggregate interface.
-	 * Every value is checked for change during iteration.
-	 *
-	 * @return \Traversable
-	 */
-	public function getIterator(): \Traversable
-	{
-		return (function &() {
-			foreach ($this->_container as $k => &$v) {
-				if(is_object($v)){
-					$tmpV = clone $v;
-				}
-				else {
-					$tmpV = $v;
-				}
-
-				yield $k => $tmpV;
-
-				//	Check to see if $tmpV type changed.
-				if ($tmpV != $v) {
-					if ((is_object($tmpV) ? get_class($tmpV) : gettype($tmpV)) === $this->_type) {
-						//	If not then copy the value.
-						$v = $tmpV;
-					}
-					else {
-						// If so then cast back.
-						$this->offsetSet($k, $tmpV);
-					}
-				}
-
-				unset($tmpV);
-			}
-		})();
-	}
-
-	/**
-	 * Returns array keys.
-	 *
-	 * @return array
-	 */
-	public function keys(): array
-	{
-		return array_keys($this->_container);
-	}
-
-	/**
-	 * Apply new names from input array values.
-	 *
-	 * @param array $keys
-	 *
-	 * @return TypedArray
-	 * @throws \LengthException
-	 */
-	public function combine(array $keys): self
-	{
-		if (count($keys) !== count($this->_container)) {
-			throw new \LengthException('array counts do not match');
-		}
-
-		$this->_container = array_combine($keys, $this->_container);
-
-		return $this;
-	}
-
-	/**
-	 * Behave like array_shift.
-	 *
-	 * @return mixed
-	 */
-	public function shift()
-	{
-		return array_shift($this->_container);
-	}
-
-	/**
-	 * Be sure json_encode get's our prepared array.
-	 *
-	 * @return array
-	 */
-	public function jsonSerialize()
-	{
-		return $this->toArray();
 	}
 
 	/**
@@ -469,5 +388,108 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Make sure object is deep copied.
+	 */
+	public function __clone()
+	{
+		foreach ($this->_container as $k => $v) {
+			if (is_object($v)) {
+				$this->_container[$k] = clone $v;
+			}
+		}
+	}
+
+	public function &getContainerReference()
+	{
+		return $this->_container;
+	}
+
+	/**
+	 * Required by the Countable interface.
+	 *
+	 * @return int
+	 */
+	public function count(): int
+	{
+		return count($this->_container);
+	}
+
+	/**
+	 * Required by the IteratorAggregate interface.
+	 * Every value is checked for change during iteration.
+	 *
+	 * @return \Traversable
+	 */
+	public function getIterator(): \Traversable
+	{
+		return (function &() {
+			foreach ($this->_container as $k => &$v) {
+				if (is_object($v)) {
+					$tmpV = clone $v;
+				}
+				else {
+					$tmpV = $v;
+				}
+
+				yield $k => $tmpV;
+
+				//	Check to see if $tmpV type changed.
+				if ($tmpV != $v) {
+					//	Check if this is the same type.
+					if ((is_object($tmpV) ? get_class($tmpV) : gettype($tmpV)) === $this->_type) {
+						//	If so then copy the value to the current slot.
+						$v = $tmpV;
+					}
+					else {
+						// If not then cast the value into the current slot.
+						$this->offsetSet($k, $tmpV);
+					}
+				}
+
+				unset($tmpV);
+			}
+		})();
+	}
+
+	/**
+	 * Returns array keys.
+	 *
+	 * @return array
+	 */
+	public function keys(): array
+	{
+		return array_keys($this->_container);
+	}
+
+	/**
+	 * Apply new names from input array values.
+	 *
+	 * @param array $keys
+	 *
+	 * @return TypedArray
+	 * @throws \LengthException
+	 */
+	public function combine(array $keys): self
+	{
+		if (count($keys) !== count($this->_container)) {
+			throw new \LengthException('array counts do not match');
+		}
+
+		$this->_container = array_combine($keys, $this->_container);
+
+		return $this;
+	}
+
+	/**
+	 * Behave like array_shift.
+	 *
+	 * @return mixed
+	 */
+	public function shift()
+	{
+		return array_shift($this->_container);
 	}
 }
