@@ -15,11 +15,13 @@ class TweetBase extends \Diskerror\Typed\TypedClass
 	//	The "getSpecialArr" method changes "id_" to "_id".
 	protected $id_                       = 0;
 
-	protected $created_at                = '__class__\Diskerror\Typed\DateTime("2018-07-18 17:10:28")';
+//	protected $created_at                = '__class__\Diskerror\Typed\DateTime("2018-07-18 17:10:28")';
+	protected $created_at                = ['__type__' => 'Diskerror\Typed\DateTime', '2018-07-18 17:10:28'];
 
 	protected $contributors              = null;
 
-	protected $entities                  = '__class__\Tweet\Entities\Entities';
+//	protected $entities                  = '__class__\Tweet\Entities\Entities';
+	protected $entities                  = ['__type__' => 'Tweet\Entities\Entities'];
 
 	protected $extended_entities         = '__class__\Tweet\ExtendedEntities';
 

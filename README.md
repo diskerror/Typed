@@ -19,8 +19,14 @@ Returns an associative array of this object with only the appropriate members. A
 * TO_BSON_DATE: conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC. *MongoDB\BSON\UTCDateTime* objects will remain untouched.
 * SWITCH_NESTED_ID: pass the current SWITCH_ID state to nested objects.
 
+### jsonSerialize
+*TypedInterface* also extends the builtin *JsonSerializable* class so derivitives of these classes can be used directly with "json_encode".
+
+### getArrayOptions & setArrayOptions
+These manage the usage of the options for how these classes are converted to an array.
+
 ## TypedClass
-The derivitives of *Typed\TypedClass* are contracted to do these things:
+The derivitives of *TypedClass* are contracted to do these things:
 * Member/property access will behave like any standard PHP object.
 * Maintain the initial type of each member/property.
 * Silently cast data assigned to properties in the most obvious way when input is of a different type.
@@ -34,8 +40,21 @@ The derivitives of *Typed\TypedClass* are contracted to do these things:
   * Map alternate names to proper names.
   * Reset single property or entire object's members to their default values.
 
+The users class properties must be declared as *protected* or *private*. The names for the properties must follow the naming convention that the intended *public* members must NOT start with an underscore. This borrows from the Zend Framework property naming convention of protected and private property names start with an underscore.
+
+These properties must also be initialized with a value. The values' initial type is stored within the object and used to cast new values to the same type.
+
+More complex types can be set with array notation as such:
+```
+class MyClass extends Diskerror\Typed\TypedClass
+{
+    protected $myDate = ['__type__' => 'DateTime', 'now'];
+    protected $myString = 'default value';
+}
+```
+
 ## TypedArray
-The instances or derivatives of *Typed\TypedArray* are contracted to do these things:
+The instances or derivatives of *TypedArray* are contracted to do these things:
 * It will otherwise behave like a standard PHP associative array.
 * Every member be the same type.
 * Silently cast assigned data in the most obvious way when input is of a different type.

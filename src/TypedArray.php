@@ -175,10 +175,9 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 			//	All object and class types.
 			default:
 				if (null === $k || !isset($this->_container[$k]) || !($this->_container[$k] instanceof TypedInterface)) {
-					$newValue =
-						(is_object($v) && get_class($v) === $this->_type) ?
-							clone $v :
-							new $this->_type($v);
+					$newValue = (is_object($v) && get_class($v) === $this->_type) ?
+						clone $v :
+						new $this->_type(...$v);
 				}
 				//	Else it is an instance of our special type.
 				else {
@@ -243,19 +242,19 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 			//	Be sure offset exists before accessing it.
 			switch (strtolower($this->_type)) {
 				case 'bool':
-				case 'boolean':	//	'' -> false
+				case 'boolean':    //	'' -> false
 				case 'int':
-				case 'integer':	//	'' -> 0
+				case 'integer':    //	'' -> 0
 				case 'float':
 				case 'double':
-				case 'real':	//	'' -> 0.0
-				case 'string':	//	'' -> ''
+				case 'real':    //	'' -> 0.0
+				case 'string':    //	'' -> ''
 					//	We don't need the value that this sets into the container,
 					//		but do we need the good offset created by this for scalars?
 					$this->offsetSet($offset, '');
 					break;
 
-				default:	//	arrays or objects
+				default:    //	arrays or objects
 					$this->offsetSet($offset, []);
 					break;
 

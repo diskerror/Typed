@@ -71,7 +71,7 @@ class Nested extends \Diskerror\Typed\TypedClass
 {
 	protected $name = 'secret';
 
-	protected $d    = '__class__TypedDate';
+	protected $d = '__class__TypedDate';
 
 	protected $date = '__class__DateTime("Jan 1, 2015")';
 }
@@ -80,7 +80,7 @@ class DateRange extends \Diskerror\Typed\TypedClass
 {
 	protected $start = '__class__DateTime';
 
-	protected $end   = '__class__DateTime';
+	protected $end = '__class__DateTime';
 
 	protected function _checkRelatedProperties()
 	{

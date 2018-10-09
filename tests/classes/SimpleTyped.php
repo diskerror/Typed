@@ -2,21 +2,22 @@
 
 class SimpleTyped extends Diskerror\Typed\TypedClass
 {
-	protected $myBool       = true;
+	protected $myBool = true;
 
-	protected $myInt        = 0;
+	protected $myInt = 0;
 
-	protected $myFloat      = 3.14;
+	protected $myFloat = 3.14;
 
-	protected $myString     = '';
+	protected $myString = '';
 
-	protected $myArray      = [];
+	protected $myArray = [];
 
-	protected $myObj        = '__class__stdClass';
+	protected $myObj = '__class__stdClass';
 
-	protected $myTypedArray = '__class__Diskerror\Typed\TypedArray(null, "JRandomClass")';
+//	protected $myTypedArray = '__class__Diskerror\Typed\TypedArray(null, "JRandomClass")';
+	protected $myTypedArray = ['__type__' => 'Diskerror\Typed\TypedArray', null, 'JRandomClass'];
 
-	protected $_map         = ['myDouble' => 'myFloat'];
+	protected $_map = ['myDouble' => 'myFloat'];
 
 }
 

@@ -10,6 +10,7 @@ class UserMentions extends \Diskerror\Typed\TypedClass
 
 	protected $name        = '';
 
-	protected $indices     = '__class__Diskerror\Typed\TypedArray(null, "int")';
+//	protected $indices     = '__class__Diskerror\Typed\TypedArray(null, "int")';
+	protected $indices     = ['__type__' => 'Diskerror\Typed\TypedArray', null, 'int'];
 
 }

@@ -106,17 +106,26 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 				unset($this->_defaultVars[$k]);
 			}
 
+			//	TODO: Use of "eval" is deprecated.
 			//	Change class definition string into a real class for the defaults.
 			//	If $v is a string and has '__class__' at the start then instantiate the named object.
 			elseif (is_string($v) && 0 === stripos($v, '__class__')) {
 				//	We must use `eval` because we want to handle
 				//		'__class__Date' and
 				//		'__class__DateTime("Jan 1, 2015")' with 1 or more parameters.
-				$this->_defaultVars[$k] = eval('return new ' . substr($v, 9) . ';');
+				$this->_defaultVars[$k] = eval('return new ' . substr($v, 9) . ';');    //	DEPRECATED
 
 				//	Objects are always passed by reference,
 				//		but we want a separate copy so the original stays unchanged.
 				$this->{$k} = clone $this->_defaultVars[$k];
+			}
+
+			elseif (is_array($v) && isset($v['__type__'])) {
+				$propTypeName = $v['__type__'];
+				unset($v['__type__']);
+
+				$this->_defaultVars[$k] = new $propTypeName(...$v);
+				$this->{$k}             = clone $this->_defaultVars[$k];
 			}
 		}
 
@@ -391,145 +400,6 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	}
 
 	/**
-	 * All member objects will be deep cloned.
-	 */
-	public function __clone()
-	{
-		foreach ($this->_publicNames as $k) {
-			if (is_object($this->{$k})) {
-				$this->{$k} = clone $this->{$k};
-			}
-		}
-	}
-
-	/**
-	 * Get variable.
-	 *
-	 * @param string $k
-	 *
-	 * @return mixed
-	 */
-	public function __get($k)
-	{
-		$this->_assertPropName($k);
-		return $this->_getByName($k);
-	}
-
-	/**
-	 * Set variable
-	 * Casts the incoming data ($v) to the same type as the named ($k) property.
-	 *
-	 * @param string $k
-	 * @param mixed  $v
-	 */
-	public function __set($k, $v)
-	{
-		$this->_assertPropName($k);
-		$this->_setByName($k, $v);
-		$this->_checkRelatedProperties();
-	}
-
-	/**
-	 * Throws exception if named property does not exist.
-	 *
-	 * @param string $k
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	protected function _assertPropName($k)
-	{
-		if (!$this->_keyExists($k)) {
-			throw new InvalidArgumentException();
-		}
-	}
-
-	/**
-	 * Get variable.
-	 *
-	 * @param string $k
-	 *
-	 * @return mixed
-	 */
-	protected function _getByName($k)
-	{
-		//	Create a method with a name like the next line and it will be called here.
-		$getter = '_get_' . $k;
-		if (method_exists($this->_calledClass, $getter)) {
-			return $this->$getter();
-		}
-
-		return $this->{$k};
-	}
-
-	/**
-	 * Is a variable set?
-	 *
-	 * @param string $k
-	 *
-	 * @return bool
-	 */
-	public function __isset($k): bool
-	{
-		if ($k[0] === '_') {
-			return false;
-		}
-
-		return isset($this->{$k});
-	}
-
-	/**
-	 * Required method for Iterator.
-	 */
-	final public function rewind()
-	{
-		$this->_position = 0;
-	}
-
-	/**
-	 * Required method for Iterator.
-	 * @return mixed
-	 */
-	final public function current()
-	{
-		return $this->_getByName($this->_publicNames[$this->_position]);
-	}
-
-	/**
-	 * Required method for Iterator.
-	 * @return mixed
-	 */
-	final public function key()
-	{
-		return $this->_publicNames[$this->_position];
-	}
-
-	/**
-	 * Required method for Iterator.
-	 */
-	final public function next()
-	{
-		++$this->_position;
-	}
-
-	/**
-	 * Required method for Iterator.
-	 * @return bool
-	 */
-	final public function valid(): bool
-	{
-		return isset($this->_publicNames[$this->_position]);
-	}
-
-	/**
-	 * Required method for Countable.
-	 * @return int
-	 */
-	final public function count(): int
-	{
-		return count($this->_defaultVars);
-	}
-
-	/**
 	 * Be sure json_encode get's our prepared array.
 	 *
 	 * @return array
@@ -650,5 +520,144 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 		}
 
 		return $arr;
+	}
+
+	/**
+	 * Get variable.
+	 *
+	 * @param string $k
+	 *
+	 * @return mixed
+	 */
+	protected function _getByName($k)
+	{
+		//	Create a method with a name like the next line and it will be called here.
+		$getter = '_get_' . $k;
+		if (method_exists($this->_calledClass, $getter)) {
+			return $this->$getter();
+		}
+
+		return $this->{$k};
+	}
+
+	/**
+	 * All member objects will be deep cloned.
+	 */
+	public function __clone()
+	{
+		foreach ($this->_publicNames as $k) {
+			if (is_object($this->{$k})) {
+				$this->{$k} = clone $this->{$k};
+			}
+		}
+	}
+
+	/**
+	 * Get variable.
+	 *
+	 * @param string $k
+	 *
+	 * @return mixed
+	 */
+	public function __get($k)
+	{
+		$this->_assertPropName($k);
+		return $this->_getByName($k);
+	}
+
+	/**
+	 * Set variable
+	 * Casts the incoming data ($v) to the same type as the named ($k) property.
+	 *
+	 * @param string $k
+	 * @param mixed  $v
+	 */
+	public function __set($k, $v)
+	{
+		$this->_assertPropName($k);
+		$this->_setByName($k, $v);
+		$this->_checkRelatedProperties();
+	}
+
+	/**
+	 * Throws exception if named property does not exist.
+	 *
+	 * @param string $k
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	protected function _assertPropName($k)
+	{
+		if (!$this->_keyExists($k)) {
+			throw new InvalidArgumentException();
+		}
+	}
+
+	/**
+	 * Is a variable set?
+	 *
+	 * @param string $k
+	 *
+	 * @return bool
+	 */
+	public function __isset($k): bool
+	{
+		if ($k[0] === '_') {
+			return false;
+		}
+
+		return isset($this->{$k});
+	}
+
+	/**
+	 * Required method for Iterator.
+	 */
+	final public function rewind()
+	{
+		$this->_position = 0;
+	}
+
+	/**
+	 * Required method for Iterator.
+	 * @return mixed
+	 */
+	final public function current()
+	{
+		return $this->_getByName($this->_publicNames[$this->_position]);
+	}
+
+	/**
+	 * Required method for Iterator.
+	 * @return mixed
+	 */
+	final public function key()
+	{
+		return $this->_publicNames[$this->_position];
+	}
+
+	/**
+	 * Required method for Iterator.
+	 */
+	final public function next()
+	{
+		++$this->_position;
+	}
+
+	/**
+	 * Required method for Iterator.
+	 * @return bool
+	 */
+	final public function valid(): bool
+	{
+		return isset($this->_publicNames[$this->_position]);
+	}
+
+	/**
+	 * Required method for Countable.
+	 * @return int
+	 */
+	final public function count(): int
+	{
+		return count($this->_defaultVars);
 	}
 }

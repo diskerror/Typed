@@ -14,7 +14,8 @@ class User extends \Diskerror\Typed\TypedClass
 
 	protected $contributors_enabled = false;
 
-	protected $created_at           = '__class__\Diskerror\Typed\DateTime("2018-07-18 17:10:28")';
+//	protected $created_at           = '__class__\Diskerror\Typed\DateTime("2018-07-18 17:10:28")';
+	protected $created_at           = ['__type__' => 'Diskerror\Typed\DateTime', '2018-07-18 17:10:28'];
 
 	protected $description          = '';
 
