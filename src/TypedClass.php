@@ -616,26 +616,23 @@ abstract class TypedClass implements TypedInterface
 			foreach ($this->_defaultVars as $k => &$v) {
 				yield $k => $this->{$k};
 
-				$defaultType = gettype($v);
-				switch ($defaultType) {
-					case 'bool':
-					case 'boolean':
+				$thisType3 = substr(gettype($v), 0, 3);
+				switch ($thisType3) {
+					case 'boo':
 					case 'int':
-					case 'integer':
-					case 'float':
-					case 'double':
-					case 'real':
-					case 'string':
-					case 'real':
-					case 'resource':
+					case 'flo':
+					case 'dou':
+					case 'rea':
+					case 'str':
+					case 'res':
 						//	Cast if not the same type.
-						if (gettype($this->{$k}) !== $defaultType) {
+						if (substr(gettype($this->{$k}), 0, 3) !== $thisType3) {
 							$this->offsetSet($k, $this->{$k});
 						}
 						break;
 
-					case 'object':
-					case 'class':
+					case 'obj':
+					case 'cla':
 						//	Cast if not the same type.
 						if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($v)) {
 							$this->offsetSet($k, $this->{$k});
