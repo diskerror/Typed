@@ -174,7 +174,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 				if (null === $k || !isset($this->_container[$k]) || !($this->_container[$k] instanceof TypedInterface)) {
 					$newValue = (is_object($v) && get_class($v) === $this->_type) ?
 						clone $v :
-						new $this->_type(...$v);
+						new $this->_type($v);
 				}
 				//	Else it is an instance of our special type.
 				else {
