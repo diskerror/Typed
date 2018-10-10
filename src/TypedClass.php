@@ -79,6 +79,14 @@ abstract class TypedClass implements TypedInterface
 	private $_publicNames;
 
 	/**
+	 * Holds the count of the to-be-public properties.
+	 *
+	 * @var int
+	 */
+	private $_count;
+
+
+	/**
 	 * Constructor.
 	 * Accepts an object, array, or JSON string.
 	 *
@@ -125,6 +133,7 @@ abstract class TypedClass implements TypedInterface
 		}
 
 		$this->_publicNames = array_keys($this->_defaultVars);
+		$this->_count       = count($this->_defaultVars);
 
 		//	Don't waste time with assign if input is one of these.
 		//		Just return leaving the default values.
@@ -164,13 +173,13 @@ abstract class TypedClass implements TypedInterface
 				//	Leave associative array as is.
 				//	Copy indexed array by position to a named array
 				if (array_values($in) === $in) {
-					$nameArr  = $this->_defaultVars;
-					$minCount = min(count($in), count($nameArr));
+					$newArr   = [];
+					$minCount = min(count($in), $this->_count);
 					for ($i = 0; $i < $minCount; ++$i) {
-						$nameArr[$this->_publicNames[$i]] = $in[$i];
+						$newArr[$this->_publicNames[$i]] = $in[$i];
 					}
 
-					$in = $nameArr;
+					$in = &$newArr;
 				}
 				break;
 
@@ -236,7 +245,7 @@ abstract class TypedClass implements TypedInterface
 	private function _keyExists($k): bool
 	{
 		return array_key_exists($k, $this->_defaultVars) ||
-			   (array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
+			(array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
 	}
 
 	/**
@@ -303,15 +312,6 @@ abstract class TypedClass implements TypedInterface
 				$this->{$k} = $v;
 				break;
 		}
-	}
-
-	/**
-	 * Override this method for additional checking such as when a start-date
-	 * is required to be earlier than an end-date, any range of values like
-	 * minimum and maximum, or any custom filtering dependent on more than a single property.
-	 */
-	protected function _checkRelatedProperties()
-	{
 	}
 
 	/**
@@ -382,6 +382,15 @@ abstract class TypedClass implements TypedInterface
 				$this->{$k} = new $propertyClassType($v);
 			}
 		}
+	}
+
+	/**
+	 * Override this method for additional checking such as when a start-date
+	 * is required to be earlier than an end-date, any range of values like
+	 * minimum and maximum, or any custom filtering dependent on more than a single property.
+	 */
+	protected function _checkRelatedProperties()
+	{
 	}
 
 	public function getArrayOptions(): int
@@ -536,6 +545,56 @@ abstract class TypedClass implements TypedInterface
 	}
 
 	/**
+	 * Required by the IteratorAggregate interface.
+	 * Every value is checked for change during iteration.
+	 *
+	 * @return \Traversable
+	 */
+	public function getIterator(): \Traversable
+	{
+		return (function &() {
+			foreach ($this->_defaultVars as $k => &$v) {
+				yield $k => $this->{$k};
+
+				$thisType3 = substr(gettype($v), 0, 3);
+				switch ($thisType3) {
+					case 'boo':
+					case 'int':
+					case 'flo':
+					case 'dou':
+					case 'rea':
+					case 'str':
+					case 'res':
+						//	Cast if not the same type.
+						if (substr(gettype($this->{$k}), 0, 3) !== $thisType3) {
+							$this->offsetSet($k, $this->{$k});
+						}
+						break;
+
+					case 'obj':
+					case 'cla':
+						//	Cast if not the same type.
+						if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($v)) {
+							$this->offsetSet($k, $this->{$k});
+						}
+						break;
+
+					//	Null property types don't get checked.
+				}
+			}
+		})();
+	}
+
+	/**
+	 * Required method for Countable.
+	 * @return int
+	 */
+	final public function count(): int
+	{
+		return $this->_count;
+	}
+
+	/**
 	 * All member objects will be deep cloned.
 	 */
 	public function __clone()
@@ -602,55 +661,5 @@ abstract class TypedClass implements TypedInterface
 		}
 
 		return isset($this->{$k});
-	}
-
-	/**
-	 * Required by the IteratorAggregate interface.
-	 * Every value is checked for change during iteration.
-	 *
-	 * @return \Traversable
-	 */
-	public function getIterator(): \Traversable
-	{
-		return (function &() {
-			foreach ($this->_defaultVars as $k => &$v) {
-				yield $k => $this->{$k};
-
-				$thisType3 = substr(gettype($v), 0, 3);
-				switch ($thisType3) {
-					case 'boo':
-					case 'int':
-					case 'flo':
-					case 'dou':
-					case 'rea':
-					case 'str':
-					case 'res':
-						//	Cast if not the same type.
-						if (substr(gettype($this->{$k}), 0, 3) !== $thisType3) {
-							$this->offsetSet($k, $this->{$k});
-						}
-						break;
-
-					case 'obj':
-					case 'cla':
-						//	Cast if not the same type.
-						if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($v)) {
-							$this->offsetSet($k, $this->{$k});
-						}
-						break;
-
-					//	Null property types don't get checked.
-				}
-			}
-		})();
-	}
-
-	/**
-	 * Required method for Countable.
-	 * @return int
-	 */
-	final public function count(): int
-	{
-		return count($this->_defaultVars);
 	}
 }
