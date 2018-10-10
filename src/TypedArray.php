@@ -9,15 +9,13 @@
 namespace Diskerror\Typed;
 
 use ArrayAccess;
-use IteratorAggregate;
-use Countable;
 
 /**
  * Provides support for an array's elements to all have the same type.
  * If type is defined as null then any element can have any type but
  *      deep copying of objects is always available.
  */
-class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Countable
+class TypedArray implements TypedInterface, ArrayAccess
 {
 	/**
 	 * A string that specifies the type of values in the container.
@@ -60,6 +58,7 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 		else {
 			$this->_type = ('' === $type || null === $type) ? 'null' : $type;
 		}
+		$this->_type = $this->_type ? : 'null';    //	If empty then change to "null".
 
 		$this->_container = [];
 
@@ -138,8 +137,6 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 		switch ($this->_type) {
 			case 'null':
 			case 'NULL':
-			case '':
-			case null:
 				if (is_object($v)) {
 					$newValue = clone $v;
 				}
@@ -214,72 +211,6 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	public function jsonSerialize()
 	{
 		return $this->toArray();
-	}
-
-	/**
-	 * Required by the ArrayAccess interface.
-	 *
-	 * @param string|int $offset
-	 */
-	public function offsetUnset($offset)
-	{
-		unset($this->_container[$offset]);
-	}
-
-	/**
-	 * Required by the ArrayAccess interface.
-	 * Returns reference to offset.
-	 *
-	 * http://stackoverflow.com/questions/20053269/indirect-modification-of-overloaded-element-of-splfixedarray-has-no-effect
-	 *
-	 * @param string|int $offset
-	 *
-	 * @return mixed
-	 */
-	public function &offsetGet($offset)
-	{
-		if (!$this->offsetExists($offset)) {
-			//	Be sure offset exists before accessing it.
-			switch (strtolower($this->_type)) {
-				case 'bool':
-				case 'boolean':    //	'' -> false
-				case 'int':
-				case 'integer':    //	'' -> 0
-				case 'float':
-				case 'double':
-				case 'real':    //	'' -> 0.0
-				case 'string':    //	'' -> ''
-					//	We don't need the value that this sets into the container,
-					//		but do we need the good offset created by this for scalars?
-					$this->offsetSet($offset, '');
-					break;
-
-				default:    //	arrays or objects
-					$this->offsetSet($offset, []);
-					break;
-
-			}
-
-			//	Returns new offset created by ::offsetSet().
-			if (null === $offset) {
-				end($this->_container);
-				$offset = key($this->_container);
-			}
-		}
-
-		return $this->_container[$offset];
-	}
-
-	/**
-	 * Required by the ArrayAccess interface.
-	 *
-	 * @param string|int $offset
-	 *
-	 * @return bool
-	 */
-	public function offsetExists($offset): bool
-	{
-		return isset($this->_container[$offset]);
 	}
 
 	/**
@@ -390,6 +321,72 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	}
 
 	/**
+	 * Required by the ArrayAccess interface.
+	 *
+	 * @param string|int $offset
+	 */
+	public function offsetUnset($offset)
+	{
+		unset($this->_container[$offset]);
+	}
+
+	/**
+	 * Required by the ArrayAccess interface.
+	 * Returns reference to offset.
+	 *
+	 * http://stackoverflow.com/questions/20053269/indirect-modification-of-overloaded-element-of-splfixedarray-has-no-effect
+	 *
+	 * @param string|int $offset
+	 *
+	 * @return mixed
+	 */
+	public function &offsetGet($offset)
+	{
+		if (!$this->offsetExists($offset)) {
+			//	Be sure offset exists before accessing it.
+			switch ($this->_type) {
+				case 'bool':
+				case 'boolean':    //	'' -> false
+				case 'int':
+				case 'integer':    //	'' -> 0
+				case 'float':
+				case 'double':
+				case 'real':       //	'' -> 0.0
+				case 'string':     //	'' -> ''
+					//	We don't need the value that this sets into the container,
+					//		but do we need the good offset created by this for scalars?
+					$this->offsetSet($offset, '');
+					break;
+
+				default:    //	arrays or objects
+					$this->offsetSet($offset, []);
+					break;
+
+			}
+
+			//	Returns new offset created by ::offsetSet().
+			if (null === $offset) {
+				end($this->_container);
+				$offset = key($this->_container);
+			}
+		}
+
+		return $this->_container[$offset];
+	}
+
+	/**
+	 * Required by the ArrayAccess interface.
+	 *
+	 * @param string|int $offset
+	 *
+	 * @return bool
+	 */
+	public function offsetExists($offset): bool
+	{
+		return isset($this->_container[$offset]);
+	}
+
+	/**
 	 * Make sure object is deep copied.
 	 */
 	public function __clone()
@@ -420,37 +417,56 @@ class TypedArray implements TypedInterface, ArrayAccess, IteratorAggregate, Coun
 	 * Required by the IteratorAggregate interface.
 	 * Every value is checked for change during iteration.
 	 *
+	 * The _type or gettype() can return different names for the same type,
+	 * ie. "bool" or "boolean", so we're only going to check the first 3 characters.
+	 *
 	 * @return \Traversable
 	 */
 	public function getIterator(): \Traversable
 	{
-		return (function &() {
-			foreach ($this->_container as $k => &$v) {
-				if (is_object($v)) {
-					$tmpV = clone $v;
-				}
-				else {
-					$tmpV = $v;
-				}
+		$thisType3 = substr($this->_type, 0, 3);
 
-				yield $k => $tmpV;
-
-				//	Check to see if $tmpV type changed.
-				if ($tmpV != $v) {
-					//	Check if this is the same type.
-					if ((is_object($tmpV) ? get_class($tmpV) : gettype($tmpV)) === $this->_type) {
-						//	If so then copy the value to the current slot.
-						$v = $tmpV;
+		switch ($thisType3) {
+			case 'nul':
+			case 'NUL':
+				//	It can be anything. Don't check it.
+				return (function &() {
+					foreach ($this->_container as $k => &$v) {
+						yield $k => $v;
 					}
-					else {
-						// If not then cast the value into the current slot.
-						$this->offsetSet($k, $tmpV);
-					}
-				}
+				})();
 
-				unset($tmpV);
-			}
-		})();
+			case 'boo':
+			case 'int':
+			case 'flo':
+			case 'dou':
+			case 'rea':
+			case 'str':
+			case 'arr':
+			case 'res':
+				return (function &() use ($thisType3) {
+					foreach ($this->_container as $k => &$v) {
+						yield $k => $v;
+
+						//	Cast if not the same type.
+						if (substr(gettype($v), 0, 3) !== $thisType3) {
+							$this->offsetSet($k, $v);
+						}
+					}
+				})();
+
+			default:
+				return (function &() {
+					foreach ($this->_container as $k => &$v) {
+						yield $k => $v;
+
+						//	Compare whole class names.
+						if (get_class($v) !== $this->_type) {
+							$this->offsetSet($k, $v);
+						}
+					}
+				})();
+		}
 	}
 
 	/**

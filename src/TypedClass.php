@@ -8,9 +8,11 @@
 
 namespace Diskerror\Typed;
 
-use Iterator;
-use Countable;
+use function get_class;
+use function gettext;
+use function gettype;
 use InvalidArgumentException;
+use function is_object;
 
 /**
  * Create a child of this class with your named properties with a visibility of
@@ -41,7 +43,7 @@ use InvalidArgumentException;
  *      object. It will help with filtering and insuring the existance of default
  *      values for missing input parameters.
  */
-abstract class TypedClass implements TypedInterface, Iterator, Countable
+abstract class TypedClass implements TypedInterface
 {
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
@@ -75,13 +77,6 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	 * @var array
 	 */
 	private $_publicNames;
-
-	/**
-	 * Holds the position for Iterator.
-	 *
-	 * @var int
-	 */
-	private $_position = 0;
 
 	/**
 	 * Constructor.
@@ -241,7 +236,7 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	private function _keyExists($k): bool
 	{
 		return array_key_exists($k, $this->_defaultVars) ||
-			(array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
+			   (array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
 	}
 
 	/**
@@ -308,6 +303,15 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 				$this->{$k} = $v;
 				break;
 		}
+	}
+
+	/**
+	 * Override this method for additional checking such as when a start-date
+	 * is required to be earlier than an end-date, any range of values like
+	 * minimum and maximum, or any custom filtering dependent on more than a single property.
+	 */
+	protected function _checkRelatedProperties()
+	{
 	}
 
 	/**
@@ -378,15 +382,6 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 				$this->{$k} = new $propertyClassType($v);
 			}
 		}
-	}
-
-	/**
-	 * Override this method for additional checking such as when a start-date
-	 * is required to be earlier than an end-date, any range of values like
-	 * minimum and maximum, or any custom filtering dependent on more than a single property.
-	 */
-	protected function _checkRelatedProperties()
-	{
 	}
 
 	public function getArrayOptions(): int
@@ -610,46 +605,47 @@ abstract class TypedClass implements TypedInterface, Iterator, Countable
 	}
 
 	/**
-	 * Required method for Iterator.
+	 * Required by the IteratorAggregate interface.
+	 * Every value is checked for change during iteration.
+	 *
+	 * @return \Traversable
 	 */
-	final public function rewind()
+	public function getIterator(): \Traversable
 	{
-		$this->_position = 0;
-	}
+		return (function &() {
+			foreach ($this->_defaultVars as $k => &$v) {
+				yield $k => $this->{$k};
 
-	/**
-	 * Required method for Iterator.
-	 * @return mixed
-	 */
-	final public function current()
-	{
-		return $this->_getByName($this->_publicNames[$this->_position]);
-	}
+				$defaultType = gettype($v);
+				switch ($defaultType) {
+					case 'bool':
+					case 'boolean':
+					case 'int':
+					case 'integer':
+					case 'float':
+					case 'double':
+					case 'real':
+					case 'string':
+					case 'real':
+					case 'resource':
+						//	Cast if not the same type.
+						if (gettype($this->{$k}) !== $defaultType) {
+							$this->offsetSet($k, $this->{$k});
+						}
+						break;
 
-	/**
-	 * Required method for Iterator.
-	 * @return mixed
-	 */
-	final public function key()
-	{
-		return $this->_publicNames[$this->_position];
-	}
+					case 'object':
+					case 'class':
+						//	Cast if not the same type.
+						if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($v)) {
+							$this->offsetSet($k, $this->{$k});
+						}
+						break;
 
-	/**
-	 * Required method for Iterator.
-	 */
-	final public function next()
-	{
-		++$this->_position;
-	}
-
-	/**
-	 * Required method for Iterator.
-	 * @return bool
-	 */
-	final public function valid(): bool
-	{
-		return isset($this->_publicNames[$this->_position]);
+					//	Null property types don't get checked.
+				}
+			}
+		})();
 	}
 
 	/**
