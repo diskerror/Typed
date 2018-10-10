@@ -8,12 +8,16 @@
 
 namespace Diskerror\Typed;
 
+use Countable;
+use IteratorAggregate;
+use JsonSerializable;
+
 /**
  * Class TypedInterface
  * Provides common interface TypedClass and TypedArray.
  * @package Diskerror\Typed
  */
-interface TypedInterface extends \JsonSerializable
+interface TypedInterface extends Countable, IteratorAggregate, JsonSerializable
 {
 	/**
 	 * Copies all matching member names while maintaining original types and
@@ -31,17 +35,17 @@ interface TypedInterface extends \JsonSerializable
 
 	/**
 	 * Returns an array of this object with only the appropriate members.
-	 * A deep copy/converstion to an array from objects is also performed
+	 * A deep copy/conversion to an array from objects is also performed
 	 * where appropriate.
 	 *
 	 * @return array
 	 */
-	function toArray() : array;
+	function toArray(): array;
 
 	/**
 	 * @return int
 	 */
-	function getArrayOptions() : int;
+	function getArrayOptions(): int;
 
 	/**
 	 * @param int $opt
