@@ -6,6 +6,8 @@ class MongoTest extends PHPUnit\Framework\TestCase
 {
 	public function testMongo()
 	{
+		date_default_timezone_set('UTC');
+
 		$tweet = new Tweet();
 		$tweet->setArrayOptions(AO::OMIT_EMPTY | AO::OMIT_RESOURCE | AO::SWITCH_ID | AO::TO_BSON_DATE | AO::SWITCH_NESTED_ID);
 
