@@ -4,17 +4,32 @@ class ArrayTest extends PHPUnit\Framework\TestCase
 {
 	public function testWalk()
 	{
-		$walk = new Diskerror\Typed\TypedArray(['1', '2', '3', '4', '5'], 'string');
-		jsonPrint($walk);
+		$walk = new Diskerror\Typed\TypedArray(['1', 2, '3', 'z', 5], 'string');
+//		jsonPrint($walk);exit;
+		$this->assertJsonStringEqualsJsonFile(
+			__DIR__ . '/results/array1.json',
+			json_encode($walk),
+			'Creation of simple array of strings.'
+		);
 
 		foreach ($walk as &$w) {
 			$w *= 2;
 		}
-		jsonPrint($walk);
+//		jsonPrint($walk);exit;
+		$this->assertJsonStringEqualsJsonFile(
+			__DIR__ . '/results/array2.json',
+			json_encode($walk),
+			'Multiple strings by number.'
+		);
 
 		foreach ($walk as &$w) {
-			$w = 8;
+			$w = [$w, "elephant"];
 		}
-		jsonPrint($walk);
+//		jsonPrint($walk);exit;
+		$this->assertJsonStringEqualsJsonFile(
+			__DIR__ . '/results/array3.json',
+			json_encode($walk),
+			'Attempt to convert strings to arrays.'
+		);
 	}
 }
