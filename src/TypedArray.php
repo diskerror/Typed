@@ -359,7 +359,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 					break;
 
 				default:    //	arrays or objects
-					$this->offsetSet($offset, []);
+					$this->offsetSet($offset, null);
 					break;
 
 			}
