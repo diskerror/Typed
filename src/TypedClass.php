@@ -135,17 +135,28 @@ abstract class TypedClass implements TypedInterface
 		$this->_publicNames = array_keys($this->_defaultVars);
 		$this->_count       = count($this->_defaultVars);
 
-		//	Don't waste time with assign if input is one of these.
-		//		Just return leaving the default values.
 		switch (gettype($in)) {
+			case 'string':
+			case 'array':
+			case 'object':
+				$this->assign($in);
+				break;
+
+			//	Don't waste time with assign if input is one of these.
+			//		Just return leaving the default values.
 			case 'NULL':
 			case 'null':
 			case 'bool':
 			case 'boolean':
-				return;
+				if (!$in) {
+					return;
+				}
+				//	bool TRUE falls through
+
+			default:
+				throw new InvalidArgumentException('bad value to constructor');
 		}
 
-		$this->assign($in);
 	}
 
 	/**

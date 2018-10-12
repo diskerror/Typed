@@ -2,6 +2,9 @@
 
 namespace Diskerror\Typed;
 
+use DateTimeZone;
+use InvalidArgumentException;
+
 /**
  * This class adds convienence methods to the built-in DateTime.
  *
@@ -32,13 +35,13 @@ class DateTime extends \DateTime
 	public function __construct($time = 'now', $timezone = null)
 	{
 		if (!is_a($timezone, 'DateTimeZone')) {
-			$timezone = new \DateTimeZone(date_default_timezone_get());
+			$timezone = new DateTimeZone(date_default_timezone_get());
 		}
 
 		switch (gettype($time)) {
 			case 'object':
 				if (is_a($time, 'DateTime')) {
-					parent::__construct($time->format(self::STRING_IO_FORMAT), $time->getTimezone());
+					parent::__construct($time->format(self::STRING_IO_FORMAT_MICRO), $time->getTimezone());
 					break;
 				}
 				$time = (array)$time;
@@ -46,7 +49,7 @@ class DateTime extends \DateTime
 				parent::__construct('now', $timezone);
 				$this->setDate($time);
 				$this->setTime($time);
-			break;
+				break;
 
 			case 'string':
 				if ($time === '') {
@@ -57,15 +60,15 @@ class DateTime extends \DateTime
 					$time = substr($time, 0, 14);
 				}
 				parent::__construct($time, $timezone);
-			break;
+				break;
 
 			case 'null':
 			case 'NULL':
 				parent::__construct('now', $timezone);
-			break;
+				break;
 
 			default:
-				throw new \InvalidArgumentException('first argument is the wrong type: ' . gettype($time));
+				throw new InvalidArgumentException('first argument is the wrong type: ' . gettype($time));
 		}
 	}
 
@@ -100,18 +103,18 @@ class DateTime extends \DateTime
 					switch (substr($k, 0, 3)) {
 						case 'yea':
 							$year = $v;
-						break;
+							break;
 
 						case 'mon':
 							$month = $v;
-						break;
+							break;
 
 						case 'day':
 							$day = $v;
-						break;
+							break;
 					}
 				}
-			break;
+				break;
 		}
 
 		parent::setDate((int)$year, (int)$month, (int)$day);
@@ -146,26 +149,26 @@ class DateTime extends \DateTime
 				$mcs    = $this->format('u');
 
 				foreach ($arrIn as $k => $v) {
-					switch (substr($k, 0, 3)) {
+					switch (substr(strtolower($k), 0, 3)) {
 						case 'hou':
 							$hour = $v;
-						break;
+							break;
 
 						case 'min':
 							$minute = $v;
-						break;
+							break;
 
 						case 'sec':
 							$second = $v;
-						break;
+							break;
 
 						case 'mcs':
 							$mcs = $v;
-						break;
+							break;
 
 						case 'fra': //	"fraction" which is a float
 							$mcs = $v * 1000000;
-						break;
+							break;
 					}
 				}
 		}
@@ -187,12 +190,7 @@ class DateTime extends \DateTime
 	 */
 	public static function createFromFormat($formatOrTime, $time = '', $timezone = null): self
 	{
-		if ($time === '') {
-			$parsed = date_parse($formatOrTime);
-		}
-		else {
-			$parsed = date_parse_from_format($formatOrTime, $time);
-		}
+		$parsed = ($time === '') ? date_parse($formatOrTime) : date_parse_from_format($formatOrTime, $time);
 
 		$d = new self();
 
@@ -214,10 +212,6 @@ class DateTime extends \DateTime
 	 */
 	public function __toString()
 	{
-		if ($this->format('u') > 0) {
-			return $this->format(self::STRING_IO_FORMAT_MICRO);
-		}
-
-		return $this->format(self::STRING_IO_FORMAT);
+		return $this->format(self::STRING_IO_FORMAT_MICRO);
 	}
 }

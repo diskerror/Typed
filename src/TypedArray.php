@@ -9,6 +9,8 @@
 namespace Diskerror\Typed;
 
 use ArrayAccess;
+use LogicException;
+use InvalidArgumentException;
 
 /**
  * Provides support for an array's elements to all have the same type.
@@ -52,7 +54,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 
 		if (isset($this->_type)) {
 			if (null !== $type) {
-				throw new \LogicException('Can\'t set type when type is set in child class.');
+				throw new LogicException('Can\'t set type when type is set in child class.');
 			}
 		}
 		else {
@@ -99,7 +101,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 				return;
 
 			default:
-				throw new \InvalidArgumentException('bad input type ' . $inputType . ', value: "' . $in . '"');
+				throw new InvalidArgumentException('bad input type ' . $inputType . ', value: "' . $in . '"');
 		}
 
 		foreach ($in as $k => $v) {
