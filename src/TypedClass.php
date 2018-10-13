@@ -8,11 +8,7 @@
 
 namespace Diskerror\Typed;
 
-use function get_class;
-use function gettext;
-use function gettype;
 use InvalidArgumentException;
-use function is_object;
 
 /**
  * Create a child of this class with your named properties with a visibility of
