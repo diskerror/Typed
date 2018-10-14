@@ -4,7 +4,7 @@
  * Date: 10/13/18
  */
 
-namespace Diskerror\Typed\Scalar;
+namespace Diskerror\Typed;
 
 
 /**
@@ -28,10 +28,10 @@ abstract class ScalarAbstract
 	/**
 	 * ScalarAbstract constructor.
 	 *
-	 * @param      $in
-	 * @param bool $allowNull
+	 * @param mixed $in A default of an empty string will cast to false or zero as needed.
+	 * @param bool  $allowNull
 	 */
-	public function __construct($in, bool $allowNull = false)
+	public function __construct($in = '', bool $allowNull = false)
 	{
 		$this->_allowNull = $allowNull;
 		$this->set($in);

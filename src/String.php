@@ -6,8 +6,9 @@
  * Time: 6:20 PM
  */
 
-namespace Diskerror\Typed\Scalar;
+namespace Diskerror\Typed;
 
+use UnexpectedValueException;
 
 class String extends ScalarAbstract
 {
@@ -16,12 +17,14 @@ class String extends ScalarAbstract
 		switch (gettype($in)) {
 			case 'object':
 				if (method_exists($in, '__toString')) {
-					$in = $in->__toString();
+					$this->_value = $in->__toString();
+					break;
 				}
-				elseif (method_exists($in, 'format')) {
-					$in = $in->format('c');
+				if (method_exists($in, 'format')) {
+					$this->_value = $in->format('c');
+					break;
 				}
-				elseif (method_exists($in, 'toArray')) {
+				if (method_exists($in, 'toArray')) {
 					$in = $in->toArray();
 				}
 			//	other objects fall through, object to array falls through
@@ -29,7 +32,7 @@ class String extends ScalarAbstract
 				$jsonStr     = json_encode($in);
 				$jsonLastErr = json_last_error();
 				if ($jsonLastErr !== JSON_ERROR_NONE) {
-					throw new \UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
+					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 				}
 				$this->_value = $jsonStr;
 				break;
@@ -38,8 +41,9 @@ class String extends ScalarAbstract
 			case 'NULL':
 				$this->_value = $this->_allowNull ? null : '';
 				break;
-		}
 
-		return (string)$in;
+			default:
+				$this->_value = (string)$in;
+		}
 	}
 }

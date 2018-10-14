@@ -6,7 +6,7 @@
  * Time: 6:20 PM
  */
 
-namespace Diskerror\Typed\Scalar;
+namespace Diskerror\Typed;
 
 
 class Boolean extends ScalarAbstract
@@ -15,12 +15,7 @@ class Boolean extends ScalarAbstract
 	{
 		switch (gettype($in)) {
 			case 'object':
-				if (method_exists($in, 'toArray')) {
-					$this->_value = (bool)$in->toArray();
-				}
-				else {
-					$this->_value = (bool)(array)$in;
-				}
+				$this->_value = method_exists($in, 'toArray') ? (bool)$in->toArray() : (bool)(array)$in;
 				break;
 
 			case 'null':

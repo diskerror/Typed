@@ -6,7 +6,7 @@
  * Time: 6:20 PM
  */
 
-namespace Diskerror\Typed\Scalar;
+namespace Diskerror\Typed;
 
 
 class Integer extends ScalarAbstract
@@ -16,8 +16,9 @@ class Integer extends ScalarAbstract
 		switch (gettype($in)) {
 			case 'string':
 				$in = trim(strtolower($in), "\x00..\x20\x7F");
-				/*****************			If empty string or string with text "null" */
-				$this->_value = ($this->_allowNull && ($in === '' || $in === 'null')) ? null : (int)intval($in, 0);
+				/*****************        If empty string or string with text "null" or "nan" */
+				$this->_value =
+					($this->_allowNull && ($in === '' || $in === 'null' || $in === 'nan')) ? null : (int)intval($in, 0);
 				break;
 
 			case 'object':

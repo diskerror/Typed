@@ -6,7 +6,7 @@
  * Time: 6:20 PM
  */
 
-namespace Diskerror\Typed\Scalar;
+namespace Diskerror\Typed;
 
 
 class Float extends ScalarAbstract
