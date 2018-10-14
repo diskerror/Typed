@@ -8,6 +8,7 @@
 
 namespace Diskerror\Typed;
 
+use MongoDB\BSON\Persistable as BsonPersistable;
 use InvalidArgumentException;
 
 /**
@@ -39,7 +40,7 @@ use InvalidArgumentException;
  *      object. It will help with filtering and insuring the existance of default
  *      values for missing input parameters.
  */
-abstract class TypedClass implements TypedInterface
+abstract class TypedClass implements TypedInterface, BsonPersistable
 {
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
@@ -147,7 +148,7 @@ abstract class TypedClass implements TypedInterface
 				if (!$in) {
 					return;
 				}
-				//	bool TRUE falls through
+			//	bool TRUE falls through
 
 			default:
 				throw new InvalidArgumentException('bad value to constructor');
@@ -252,7 +253,7 @@ abstract class TypedClass implements TypedInterface
 	private function _keyExists($k): bool
 	{
 		return array_key_exists($k, $this->_defaultVars) ||
-			(array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
+			   (array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
 	}
 
 	/**
@@ -319,6 +320,15 @@ abstract class TypedClass implements TypedInterface
 				$this->{$k} = $v;
 				break;
 		}
+	}
+
+	/**
+	 * Override this method for additional checking such as when a start-date
+	 * is required to be earlier than an end-date, any range of values like
+	 * minimum and maximum, or any custom filtering dependent on more than a single property.
+	 */
+	protected function _checkRelatedProperties()
+	{
 	}
 
 	/**
@@ -389,15 +399,6 @@ abstract class TypedClass implements TypedInterface
 				$this->{$k} = new $propertyClassType($v);
 			}
 		}
-	}
-
-	/**
-	 * Override this method for additional checking such as when a start-date
-	 * is required to be earlier than an end-date, any range of values like
-	 * minimum and maximum, or any custom filtering dependent on more than a single property.
-	 */
-	protected function _checkRelatedProperties()
-	{
 	}
 
 	public function getArrayOptions(): int
@@ -472,7 +473,8 @@ abstract class TypedClass implements TypedInterface
 						$arr[$k] = $this->$k;    // maintain the type
 					}
 					elseif ($this->$k instanceof \DateTimeInterface && $bsonDate) {
-						$arr[$k] = new \MongoDB\BSON\UTCDateTime($this->$k->getTimestamp() * 1000);
+						$dtMilliSeconds = ($this->$k->getTimestamp() * 1000) + (int)$this->$k->format('v');
+						$arr[$k] = new \MongoDB\BSON\UTCDateTime($dtMilliSeconds);
 					}
 					elseif (method_exists($v, 'toArray')) {
 						if (method_exists($v, 'getArrayOptions')) {
@@ -669,4 +671,27 @@ abstract class TypedClass implements TypedInterface
 
 		return isset($this->{$k});
 	}
+
+	/**
+	 *
+	 * @return array
+	 */
+	public function bsonSerialize(): array
+	{
+		$argOptions = $this->_arrayOptions->get();
+		$this->setArrayOptions(
+			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
+
+		$res = $this->toArray();
+
+		$this->_arrayOptions->set($argOptions);
+
+		return $res;
+	}
+
+	function bsonUnserialize(array $data)
+	{
+		$this->assign($data);
+	}
+
 }

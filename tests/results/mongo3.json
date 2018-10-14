@@ -1,7 +1,7 @@
 {
 	"retweeted_status": {
 		"id_": 0,
-		"created_at": "2018-07-18 17:10:28",
+		"created_at": "2018-07-18 17:10:28.000000",
 		"contributors": null,
 		"entities": {
 			"hashtags": [],
@@ -36,7 +36,7 @@
 			"screen_name": "",
 			"location": "",
 			"contributors_enabled": false,
-			"created_at": "2018-07-18 17:10:28",
+			"created_at": "2018-07-18 17:10:28.000000",
 			"description": "",
 			"favourites_count": 0,
 			"followers_count": 0,
@@ -53,7 +53,7 @@
 		}
 	},
 	"id_": 0,
-	"created_at": "2018-07-18 17:10:28",
+	"created_at": "2018-07-18 17:10:28.000000",
 	"contributors": null,
 	"entities": {
 		"hashtags": [],
@@ -88,7 +88,7 @@
 		"screen_name": "",
 		"location": "",
 		"contributors_enabled": false,
-		"created_at": "2018-07-18 17:10:28",
+		"created_at": "2018-07-18 17:10:28.000000",
 		"description": "",
 		"favourites_count": 0,
 		"followers_count": 0,

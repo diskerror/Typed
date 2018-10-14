@@ -28,7 +28,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 
 	/**
 	 * Holds options for "toArray" customizations.
-	 * @var \Diskerror\Typed\ArrayOptions
+	 * @var ArrayOptions
 	 */
 	protected $_arrayOptions;
 
@@ -139,12 +139,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 		switch ($this->_type) {
 			case 'null':
 			case 'NULL':
-				if (is_object($v)) {
-					$newValue = clone $v;
-				}
-				else {
-					$newValue = $v;
-				}
+				$newValue = $v;
 				break;
 
 			case 'bool':
@@ -174,9 +169,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 			//	All object and class types.
 			default:
 				if (null === $k || !isset($this->_container[$k]) || !($this->_container[$k] instanceof TypedInterface)) {
-					$newValue = (is_object($v) && get_class($v) === $this->_type) ?
-						clone $v :
-						new $this->_type($v);
+					$newValue = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
 				}
 				//	Else it is an instance of our special type.
 				else {
@@ -193,16 +186,6 @@ class TypedArray implements TypedInterface, ArrayAccess
 		else {
 			$this->_container[$k] = &$newValue;
 		}
-	}
-
-	public function getArrayOptions(): int
-	{
-		return $this->_arrayOptions->get();
-	}
-
-	public function setArrayOptions(int $opts)
-	{
-		$this->_arrayOptions->set($opts);
 	}
 
 	/**
@@ -508,5 +491,34 @@ class TypedArray implements TypedInterface, ArrayAccess
 	public function shift()
 	{
 		return array_shift($this->_container);
+	}
+
+	/**
+	 * Read the link to understand why "array_values" is used.
+	 * http://php.net/manual/en/mongodb.persistence.serialization.php
+	 *
+	 * @return array
+	 */
+	public function bsonSerialize(): array
+	{
+		$argOptions = $this->_arrayOptions->get();
+		$this->setArrayOptions(
+			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
+
+		$res = array_values($this->toArray());
+
+		$this->_arrayOptions->set($argOptions);
+
+		return $res;
+	}
+
+	public function getArrayOptions(): int
+	{
+		return $this->_arrayOptions->get();
+	}
+
+	public function setArrayOptions(int $opts)
+	{
+		$this->_arrayOptions->set($opts);
 	}
 }
