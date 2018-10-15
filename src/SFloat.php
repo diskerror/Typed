@@ -15,7 +15,7 @@ class Float extends ScalarAbstract
 	{
 		switch (gettype($in)) {
 			case 'string':
-				$in = trim(strtolower($in), "\x00..\x20\x7F");
+				$this->_value = trim(strtolower($in), "\x00..\x20\x7F");
 				if ($in === '' || $in === 'null' || $in === 'nan') {
 					$this->_value = $this->_allowNull ? null : 0.0;
 					break;
@@ -43,7 +43,7 @@ class Float extends ScalarAbstract
 				break;
 
 			case 'object':
-				$this->_value = method_exists($in, 'toArray') ? (int)$in->toArray() : (int)(array)$in;
+				$this->_value = (float)self::_castObject($in);
 				break;
 
 			case 'null':

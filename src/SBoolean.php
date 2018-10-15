@@ -15,7 +15,7 @@ class Boolean extends ScalarAbstract
 	{
 		switch (gettype($in)) {
 			case 'object':
-				$this->_value = method_exists($in, 'toArray') ? (bool)$in->toArray() : (bool)(array)$in;
+				$this->_value = (bool)self::_castObject($in);
 				break;
 
 			case 'null':

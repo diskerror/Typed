@@ -16,13 +16,15 @@ class Integer extends ScalarAbstract
 		switch (gettype($in)) {
 			case 'string':
 				$in = trim(strtolower($in), "\x00..\x20\x7F");
-				/*****************        If empty string or string with text "null" or "nan" */
+				/*****************   If empty string or string with text "null" or "nan" */
 				$this->_value =
-					($this->_allowNull && ($in === '' || $in === 'null' || $in === 'nan')) ? null : (int)intval($in, 0);
+					($this->_allowNull && ($in === '' || $in === 'null' || $in === 'nan')) ?
+						null :
+						(int)intval($in, 0);
 				break;
 
 			case 'object':
-				$this->_value = method_exists($in, 'toArray') ? (int)$in->toArray() : (int)(array)$in;
+				$this->_value = (int)self::_castObject($in);
 				break;
 
 			case 'null':

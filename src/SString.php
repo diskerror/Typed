@@ -16,6 +16,10 @@ class String extends ScalarAbstract
 	{
 		switch (gettype($in)) {
 			case 'object':
+				if ($in instanceof ScalarAbstract) {
+					$this->_value = (string)$in->get();
+					break;
+				}
 				if (method_exists($in, '__toString')) {
 					$this->_value = $in->__toString();
 					break;
@@ -24,6 +28,7 @@ class String extends ScalarAbstract
 					$this->_value = $in->format('c');
 					break;
 				}
+
 				if (method_exists($in, 'toArray')) {
 					$in = $in->toArray();
 				}
