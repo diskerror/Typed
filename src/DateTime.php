@@ -212,6 +212,31 @@ class DateTime extends \DateTime
 	 */
 	public function __toString()
 	{
-		return $this->format(self::STRING_IO_FORMAT_MICRO);
+		if ($this->format('u') > 0) {
+			return $this->format(self::STRING_IO_FORMAT_MICRO);
+		}
+
+		return $this->format(self::STRING_IO_FORMAT);
 	}
+
+	/**
+	 * Returns an integer, as the timestamp in milliseconds since the Unix epoch.
+	 *
+	 * @return int
+	 */
+	public function getTimestampMilli():int
+	{
+		return ($this->getTimestamp() * 1000) + $this->format('v');
+	}
+
+	/**
+	 * Returns a float, as the timestamp in seconds since the Unix epoch accurate to the nearest microsecond.
+	 *
+	 * @return float
+	 */
+	public function getTimestampMicro(): float
+	{
+		return (float)$this->getTimestamp() + ($this->format('u') / 1000000.0);
+	}
+
 }
