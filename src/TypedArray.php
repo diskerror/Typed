@@ -195,7 +195,15 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 */
 	public function jsonSerialize()
 	{
-		return $this->toArray();
+		$origOptions = $this->_arrayOptions->get();
+		$this->setArrayOptions(
+			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR);
+
+		$res = $this->toArray();
+
+		$this->_arrayOptions->set($origOptions);
+
+		return $res;
 	}
 
 	/**
@@ -494,31 +502,28 @@ class TypedArray implements TypedInterface, ArrayAccess
 	}
 
 	/**
-	 * Read the link to understand why "array_values" is used.
-	 * http://php.net/manual/en/mongodb.persistence.serialization.php
-	 *
-	 * @return array
+	 * Return an integer representing the toArray conversion options.
+	 * @return int
 	 */
-	public function bsonSerialize(): array
-	{
-		$argOptions = $this->_arrayOptions->get();
-		$this->setArrayOptions(
-			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
-
-		$res = array_values($this->toArray());
-
-		$this->_arrayOptions->set($argOptions);
-
-		return $res;
-	}
-
 	public function getArrayOptions(): int
 	{
 		return $this->_arrayOptions->get();
 	}
 
+	/**
+	 * Takes an integer representing the toArray conversion options.
+	 * @param int $opts
+	 */
 	public function setArrayOptions(int $opts)
 	{
 		$this->_arrayOptions->set($opts);
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getValues()
+	{
+		return array_values($this->_container);
 	}
 }

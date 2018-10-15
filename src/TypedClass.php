@@ -418,7 +418,15 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 	 */
 	public function jsonSerialize()
 	{
-		return $this->toArray();
+		$origOptions = $this->_arrayOptions->get();
+		$this->setArrayOptions(
+			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR);
+
+		$res = $this->toArray();
+
+		$this->_arrayOptions->set($origOptions);
+
+		return $res;
 	}
 
 	/**
@@ -678,13 +686,13 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 	 */
 	public function bsonSerialize(): array
 	{
-		$argOptions = $this->_arrayOptions->get();
+		$origOptions = $this->_arrayOptions->get();
 		$this->setArrayOptions(
 			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
 
 		$res = $this->toArray();
 
-		$this->_arrayOptions->set($argOptions);
+		$this->_arrayOptions->set($origOptions);
 
 		return $res;
 	}

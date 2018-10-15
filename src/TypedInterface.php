@@ -11,14 +11,13 @@ namespace Diskerror\Typed;
 use Countable;
 use IteratorAggregate;
 use JsonSerializable;
-use \MongoDB\BSON\Serializable as BsonSerializable;
 
 /**
  * Class TypedInterface
  * Provides common interface TypedClass and TypedArray.
  * @package Diskerror\Typed
  */
-interface TypedInterface extends Countable, IteratorAggregate, JsonSerializable, BsonSerializable
+interface TypedInterface extends Countable, IteratorAggregate, JsonSerializable
 {
 	/**
 	 * Copies all matching member names while maintaining original types and
