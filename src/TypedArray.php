@@ -195,15 +195,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 */
 	public function jsonSerialize()
 	{
-		$origOptions = $this->_arrayOptions->get();
-		$this->setArrayOptions(
-			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR);
-
-		$res = $this->toArray();
-
-		$this->_arrayOptions->set($origOptions);
-
-		return $res;
+		return $this->toArray();
 	}
 
 	/**
