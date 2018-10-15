@@ -8,7 +8,9 @@
 
 namespace Diskerror\Typed;
 
-use MongoDB\BSON\Persistable as BsonPersistable;
+use DateTimeInterface;
+use MongoDB\BSON\{UTCDateTime, UTCDateTimeInterface, Persistable};
+use Traversable;
 use InvalidArgumentException;
 
 /**
@@ -40,7 +42,7 @@ use InvalidArgumentException;
  *      object. It will help with filtering and insuring the existance of default
  *      values for missing input parameters.
  */
-abstract class TypedClass implements TypedInterface, BsonPersistable
+abstract class TypedClass implements TypedInterface, Persistable
 {
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
@@ -91,6 +93,34 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 	 */
 	public function __construct($in = null)
 	{
+		$this->_init();
+
+		switch (gettype($in)) {
+			case 'string':
+			case 'array':
+			case 'object':
+				$this->assign($in);
+				break;
+
+			//	Don't waste time with assign if input is one of these.
+			//		Just return leaving the default values.
+			case 'NULL':
+			case 'null':
+			case 'bool':
+			case 'boolean':
+				if (!$in) {
+					return;
+				}
+			//	bool TRUE falls through
+
+			default:
+				throw new InvalidArgumentException('bad value to constructor');
+		}
+
+	}
+
+	private function _init()
+	{
 		$this->_calledClass = get_called_class();
 
 		if (!isset($this->_arrayOptions)) {
@@ -131,29 +161,6 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 
 		$this->_publicNames = array_keys($this->_defaultVars);
 		$this->_count       = count($this->_defaultVars);
-
-		switch (gettype($in)) {
-			case 'string':
-			case 'array':
-			case 'object':
-				$this->assign($in);
-				break;
-
-			//	Don't waste time with assign if input is one of these.
-			//		Just return leaving the default values.
-			case 'NULL':
-			case 'null':
-			case 'bool':
-			case 'boolean':
-				if (!$in) {
-					return;
-				}
-			//	bool TRUE falls through
-
-			default:
-				throw new InvalidArgumentException('bad value to constructor');
-		}
-
 	}
 
 	/**
@@ -172,6 +179,7 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 	 */
 	public function assign($in = null)
 	{
+		//	First check if the input data is good or needs to be massaged.
 		switch (gettype($in)) {
 			case 'object':
 				break;
@@ -220,6 +228,7 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 				throw new InvalidArgumentException('invalid input type');
 		}
 
+		//	Then copy each field to the appropriate place.
 		foreach ($in as $k => $v) {
 			if (!$this->_keyExists($k)) {
 				continue;
@@ -360,12 +369,12 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 
 			//	Treat DateTime related objects as atomic in these next cases.
 			elseif (
-				($propertyDefaultClass instanceof \DateTimeInterface) && ($v instanceof \MongoDB\BSON\UTCDateTimeInterface)
+				($propertyDefaultClass instanceof DateTimeInterface) && ($v instanceof UTCDateTimeInterface)
 			) {
 				$this->{$k} = new $propertyClassType($v->toDateTime());
 			}
 			elseif (
-				($propertyDefaultClass instanceof \MongoDB\BSON\UTCDateTimeInterface) && ($v instanceof \DateTimeInterface)
+				($propertyDefaultClass instanceof UTCDateTimeInterface) && ($v instanceof DateTimeInterface)
 			) {
 				$this->{$k} = new $propertyClassType($v->getTimestamp() * 1000);
 			}
@@ -373,7 +382,7 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 			//	if this->k is a DateTime object and v is any other type
 			//		then absorb v or v's properties into this->k's properties
 			//		But only if $v object has __toString.
-			elseif ($propertyDefaultClass instanceof \DateTimeInterface && method_exists($v, '__toString')) {
+			elseif ($propertyDefaultClass instanceof DateTimeInterface && method_exists($v, '__toString')) {
 				$this->{$k} = new $propertyClassType($v->__toString());
 			}
 
@@ -469,12 +478,12 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 					if (($this->$k instanceof $ZJE_STRING) && $keepJsonExpr) {
 						$arr[$k] = $this->$k;    // maintain the type
 					}
-					elseif ($this->$k instanceof \MongoDB\BSON\UTCDateTime && $bsonDate) {
+					elseif ($this->$k instanceof UTCDateTime && $bsonDate) {
 						$arr[$k] = $this->$k;    // maintain the type
 					}
-					elseif ($this->$k instanceof \DateTimeInterface && $bsonDate) {
+					elseif ($this->$k instanceof DateTimeInterface && $bsonDate) {
 						$dtMilliSeconds = ($this->$k->getTimestamp() * 1000) + (int)$this->$k->format('v');
-						$arr[$k] = new \MongoDB\BSON\UTCDateTime($dtMilliSeconds);
+						$arr[$k] = new UTCDateTime($dtMilliSeconds);
 					}
 					elseif (method_exists($v, 'toArray')) {
 						if (method_exists($v, 'getArrayOptions')) {
@@ -559,7 +568,7 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 	 *
 	 * @return \Traversable
 	 */
-	public function getIterator(): \Traversable
+	public function getIterator(): Traversable
 	{
 		return (function &() {
 			foreach ($this->_defaultVars as $k => &$v) {
@@ -576,7 +585,7 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 					case 'res':
 						//	Cast if not the same type.
 						if (substr(gettype($this->{$k}), 0, 3) !== $thisType3) {
-							$this->offsetSet($k, $this->{$k});
+							$this->_setByName($k, $this->{$k});
 						}
 						break;
 
@@ -584,7 +593,7 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 					case 'cla':
 						//	Cast if not the same type.
 						if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($v)) {
-							$this->offsetSet($k, $this->{$k});
+							$this->_setByName($k, $this->{$k});
 						}
 						break;
 
@@ -691,6 +700,7 @@ abstract class TypedClass implements TypedInterface, BsonPersistable
 
 	function bsonUnserialize(array $data)
 	{
+		$this->_init();
 		$this->assign($data);
 	}
 
