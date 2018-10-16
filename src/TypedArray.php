@@ -60,7 +60,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 		else {
 			$this->_type = ('' === $type || null === $type) ? 'null' : $type;
 		}
-		$this->_type = $this->_type ? : 'null';    //	If empty then change to "null".
+		$this->_type = $this->_type ?: 'null';    //	If empty then change to "null".
 
 		$this->_container = [];
 
@@ -110,81 +110,87 @@ class TypedArray implements TypedInterface, ArrayAccess
 	}
 
 	/**
-	 * Required by the ArrayAccess interface
-	 * Coerces input values to be the required type.
+	 * Required by the Countable interface.
 	 *
-	 * There are 5 basic conditions for $this->_type:
-	 * # $this->_type is null (accept any type and value, like a standard array);
-	 * # $this->_type is a scalar [bool, int, float, string];
-	 * # $this->_type is an array (check if value has toArray);
-	 * # $this->_type is an object of type TypedAbstract (call assign);
-	 * # $this->_type is any other object.
-	 *
-	 * There are 3 conditions involving $offset:
-	 * # $offset is null;
-	 * # $offset is set and exists;
-	 * # $offset is set and does not exist (null);
-	 *
-	 * There are 4 conditions for handling $value:
-	 * # $value is null (replace current scalar values with null, reset non-scalars);
-	 * # $value is a scalar (cast);
-	 * # $value is a an array (check for toArray, or cast);
-	 * # $value is a an object (clone if the same as _type, otherwise new _type(value) );
-	 *
-	 * @param string|int $k
-	 * @param mixed      $v
+	 * @return int
 	 */
-	public function offsetSet($k, $v)
+	public function count(): int
 	{
-		switch ($this->_type) {
-			case 'null':
-			case 'NULL':
-				$newValue = $v;
-				break;
+		return count($this->_container);
+	}
 
-			case 'bool':
-			case 'boolean':
-				$newValue = Cast::toBoolean($v);
-				break;
+	/**
+	 * Return an integer representing the toArray conversion options.
+	 * @return int
+	 */
+	public function getArrayOptions(): int
+	{
+		return $this->_arrayOptions->get();
+	}
 
+	/**
+	 * Takes an integer representing the toArray conversion options.
+	 *
+	 * @param int $opts
+	 */
+	public function setArrayOptions(int $opts)
+	{
+		$this->_arrayOptions->set($opts);
+	}
+
+	/**
+	 * Required by the IteratorAggregate interface.
+	 * Every value is checked for change during iteration.
+	 *
+	 * The _type or gettype() can return different names for the same type,
+	 * ie. "bool" or "boolean", so we're only going to check the first 3 characters.
+	 *
+	 * @return \Traversable
+	 */
+	public function getIterator(): \Traversable
+	{
+		$thisType3 = substr($this->_type, 0, 3);
+
+		switch ($thisType3) {
+			case 'nul':
+			case 'NUL':
+				//	It can be anything. Don't check it.
+				return (function &() {
+					foreach ($this->_container as $k => &$v) {
+						yield $k => $v;
+					}
+				})();
+
+			case 'boo':
 			case 'int':
-			case 'integer':
-				$newValue = Cast::toInteger($v);
-				break;
+			case 'flo':
+			case 'dou':
+			case 'rea':
+			case 'str':
+			case 'arr':
+			case 'res':
+				return (function &() use ($thisType3) {
+					foreach ($this->_container as $k => &$v) {
+						yield $k => $v;
 
-			case 'float':
-			case 'double':
-			case 'real':
-				$newValue = Cast::toDouble($v);
-				break;
+						//	Cast if not the same type.
+						if (substr(gettype($v), 0, 3) !== $thisType3) {
+							$this->offsetSet($k, $v);
+						}
+					}
+				})();
 
-			case 'string':
-				$newValue = Cast::toString($v);
-				break;
-
-			case 'array':
-				$newValue = Cast::toArray($v);
-				break;
-
-			//	All object and class types.
 			default:
-				if (null === $k || !isset($this->_container[$k]) || !($this->_container[$k] instanceof TypedInterface)) {
-					$newValue = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
-				}
-				//	Else it is an instance of our special type.
-				else {
-					$this->_container[$k]->assign($v);
+				return (function &() {
+					foreach ($this->_container as $k => &$v) {
+						yield $k => $v;
 
-					return; //	value already assigned to container
-				}
-				break;
-		}
-
-		if (null === $k) {
-			$this->_container[] = &$newValue;
-		}
-		else {
-			$this->_container[$k] = &$newValue;
+						//	Compare whole class names.
+						if (get_class($v) !== $this->_type) {
+							$this->offsetSet($k, $v);
+						}
+					}
+				})();
 		}
 	}
 
@@ -196,6 +202,38 @@ class TypedArray implements TypedInterface, ArrayAccess
 	public function jsonSerialize()
 	{
 		return $this->toArray();
+	}
+
+	/**
+	 * String representation of object.
+	 *
+	 * @link  https://php.net/manual/en/serializable.serialize.php
+	 * @return string the string representation of the object or null
+	 */
+	public function serialize(): string
+	{
+		return serialize([
+			'_type' => $this->_type,
+			'_arrayOptions' => $this->_arrayOptions->get(),
+			'_container' => $this->_container
+		]);
+	}
+
+	/**
+	 * Constructs the object
+	 * @link  https://php.net/manual/en/serializable.unserialize.php
+	 *
+	 * @param string $serialized The string representation of the object.
+	 *
+	 * @return void
+	 */
+	public function unserialize($serialized)
+	{
+		$data = unserialize($serialized);
+
+		$this->_type         = $data['_type'];
+		$this->_arrayOptions = new ArrayOptions($data['_arrayOptions']);
+		$this->_container    = $data['_container'];
 	}
 
 	/**
@@ -309,10 +347,12 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 * Required by the ArrayAccess interface.
 	 *
 	 * @param string|int $offset
+	 *
+	 * @return bool
 	 */
-	public function offsetUnset($offset)
+	public function offsetExists($offset): bool
 	{
-		unset($this->_container[$offset]);
+		return isset($this->_container[$offset]);
 	}
 
 	/**
@@ -360,15 +400,92 @@ class TypedArray implements TypedInterface, ArrayAccess
 	}
 
 	/**
+	 * Required by the ArrayAccess interface
+	 * Coerces input values to be the required type.
+	 *
+	 * There are 5 basic conditions for $this->_type:
+	 * # $this->_type is null (accept any type and value, like a standard array);
+	 * # $this->_type is a scalar [bool, int, float, string];
+	 * # $this->_type is an array (check if value has toArray);
+	 * # $this->_type is an object of type TypedAbstract (call assign);
+	 * # $this->_type is any other object.
+	 *
+	 * There are 3 conditions involving $offset:
+	 * # $offset is null;
+	 * # $offset is set and exists;
+	 * # $offset is set and does not exist (null);
+	 *
+	 * There are 4 conditions for handling $value:
+	 * # $value is null (replace current scalar values with null, reset non-scalars);
+	 * # $value is a scalar (cast);
+	 * # $value is a an array (check for toArray, or cast);
+	 * # $value is a an object (clone if the same as _type, otherwise new _type(value) );
+	 *
+	 * @param string|int $k
+	 * @param mixed      $v
+	 */
+	public function offsetSet($k, $v)
+	{
+		switch ($this->_type) {
+			case 'null':
+			case 'NULL':
+				$newValue = $v;
+				break;
+
+			case 'bool':
+			case 'boolean':
+				$newValue = Cast::toBoolean($v);
+				break;
+
+			case 'int':
+			case 'integer':
+				$newValue = Cast::toInteger($v);
+				break;
+
+			case 'float':
+			case 'double':
+			case 'real':
+				$newValue = Cast::toDouble($v);
+				break;
+
+			case 'string':
+				$newValue = Cast::toString($v);
+				break;
+
+			case 'array':
+				$newValue = Cast::toArray($v);
+				break;
+
+			//	All object and class types.
+			default:
+				if (null === $k || !isset($this->_container[$k]) || !($this->_container[$k] instanceof TypedInterface)) {
+					$newValue = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+				}
+				//	Else it is an instance of our special type.
+				else {
+					$this->_container[$k]->assign($v);
+
+					return; //	value already assigned to container
+				}
+				break;
+		}
+
+		if (null === $k) {
+			$this->_container[] = &$newValue;
+		}
+		else {
+			$this->_container[$k] = &$newValue;
+		}
+	}
+
+	/**
 	 * Required by the ArrayAccess interface.
 	 *
 	 * @param string|int $offset
-	 *
-	 * @return bool
 	 */
-	public function offsetExists($offset): bool
+	public function offsetUnset($offset)
 	{
-		return isset($this->_container[$offset]);
+		unset($this->_container[$offset]);
 	}
 
 	/**
@@ -386,72 +503,6 @@ class TypedArray implements TypedInterface, ArrayAccess
 	public function &getContainerReference()
 	{
 		return $this->_container;
-	}
-
-	/**
-	 * Required by the Countable interface.
-	 *
-	 * @return int
-	 */
-	public function count(): int
-	{
-		return count($this->_container);
-	}
-
-	/**
-	 * Required by the IteratorAggregate interface.
-	 * Every value is checked for change during iteration.
-	 *
-	 * The _type or gettype() can return different names for the same type,
-	 * ie. "bool" or "boolean", so we're only going to check the first 3 characters.
-	 *
-	 * @return \Traversable
-	 */
-	public function getIterator(): \Traversable
-	{
-		$thisType3 = substr($this->_type, 0, 3);
-
-		switch ($thisType3) {
-			case 'nul':
-			case 'NUL':
-				//	It can be anything. Don't check it.
-				return (function &() {
-					foreach ($this->_container as $k => &$v) {
-						yield $k => $v;
-					}
-				})();
-
-			case 'boo':
-			case 'int':
-			case 'flo':
-			case 'dou':
-			case 'rea':
-			case 'str':
-			case 'arr':
-			case 'res':
-				return (function &() use ($thisType3) {
-					foreach ($this->_container as $k => &$v) {
-						yield $k => $v;
-
-						//	Cast if not the same type.
-						if (substr(gettype($v), 0, 3) !== $thisType3) {
-							$this->offsetSet($k, $v);
-						}
-					}
-				})();
-
-			default:
-				return (function &() {
-					foreach ($this->_container as $k => &$v) {
-						yield $k => $v;
-
-						//	Compare whole class names.
-						if (get_class($v) !== $this->_type) {
-							$this->offsetSet($k, $v);
-						}
-					}
-				})();
-		}
 	}
 
 	/**
@@ -491,24 +542,6 @@ class TypedArray implements TypedInterface, ArrayAccess
 	public function shift()
 	{
 		return array_shift($this->_container);
-	}
-
-	/**
-	 * Return an integer representing the toArray conversion options.
-	 * @return int
-	 */
-	public function getArrayOptions(): int
-	{
-		return $this->_arrayOptions->get();
-	}
-
-	/**
-	 * Takes an integer representing the toArray conversion options.
-	 * @param int $opts
-	 */
-	public function setArrayOptions(int $opts)
-	{
-		$this->_arrayOptions->set($opts);
 	}
 
 	/**

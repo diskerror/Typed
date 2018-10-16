@@ -39,7 +39,7 @@ use InvalidArgumentException;
  *
  * The ideal usage of this abstract class is as the parent class of a data set
  *      where the input to the constructor (or assign) method is an HTTP request
- *      object. It will help with filtering and insuring the existance of default
+ *      object. It will help with filtering and insuring the existence of default
  *      values for missing input parameters.
  */
 abstract class TypedClass implements TypedInterface, Persistable
@@ -241,6 +241,227 @@ abstract class TypedClass implements TypedInterface, Persistable
 	}
 
 	/**
+	 * Required method for Countable.
+	 * @return int
+	 */
+	final public function count(): int
+	{
+		return $this->_count;
+	}
+
+	public function getArrayOptions(): int
+	{
+		return $this->_arrayOptions->get();
+	}
+
+	public function setArrayOptions(int $opts)
+	{
+		$this->_arrayOptions->set($opts);
+	}
+
+	/**
+	 * Required by the IteratorAggregate interface.
+	 * Every value is checked for change during iteration.
+	 *
+	 * @return \Traversable
+	 */
+	public function getIterator(): Traversable
+	{
+		return (function &() {
+			foreach ($this->_defaultVars as $k => &$v) {
+				yield $k => $this->{$k};
+
+				$thisType3 = substr(gettype($v), 0, 3);
+				switch ($thisType3) {
+					case 'boo':
+					case 'int':
+					case 'flo':
+					case 'dou':
+					case 'rea':
+					case 'str':
+					case 'res':
+						//	Cast if not the same type.
+						if (substr(gettype($this->{$k}), 0, 3) !== $thisType3) {
+							$this->_setByName($k, $this->{$k});
+						}
+						break;
+
+					case 'obj':
+					case 'cla':
+						//	Cast if not the same type.
+						if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($v)) {
+							$this->_setByName($k, $this->{$k});
+						}
+						break;
+
+					//	Null property types don't get checked.
+				}
+			}
+		})();
+	}
+
+	/**
+	 * Be sure json_encode get's our prepared array.
+	 *
+	 * @return array
+	 */
+	public function jsonSerialize()
+	{
+		return $this->toArray();
+	}
+
+	/**
+	 * String representation of object
+	 * @link  https://php.net/manual/en/serializable.serialize.php
+	 * @return string the string representation of the object or null
+	 */
+	public function serialize(): string
+	{
+		$toSerialize = ['_arrayOptions' => $this->_arrayOptions->get()];
+		foreach ($this->_publicNames as $k) {
+			$toSerialize[$k] = $this->{$k};
+		}
+
+		return serialize($toSerialize);
+	}
+
+	/**
+	 * Constructs the object
+	 * @link  https://php.net/manual/en/serializable.unserialize.php
+	 *
+	 * @param string $serialized The string representation of the object.
+	 *
+	 * @return void
+	 */
+	public function unserialize($serialized)
+	{
+		$this->_init();
+
+		$data = unserialize($serialized);
+
+		$this->_arrayOptions->set($data['_arrayOptions']);
+		unset($data['_arrayOptions']);
+
+		foreach ($data as $k => $v) {
+			$this->{$k} = $v;
+		}
+	}
+
+	/**
+	 * Returns an array with all public, protected, and private properties in
+	 * object that DO NOT begin with an underscore. This allows protected or
+	 * private properties to be treated as if they were public. This supports the
+	 * convention that protected and private property names begin with an
+	 * underscore (_).
+	 *
+	 * @return array
+	 */
+	final public function toArray(): array
+	{
+		$omitEmpty      = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$omitResource   = $this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE);
+		$switchID       = $this->_arrayOptions->has(ArrayOptions::SWITCH_ID);
+		$keepJsonExpr   = $this->_arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+		$bsonDate       = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
+		$switchNestedID = $this->_arrayOptions->has(ArrayOptions::SWITCH_NESTED_ID);
+
+		$ZJE_STRING = '\\Zend\\Json\\Expr';
+
+		$arr = [];
+		foreach ($this->_publicNames as $k) {
+			$v = $this->_getByName($k);
+
+			switch (gettype($v)) {
+				case 'null':
+				case 'NULL':
+					if (!$omitEmpty) {
+						$arr[$k] = null;
+					}
+					break;
+
+				case 'resource':
+					if (!$omitResource) {
+						$arr[$k] = $v;
+					}
+					break;
+
+				case 'string':
+					if ('' !== $v || !$omitEmpty) {
+						$arr[$k] = $v;
+					}
+					break;
+
+				case 'object':
+					if (($this->$k instanceof $ZJE_STRING) && $keepJsonExpr) {
+						$arr[$k] = $this->$k;    // maintain the type
+					}
+					elseif ($this->$k instanceof UTCDateTime && $bsonDate) {
+						$arr[$k] = $this->$k;    // maintain the type
+					}
+					elseif ($this->$k instanceof DateTimeInterface && $bsonDate) {
+						$dtMilliSeconds = ($this->$k->getTimestamp() * 1000) + (int)$this->$k->format('v');
+						$arr[$k]        = new UTCDateTime($dtMilliSeconds);
+					}
+					elseif (method_exists($v, 'toArray')) {
+						if (method_exists($v, 'getArrayOptions')) {
+							$vOrigOpts  = $v->getArrayOptions();
+							$thisArrOpt = $this->_arrayOptions->get();
+							if (!$switchNestedID) {
+								if (($vOrigOpts & ArrayOptions::SWITCH_ID) > 0) {
+									$thisArrOpt |= ArrayOptions::SWITCH_ID;
+								}
+								else {
+									$thisArrOpt &= ~ArrayOptions::SWITCH_ID;
+								}
+							}
+							$v->setArrayOptions($thisArrOpt);
+						}
+
+						$arr[$k] = $v->toArray();
+
+						if (isset($vOrigOpts)) {
+							$v->setArrayOptions($vOrigOpts);
+							unset($vOrigOpts);
+						}
+
+						if (count($arr[$k]) === 0 && $omitEmpty) {
+							unset($arr[$k]);
+						}
+					}
+					elseif (method_exists($v, '__toString')) {
+						$arr[$k] = $v->__toString();
+						if ($arr[$k] === '' && $omitEmpty) {
+							unset($arr[$k]);
+						}
+					}
+					else {
+						if (count((array)$v) || !$omitEmpty) {
+							$arr[$k] = $v;
+						}
+					}
+					break;
+
+				case 'array':
+					if (count($v) || !$omitEmpty) {
+						$arr[$k] = $v;
+					}
+					break;
+
+				//	ints and floats
+				default:
+					$arr[$k] = $v;
+			}
+
+			if ($k === 'id_' && $switchID) {
+				$arr['_id'] = &$arr['id_'];
+				unset($arr['id_']);
+			}
+		}
+
+		return $arr;
+	}
+
+	/**
 	 * Sets a variable to it's default value rather than unsetting it.
 	 *
 	 * @param string $k
@@ -262,7 +483,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 	private function _keyExists($k): bool
 	{
 		return array_key_exists($k, $this->_defaultVars) ||
-			   (array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
+			(array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
 	}
 
 	/**
@@ -410,208 +631,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 		}
 	}
 
-	public function getArrayOptions(): int
-	{
-		return $this->_arrayOptions->get();
-	}
-
-	public function setArrayOptions(int $opts)
-	{
-		$this->_arrayOptions->set($opts);
-	}
-
-	/**
-	 * Be sure json_encode get's our prepared array.
-	 *
-	 * @return array
-	 */
-	public function jsonSerialize()
-	{
-		return $this->toArray();
-	}
-
-	/**
-	 * Returns an array with all public, protected, and private properties in
-	 * object that DO NOT begin with an underscore. This allows protected or
-	 * private properties to be treated as if they were public. This supports the
-	 * convention that protected and private property names begin with an
-	 * underscore (_).
-	 *
-	 * @return array
-	 */
-	final public function toArray(): array
-	{
-		$omitEmpty      = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$omitResource   = $this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE);
-		$switchID       = $this->_arrayOptions->has(ArrayOptions::SWITCH_ID);
-		$keepJsonExpr   = $this->_arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$bsonDate       = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
-		$switchNestedID = $this->_arrayOptions->has(ArrayOptions::SWITCH_NESTED_ID);
-
-		$ZJE_STRING = '\\Zend\\Json\\Expr';
-
-		$arr = [];
-		foreach ($this->_publicNames as $k) {
-			$v = $this->_getByName($k);
-
-			switch (gettype($v)) {
-				case 'null':
-				case 'NULL':
-					if (!$omitEmpty) {
-						$arr[$k] = null;
-					}
-					break;
-
-				case 'resource':
-					if (!$omitResource) {
-						$arr[$k] = $v;
-					}
-					break;
-
-				case 'string':
-					if ('' !== $v || !$omitEmpty) {
-						$arr[$k] = $v;
-					}
-					break;
-
-				case 'object':
-					if (($this->$k instanceof $ZJE_STRING) && $keepJsonExpr) {
-						$arr[$k] = $this->$k;    // maintain the type
-					}
-					elseif ($this->$k instanceof UTCDateTime && $bsonDate) {
-						$arr[$k] = $this->$k;    // maintain the type
-					}
-					elseif ($this->$k instanceof DateTimeInterface && $bsonDate) {
-						$dtMilliSeconds = ($this->$k->getTimestamp() * 1000) + (int)$this->$k->format('v');
-						$arr[$k] = new UTCDateTime($dtMilliSeconds);
-					}
-					elseif (method_exists($v, 'toArray')) {
-						if (method_exists($v, 'getArrayOptions')) {
-							$vOrigOpts  = $v->getArrayOptions();
-							$thisArrOpt = $this->_arrayOptions->get();
-							if (!$switchNestedID) {
-								if (($vOrigOpts & ArrayOptions::SWITCH_ID) > 0) {
-									$thisArrOpt |= ArrayOptions::SWITCH_ID;
-								}
-								else {
-									$thisArrOpt &= ~ArrayOptions::SWITCH_ID;
-								}
-							}
-							$v->setArrayOptions($thisArrOpt);
-						}
-
-						$arr[$k] = $v->toArray();
-
-						if (isset($vOrigOpts)) {
-							$v->setArrayOptions($vOrigOpts);
-							unset($vOrigOpts);
-						}
-
-						if (count($arr[$k]) === 0 && $omitEmpty) {
-							unset($arr[$k]);
-						}
-					}
-					elseif (method_exists($v, '__toString')) {
-						$arr[$k] = $v->__toString();
-						if ($arr[$k] === '' && $omitEmpty) {
-							unset($arr[$k]);
-						}
-					}
-					else {
-						if (count((array)$v) || !$omitEmpty) {
-							$arr[$k] = $v;
-						}
-					}
-					break;
-
-				case 'array':
-					if (count($v) || !$omitEmpty) {
-						$arr[$k] = $v;
-					}
-					break;
-
-				//	ints and floats
-				default:
-					$arr[$k] = $v;
-			}
-
-			if ($k === 'id_' && $switchID) {
-				$arr['_id'] = &$arr['id_'];
-				unset($arr['id_']);
-			}
-		}
-
-		return $arr;
-	}
-
-	/**
-	 * Get variable.
-	 *
-	 * @param string $k
-	 *
-	 * @return mixed
-	 */
-	protected function _getByName($k)
-	{
-		//	Create a method with a name like the next line and it will be called here.
-		$getter = '_get_' . $k;
-		if (method_exists($this->_calledClass, $getter)) {
-			return $this->$getter();
-		}
-
-		return $this->{$k};
-	}
-
-	/**
-	 * Required by the IteratorAggregate interface.
-	 * Every value is checked for change during iteration.
-	 *
-	 * @return \Traversable
-	 */
-	public function getIterator(): Traversable
-	{
-		return (function &() {
-			foreach ($this->_defaultVars as $k => &$v) {
-				yield $k => $this->{$k};
-
-				$thisType3 = substr(gettype($v), 0, 3);
-				switch ($thisType3) {
-					case 'boo':
-					case 'int':
-					case 'flo':
-					case 'dou':
-					case 'rea':
-					case 'str':
-					case 'res':
-						//	Cast if not the same type.
-						if (substr(gettype($this->{$k}), 0, 3) !== $thisType3) {
-							$this->_setByName($k, $this->{$k});
-						}
-						break;
-
-					case 'obj':
-					case 'cla':
-						//	Cast if not the same type.
-						if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($v)) {
-							$this->_setByName($k, $this->{$k});
-						}
-						break;
-
-					//	Null property types don't get checked.
-				}
-			}
-		})();
-	}
-
-	/**
-	 * Required method for Countable.
-	 * @return int
-	 */
-	final public function count(): int
-	{
-		return $this->_count;
-	}
-
 	/**
 	 * All member objects will be deep cloned.
 	 */
@@ -666,6 +685,24 @@ abstract class TypedClass implements TypedInterface, Persistable
 	}
 
 	/**
+	 * Get variable.
+	 *
+	 * @param string $k
+	 *
+	 * @return mixed
+	 */
+	protected function _getByName($k)
+	{
+		//	Create a method with a name like the next line and it will be called here.
+		$getter = '_get_' . $k;
+		if (method_exists($this->_calledClass, $getter)) {
+			return $this->$getter();
+		}
+
+		return $this->{$k};
+	}
+
+	/**
 	 * Is a variable set?
 	 *
 	 * @param string $k
@@ -682,25 +719,31 @@ abstract class TypedClass implements TypedInterface, Persistable
 	}
 
 	/**
+	 * Called automatically by MongoDB.
 	 *
 	 * @return array
 	 */
 	public function bsonSerialize(): array
 	{
 		$origOptions = $this->_arrayOptions->get();
-		$this->setArrayOptions(
-			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
+		$this->setArrayOptions(ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
 
-		$res = $this->toArray();
+		$arr = array_merge($this->toArray(), ['_arrayOptions' => $origOptions]);
 
 		$this->_arrayOptions->set($origOptions);
 
-		return $res;
+		return $arr;
 	}
 
-	function bsonUnserialize(array $data)
+	/**
+	 * Called automatically by MongoDB when a document has a field namaed "__pclass".
+	 *
+	 * @param array $data
+	 */
+	public function bsonUnserialize(array $data)
 	{
 		$this->_init();
+		$this->_arrayOptions->set($data['_arrayOptions']);
 		$this->assign($data);
 	}
 

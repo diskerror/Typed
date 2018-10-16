@@ -10,6 +10,7 @@ namespace Diskerror\Typed;
 
 use Countable;
 use IteratorAggregate;
+use Serializable;
 use JsonSerializable;
 
 /**
@@ -17,7 +18,7 @@ use JsonSerializable;
  * Provides common interface TypedClass and TypedArray.
  * @package Diskerror\Typed
  */
-interface TypedInterface extends Countable, IteratorAggregate, JsonSerializable
+interface TypedInterface extends Countable, IteratorAggregate, Serializable, JsonSerializable
 {
 	/**
 	 * Copies all matching member names while maintaining original types and

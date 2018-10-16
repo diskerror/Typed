@@ -19,11 +19,16 @@ Returns an associative array of this object with only the appropriate members. A
 * TO_BSON_DATE: conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC. *MongoDB\BSON\UTCDateTime* objects will remain untouched.
 * SWITCH_NESTED_ID: pass the current SWITCH_ID state to nested objects.
 
-### jsonSerialize
-*TypedInterface* also extends the builtin *JsonSerializable* class so derivitives of these classes can be used directly with "json_encode".
-
 ### getArrayOptions & setArrayOptions
 These manage the usage of the options for how these classes are converted to an array.
+
+### Serialization
+
+*TypedInterface* extends the builtin *Serializable* and *JsonSerializable* classes which *TypedArray* and *TypedClass* both implement. *TypedClass* also implements the interface *MongoDB\BSON\Persistable* from the _MongoDb_ extension.
+
+The *Serializable* and *Persistable* classes will fully are coded to only store the minimum data required to fully rebuild the data classes, and make use of extensive self-checking in the *Typed* classes. Many of the housekeeping properties are not serialized.
+
+The implementations of *JsonSerializable* only return the user defined members. A *Typed* class or array can be reconstituted by passing the JSON string to the appropriate constructor. The options for converting these classes to an array will then be the default values.
 
 ## TypedClass
 The derivitives of *TypedClass* are contracted to do these things:
@@ -35,7 +40,7 @@ The derivitives of *TypedClass* are contracted to do these things:
 * Impliment “toArray” to return a deeply transformed standard associative array.
 * Handle special cases of members/properties that are objects with an option for handling NULL assignments.
 * Accept another object, associative or indexed array, and assign the input values to the appropriate members.
-  * Copy (clone) object or named array item by item.
+  * Copy each field or property item by item.
   * Copy indexed array by position.
   * Map alternate names to proper names.
   * Reset single property or entire object's members to their default values.
