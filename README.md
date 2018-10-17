@@ -26,9 +26,9 @@ These manage the usage of the options for how these classes are converted to an 
 
 *TypedInterface* extends the builtin *Serializable* and *JsonSerializable* classes which *TypedArray* and *TypedClass* both implement. *TypedClass* also implements the interface *MongoDB\BSON\Persistable* from the _MongoDb_ extension.
 
-The *Serializable* and *Persistable* classes will fully are coded to only store the minimum data required to fully rebuild the data classes, and make use of extensive self-checking in the *Typed* classes. Many of the housekeeping properties are not serialized.
+The *Serializable* classes are coded to store the minimum data required to fully rebuild the data classes, and make use of extensive self-checking in the *Typed* classes. Many of the housekeeping properties are not serialized.
 
-The implementations of *JsonSerializable* only return the user defined members. A *Typed* class or array can be reconstituted by passing the JSON string to the appropriate constructor. The options for converting these classes to an array will then be the default values.
+The implementations of *JsonSerializable* and *Persistable* only return the user defined members. A *Typed* class or array can be reconstituted by passing the JSON string to the appropriate constructor. The options for converting these classes to an array will then be the default values.
 
 ## TypedClass
 The derivitives of *TypedClass* are contracted to do these things:

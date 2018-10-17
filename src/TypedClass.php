@@ -726,9 +726,10 @@ abstract class TypedClass implements TypedInterface, Persistable
 	public function bsonSerialize(): array
 	{
 		$origOptions = $this->_arrayOptions->get();
-		$this->setArrayOptions(ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
+		$this->setArrayOptions(ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
 
-		$arr = array_merge($this->toArray(), ['_arrayOptions' => $origOptions]);
+//		$arr = array_merge($this->toArray(), ['_arrayOptions' => $origOptions]);
+		$arr = $this->toArray();
 
 		$this->_arrayOptions->set($origOptions);
 
@@ -743,7 +744,9 @@ abstract class TypedClass implements TypedInterface, Persistable
 	public function bsonUnserialize(array $data)
 	{
 		$this->_init();
-		$this->_arrayOptions->set($data['_arrayOptions']);
+		if (array_key_exists('_arrayOptions', $data)) {
+			$this->_arrayOptions->set($data['_arrayOptions']);
+		}
 		$this->assign($data);
 	}
 
