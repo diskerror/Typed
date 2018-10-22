@@ -1,6 +1,8 @@
 <?php
 
-class SimpleTyped extends Diskerror\Typed\TypedClass
+use Diskerror\Typed\TypedClass;
+
+class SimpleTyped extends TypedClass
 {
 	protected $myBool       = true;
 	protected $myInt        = 0;
@@ -14,7 +16,7 @@ class SimpleTyped extends Diskerror\Typed\TypedClass
 
 }
 
-class JRandomClass extends \Diskerror\Typed\TypedClass
+class JRandomClass extends TypedClass
 {
 	protected $jRandomVar = '';
 }
