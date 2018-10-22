@@ -58,9 +58,8 @@ class TypedArray implements TypedInterface, ArrayAccess
 			}
 		}
 		else {
-			$this->_type = ('' === $type || null === $type) ? 'null' : $type;
+			$this->_type = null === $type ? 'null' : $type;
 		}
-		$this->_type = $this->_type ?: 'null';    //	If empty then change to "null".
 
 		$this->_container = [];
 
@@ -92,6 +91,10 @@ class TypedArray implements TypedInterface, ArrayAccess
 				$jsonLastErr = json_last_error();
 				if ($jsonLastErr !== JSON_ERROR_NONE) {
 					throw new \UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
+				}
+				if ($in === null) {
+					$this->_container = [];    //	remove all current values
+					return;
 				}
 				break;
 
