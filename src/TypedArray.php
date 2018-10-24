@@ -54,7 +54,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 
 		if (isset($this->_type)) {
 			if (null !== $type) {
-				throw new LogicException('Can\'t set type when type is set in child class.');
+				throw new LogicException('Can\'t set type in constructor when type is set in child class.');
 			}
 		}
 		else {

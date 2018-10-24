@@ -9,7 +9,7 @@
 namespace Diskerror\Typed;
 
 
-class Boolean extends ScalarAbstract
+class SABoolean extends ScalarAbstract
 {
 	public function set($in)
 	{

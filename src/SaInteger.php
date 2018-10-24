@@ -9,7 +9,7 @@
 namespace Diskerror\Typed;
 
 
-class Integer extends ScalarAbstract
+class SAInteger extends ScalarAbstract
 {
 	public function set($in)
 	{

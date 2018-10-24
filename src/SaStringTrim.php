@@ -9,7 +9,7 @@
 namespace Diskerror\Typed;
 
 
-class StringTrim extends String
+class SAStringTrim extends SAString
 {
 	public function set($in)
 	{

@@ -6,6 +6,8 @@
 
 namespace Diskerror\Typed;
 
+use stdClass;
+
 
 /**
  * Class ScalarAbstract
@@ -35,6 +37,14 @@ abstract class ScalarAbstract
 	{
 		$this->_allowNull = $allowNull;
 		$this->set($in);
+	}
+
+	protected static function _castObject(stdClass $in): array
+	{
+		if (method_exists($in, 'toArray')) {
+			return $in->toArray();
+		}
+		return (array)$in;
 	}
 
 	/**

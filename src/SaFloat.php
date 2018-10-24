@@ -9,7 +9,7 @@
 namespace Diskerror\Typed;
 
 
-class Float extends ScalarAbstract
+class SAFloat extends ScalarAbstract
 {
 	public function set($in)
 	{

@@ -9,7 +9,7 @@
 namespace Diskerror\Typed;
 
 
-class IntegerUnsigned extends Integer
+class SAIntegerUnsigned extends SAInteger
 {
 	public function set($in)
 	{

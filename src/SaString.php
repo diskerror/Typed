@@ -10,7 +10,7 @@ namespace Diskerror\Typed;
 
 use UnexpectedValueException;
 
-class String extends ScalarAbstract
+class SAString extends ScalarAbstract
 {
 	public function set($in)
 	{
