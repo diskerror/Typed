@@ -1,6 +1,7 @@
 <?php
 /**
  * Create an array where members must be the same type.
+ *
  * @name        TypedArray
  * @copyright   Copyright (c) 2012 Reid Woodbury Jr
  * @license     http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
@@ -11,6 +12,7 @@ namespace Diskerror\Typed;
 use ArrayAccess;
 use LogicException;
 use InvalidArgumentException;
+use UnexpectedValueException;
 
 /**
  * Provides support for an array's elements to all have the same type.
@@ -22,18 +24,28 @@ class TypedArray implements TypedInterface, ArrayAccess
 	/**
 	 * A string that specifies the type of values in the container.
 	 * A child class can override _type rather than it being set with the constructor.
+	 *
 	 * @var string|null
 	 */
 	protected $_type;
 
 	/**
 	 * Holds options for "toArray" customizations.
+	 *
 	 * @var ArrayOptions
 	 */
-	protected $_arrayOptions;
+	private $_arrayOptions;
+
+	/**
+	 * Holds the type of iterator needed to iterate over values in the container.
+	 *
+	 * @var
+	 */
+	private $_iteratorType;
 
 	/**
 	 * An array that contains the items of interest.
+	 *
 	 * @var array
 	 */
 	private $_container;
@@ -44,7 +56,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 * @param array|object|string|null $values OPTIONAL null
 	 * @param string                   $type   OPTIONAL null
 	 *
-	 * @throws \LogicException
+	 * @throws LogicException
 	 */
 	public function __construct($values = null, string $type = null)
 	{
@@ -90,7 +102,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 				$in          = json_decode($in);
 				$jsonLastErr = json_last_error();
 				if ($jsonLastErr !== JSON_ERROR_NONE) {
-					throw new \UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
+					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 				}
 				if ($in === null) {
 					$this->_container = [];    //	remove all current values
@@ -124,6 +136,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 
 	/**
 	 * Return an integer representing the toArray conversion options.
+	 *
 	 * @return int
 	 */
 	public function getArrayOptions(): int
@@ -152,38 +165,59 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 */
 	public function getIterator(): \Traversable
 	{
-		$thisType3 = substr($this->_type, 0, 3);
+		if (!isset($this->_iteratorType)) {
+			$thisType3 = substr($this->_type, 0, 3);
+			switch ($thisType3) {
+				case 'nul':
+				case 'NUL':
+					$this->_iteratorType = 'null';
+					break;
 
-		switch ($thisType3) {
-			case 'nul':
-			case 'NUL':
-				//	It can be anything. Don't check it.
+				case 'boo':
+				case 'int':
+				case 'flo':
+				case 'dou':
+				case 'rea':
+				case 'str':
+				case 'arr':
+				case 'res':
+					$this->_iteratorType = 'base';
+					break;
+
+				default:
+					$this->_iteratorType =
+						is_subclass_of($this->_type, ScalarAbstract::class, true) ?
+							'scalarAbstract' :
+							'object';
+			}
+		}
+
+		switch ($this->_iteratorType) {
+			case 'base':
 				return (function &() {
-					foreach ($this->_container as $k => &$v) {
-						yield $k => $v;
-					}
-				})();
-
-			case 'boo':
-			case 'int':
-			case 'flo':
-			case 'dou':
-			case 'rea':
-			case 'str':
-			case 'arr':
-			case 'res':
-				return (function &() use ($thisType3) {
 					foreach ($this->_container as $k => &$v) {
 						yield $k => $v;
 
 						//	Cast if not the same type.
-						if (substr(gettype($v), 0, 3) !== $thisType3) {
+						if (gettype($v) !== $this->_type) {
 							$this->offsetSet($k, $v);
 						}
 					}
 				})();
 
-			default:
+			case 'scalarAbstract':
+				return (function &() {
+					foreach ($this->_container as $k => $v) {
+						$v     = $v->get();
+						$vOrig = $v;
+						yield $k => $v;
+						if ($v !== $vOrig) {
+							$this->_container[$k]->set($v);
+						}
+					}
+				})();
+
+			case 'object':
 				return (function &() {
 					foreach ($this->_container as $k => &$v) {
 						yield $k => $v;
@@ -192,6 +226,15 @@ class TypedArray implements TypedInterface, ArrayAccess
 						if (get_class($v) !== $this->_type) {
 							$this->offsetSet($k, $v);
 						}
+					}
+				})();
+
+			case 'null':
+			default:
+				//	It can be anything. Don't check it.
+				return (function &() {
+					foreach ($this->_container as $k => &$v) {
+						yield $k => $v;
 					}
 				})();
 		}
@@ -224,6 +267,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 
 	/**
 	 * Constructs the object
+	 *
 	 * @link  https://php.net/manual/en/serializable.unserialize.php
 	 *
 	 * @param string $serialized The string representation of the object.

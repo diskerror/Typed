@@ -14,6 +14,8 @@ class SAStringTrim extends SAString
 	public function set($in)
 	{
 		parent::set($in);
-		$this->_value = trim($this->_value, "\x00..\x20\x7F");
+		if (null !== $this->_value) {
+			$this->_value = trim($this->_value, "\x01..\x20");
+		}
 	}
 }

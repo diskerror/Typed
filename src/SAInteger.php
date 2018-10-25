@@ -29,7 +29,7 @@ class SAInteger extends ScalarAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->_value = $this->_allowNull ? null : 0;
+				$this->_setNullOrDefault();
 				break;
 
 			default:

@@ -10,45 +10,25 @@ namespace Diskerror\Typed;
 
 use UnexpectedValueException;
 
-class SAString extends ScalarAbstract
+/**
+ * Class SAString
+ *
+ * In PHP, a string variable can hold any set of bytes, so we call that a binary, short for "binary string".
+ *
+ * We don't want certain bytes in a text string.
+ *
+ * @package Diskerror\Typed
+ */
+class SAString extends SABinary
 {
+	/**
+	 * @param $in
+	 */
 	public function set($in)
 	{
-		switch (gettype($in)) {
-			case 'object':
-				if ($in instanceof ScalarAbstract) {
-					$this->_value = (string)$in->get();
-					break;
-				}
-				if (method_exists($in, '__toString')) {
-					$this->_value = $in->__toString();
-					break;
-				}
-				if (method_exists($in, 'format')) {
-					$this->_value = $in->format('c');
-					break;
-				}
-
-				if (method_exists($in, 'toArray')) {
-					$in = $in->toArray();
-				}
-			//	other objects fall through, object to array falls through
-			case 'array':
-				$jsonStr     = json_encode($in);
-				$jsonLastErr = json_last_error();
-				if ($jsonLastErr !== JSON_ERROR_NONE) {
-					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
-				}
-				$this->_value = $jsonStr;
-				break;
-
-			case 'null':
-			case 'NULL':
-				$this->_value = $this->_allowNull ? null : '';
-				break;
-
-			default:
-				$this->_value = (string)$in;
+		parent::set($in);
+		if (null !== $this->_value) {
+			$this->_value = strtr($this->_value, ["\x00" => '', "\x7F" => '']);
 		}
 	}
 }

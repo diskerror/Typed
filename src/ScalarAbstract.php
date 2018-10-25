@@ -11,21 +11,29 @@ use stdClass;
 
 /**
  * Class ScalarAbstract
+ *
  * @package Diskerror\Typed\Scalar
  */
 abstract class ScalarAbstract
 {
 	/**
-	 * Indicates whether or not the value can also be null.
-	 * @var bool
-	 */
-	protected $_allowNull;
-
-	/**
 	 * Stores the scalar value.
+	 *
 	 * @var mixed
 	 */
 	protected $_value;
+
+	/**
+	 * Indicates whether or not the value can also be null.
+	 *
+	 * @var bool
+	 */
+	private $_allowNull;
+
+	/**
+	 * @var mixed
+	 */
+	private $_defaultValue;
 
 	/**
 	 * ScalarAbstract constructor.
@@ -37,8 +45,14 @@ abstract class ScalarAbstract
 	{
 		$this->_allowNull = $allowNull;
 		$this->set($in);
+		$this->_defaultValue = $this->_value;
 	}
 
+	/**
+	 * @param stdClass $in
+	 *
+	 * @return array
+	 */
 	protected static function _castObject(stdClass $in): array
 	{
 		if (method_exists($in, 'toArray')) {
@@ -58,5 +72,15 @@ abstract class ScalarAbstract
 	public function get()
 	{
 		return $this->_value;
+	}
+
+	/**
+	 * Returns a null or the default preset value.
+	 *
+	 * @return mixed
+	 */
+	protected function _setNullOrDefault()
+	{
+		$this->_value = $this->_allowNull ? null : $this->_defaultValue;
 	}
 }

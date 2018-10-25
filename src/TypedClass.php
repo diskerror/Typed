@@ -1,6 +1,7 @@
 <?php
 /**
  * Provides support for class members/properties maintain their initial types.
+ *
  * @name        TypedClass
  * @copyright      Copyright (c) 2012 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
@@ -53,6 +54,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 	/**
 	 * Holds options for "toArray" customizations.
+	 *
 	 * @var \Diskerror\Typed\ArrayOptions
 	 */
 	protected $_arrayOptions;
@@ -66,6 +68,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 	/**
 	 * Holds the default values of the called class to-be-public properties in associative array.
+	 *
 	 * @var array
 	 */
 	private $_defaultVars;
@@ -117,50 +120,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 				throw new InvalidArgumentException('bad value to constructor');
 		}
 
-	}
-
-	private function _init()
-	{
-		$this->_calledClass = get_called_class();
-
-		if (!isset($this->_arrayOptions)) {
-			$this->_arrayOptions = new ArrayOptions();
-		}
-
-		//	Build array of default values.
-		//	First get all class properties then remove elements with names starting with underscore.
-		//	Then convert strings with class names into actual instances.
-		$this->_defaultVars = get_class_vars($this->_calledClass);
-		foreach ($this->_defaultVars as $k => $v) {
-			if ($k[0] === '_') {
-				unset($this->_defaultVars[$k]);
-			}
-
-			//	TODO: Use of "eval" is deprecated.
-			//	Change class definition string into a real class for the defaults.
-			//	If $v is a string and has '__class__' at the start then instantiate the named object.
-			elseif (is_string($v) && 0 === stripos($v, '__class__')) {
-				//	We must use `eval` because we want to handle
-				//		'__class__Date' and
-				//		'__class__DateTime("Jan 1, 2015")' with 1 or more parameters.
-				$this->_defaultVars[$k] = eval('return new ' . substr($v, 9) . ';');    //	DEPRECATED
-
-				//	Objects are always passed by reference,
-				//		but we want a separate copy so the original stays unchanged.
-				$this->{$k} = clone $this->_defaultVars[$k];
-			}
-
-			elseif (is_array($v) && isset($v['__type__'])) {
-				$propTypeName = $v['__type__'];
-				unset($v['__type__']);
-
-				$this->_defaultVars[$k] = new $propTypeName(...$v);
-				$this->{$k}             = clone $this->_defaultVars[$k];
-			}
-		}
-
-		$this->_publicNames = array_keys($this->_defaultVars);
-		$this->_count       = count($this->_defaultVars);
 	}
 
 	/**
@@ -242,6 +201,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 	/**
 	 * Required method for Countable.
+	 *
 	 * @return int
 	 */
 	final public function count(): int
@@ -268,33 +228,46 @@ abstract class TypedClass implements TypedInterface, Persistable
 	public function getIterator(): Traversable
 	{
 		return (function &() {
-			foreach ($this->_defaultVars as $k => &$v) {
-				yield $k => $this->{$k};
+			foreach ($this->_defaultVars as $k => &$vDefault) {
+				if ($vDefault instanceof ScalarAbstract) {
+					$v     = $this->{$k}->get();
+					$vOrig = $v;
 
-				$thisType3 = substr(gettype($v), 0, 3);
-				switch ($thisType3) {
-					case 'boo':
-					case 'int':
-					case 'flo':
-					case 'dou':
-					case 'rea':
-					case 'str':
-					case 'res':
-						//	Cast if not the same type.
-						if (substr(gettype($this->{$k}), 0, 3) !== $thisType3) {
-							$this->_setByName($k, $this->{$k});
-						}
-						break;
+					yield $k => $v;
 
-					case 'obj':
-					case 'cla':
-						//	Cast if not the same type.
-						if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($v)) {
-							$this->_setByName($k, $this->{$k});
-						}
-						break;
+					//	These classes might do additional filtering beyond checking the type.
+					if ($v !== $vOrig) {
+						$this->{$k}->set($v);
+					}
+				}
+				else {
+					yield $k => $this->{$k};
 
-					//	Null property types don't get checked.
+					$thisType3 = substr(gettype($vDefault), 0, 3);
+					switch ($thisType3) {
+						case 'boo':
+						case 'int':
+						case 'flo':
+						case 'dou':
+						case 'rea':
+						case 'str':
+						case 'res':
+							//	Cast if not the same type.
+							if (substr(gettype($this->{$k}), 0, 3) !== $thisType3) {
+								$this->_setByName($k, $this->{$k});
+							}
+							break;
+
+						case 'obj':
+						case 'cla':
+							//	Cast if not the same type.
+							if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($vDefault)) {
+								$this->_setByName($k, $this->{$k});
+							}
+							break;
+
+						//	Null property types don't get checked.
+					}
 				}
 			}
 		})();
@@ -312,6 +285,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 	/**
 	 * String representation of object
+	 *
 	 * @link  https://php.net/manual/en/serializable.serialize.php
 	 * @return string the string representation of the object or null
 	 */
@@ -327,6 +301,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 	/**
 	 * Constructs the object
+	 *
 	 * @link  https://php.net/manual/en/serializable.unserialize.php
 	 *
 	 * @param string $serialized The string representation of the object.
@@ -474,16 +449,90 @@ abstract class TypedClass implements TypedInterface, Persistable
 	}
 
 	/**
-	 * Returns true if key/prop name exists.
+	 * All member objects will be deep cloned.
+	 */
+	public function __clone()
+	{
+		foreach ($this->_publicNames as $k) {
+			if (is_object($this->{$k})) {
+				$this->{$k} = clone $this->{$k};
+			}
+		}
+	}
+
+	/**
+	 * Get variable.
+	 *
+	 * @param string $k
+	 *
+	 * @return mixed
+	 */
+	public function __get($k)
+	{
+		$this->_assertPropName($k);
+		return $this->_getByName($k);
+	}
+
+	/**
+	 * Set variable
+	 * Casts the incoming data ($v) to the same type as the named ($k) property.
+	 *
+	 * @param string $k
+	 * @param mixed  $v
+	 */
+	public function __set($k, $v)
+	{
+		$this->_assertPropName($k);
+		$this->_setByName($k, $v);
+		$this->_checkRelatedProperties();
+	}
+
+	/**
+	 * Is a variable set?
 	 *
 	 * @param string $k
 	 *
 	 * @return bool
 	 */
-	private function _keyExists($k): bool
+	public function __isset($k): bool
 	{
-		return array_key_exists($k, $this->_defaultVars) ||
-			(array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
+		if ($k[0] === '_') {
+			return false;
+		}
+
+		return isset($this->{$k});
+	}
+
+	/**
+	 * Called automatically by MongoDB.
+	 *
+	 * @return array
+	 */
+	public function bsonSerialize(): array
+	{
+		$origOptions = $this->_arrayOptions->get();
+		$this->setArrayOptions(ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
+
+//		$arr = array_merge($this->toArray(), ['_arrayOptions' => $origOptions]);
+		$arr = $this->toArray();
+
+		$this->_arrayOptions->set($origOptions);
+
+		return $arr;
+	}
+
+	/**
+	 * Called automatically by MongoDB when a document has a field namaed "__pclass".
+	 *
+	 * @param array $data
+	 */
+	public function bsonUnserialize(array $data)
+	{
+		$this->_init();
+		if (array_key_exists('_arrayOptions', $data)) {
+			$this->_arrayOptions->set($data['_arrayOptions']);
+		}
+		$this->assign($data);
 	}
 
 	/**
@@ -562,40 +611,47 @@ abstract class TypedClass implements TypedInterface, Persistable
 	}
 
 	/**
-	 * Casting to an object type that is dependent on original value and input value.
+	 * Casting to an object type is dependent on original value and input value.
 	 *
 	 * @param string $k
 	 * @param mixed  $v
 	 */
 	protected function _castToObject($k, $v)
 	{
-		$propertyDefaultClass = $this->_defaultVars[$k];
-		$propertyClassType    = get_class($propertyDefaultClass);
+		$propertyDefaultValue = $this->_defaultVars[$k];
+
+		if ($propertyDefaultValue instanceof ScalarAbstract) {
+			$this->{$k}->set($v);
+			return;
+		}
 
 		//	if this->k is a TypedAbstract object and v is any other type
 		//		then absorb v or v's properties into this->k's properties
-		if ($propertyDefaultClass instanceof TypedInterface) {
+		if ($propertyDefaultValue instanceof TypedInterface) {
 			if ($this->{$k} === null) {
-				$this->{$k} = clone $propertyDefaultClass; //	cloned for possible default values
+				$this->{$k} = clone $propertyDefaultValue; //	cloned for possible default values
 			}
 
 			$this->{$k}->assign($v);
+			return;
 		}
 
-		elseif (is_object($v)) {
-			//	if identical types then clone
+		$propertyClassType = get_class($propertyDefaultValue);
+
+		if (is_object($v)) {
+			//	if identical types then reference the original object
 			if ($propertyClassType === get_class($v)) {
-				$this->{$k} = clone $v;
+				$this->{$k} = $v;
 			}
 
 			//	Treat DateTime related objects as atomic in these next cases.
 			elseif (
-				($propertyDefaultClass instanceof DateTimeInterface) && ($v instanceof UTCDateTimeInterface)
+				($propertyDefaultValue instanceof DateTimeInterface) && ($v instanceof UTCDateTimeInterface)
 			) {
 				$this->{$k} = new $propertyClassType($v->toDateTime());
 			}
 			elseif (
-				($propertyDefaultClass instanceof UTCDateTimeInterface) && ($v instanceof DateTimeInterface)
+				($propertyDefaultValue instanceof UTCDateTimeInterface) && ($v instanceof DateTimeInterface)
 			) {
 				$this->{$k} = new $propertyClassType($v->getTimestamp() * 1000);
 			}
@@ -603,7 +659,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 			//	if this->k is a DateTime object and v is any other type
 			//		then absorb v or v's properties into this->k's properties
 			//		But only if $v object has __toString.
-			elseif ($propertyDefaultClass instanceof DateTimeInterface && method_exists($v, '__toString')) {
+			elseif ($propertyDefaultValue instanceof DateTimeInterface && method_exists($v, '__toString')) {
 				$this->{$k} = new $propertyClassType($v->__toString());
 			}
 
@@ -611,63 +667,21 @@ abstract class TypedClass implements TypedInterface, Persistable
 			else {
 				throw new InvalidArgumentException('cannot coerce object types');
 			}
+
+			return;
 		}
 
+		if ($v === null) {
+			$this->{$k} = clone $propertyDefaultValue;
+		}
+		elseif ($propertyClassType === 'stdClass' && is_array($v)) {
+			$this->{$k} = (object)$v;
+		}
 		else {
-			if ($v === null) {
-				$this->{$k} = clone $propertyDefaultClass;
-			}
-//			elseif($propertyDefaultClass instanceof TypedArray){
-//				$this->{$k}[] = $v;
-//			}
-			elseif ($propertyClassType === 'stdClass' && is_array($v)) {
-				$this->{$k} = (object)$v;
-			}
-			else {
-				//	Other classes might be able to absorb/convert other input,
-				//		like «DateTime::__construct("now")» accepts a string.
-				$this->{$k} = new $propertyClassType($v);
-			}
+			//	Other classes might be able to absorb/convert other input,
+			//		like «DateTime::__construct("now")» accepts a string.
+			$this->{$k} = new $propertyClassType($v);
 		}
-	}
-
-	/**
-	 * All member objects will be deep cloned.
-	 */
-	public function __clone()
-	{
-		foreach ($this->_publicNames as $k) {
-			if (is_object($this->{$k})) {
-				$this->{$k} = clone $this->{$k};
-			}
-		}
-	}
-
-	/**
-	 * Get variable.
-	 *
-	 * @param string $k
-	 *
-	 * @return mixed
-	 */
-	public function __get($k)
-	{
-		$this->_assertPropName($k);
-		return $this->_getByName($k);
-	}
-
-	/**
-	 * Set variable
-	 * Casts the incoming data ($v) to the same type as the named ($k) property.
-	 *
-	 * @param string $k
-	 * @param mixed  $v
-	 */
-	public function __set($k, $v)
-	{
-		$this->_assertPropName($k);
-		$this->_setByName($k, $v);
-		$this->_checkRelatedProperties();
 	}
 
 	/**
@@ -693,6 +707,10 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	protected function _getByName($k)
 	{
+		if ($this->{$k} instanceof ScalarAbstract) {
+			return $this->{$k}->get();
+		}
+
 		//	Create a method with a name like the next line and it will be called here.
 		$getter = '_get_' . $k;
 		if (method_exists($this->_calledClass, $getter)) {
@@ -702,52 +720,61 @@ abstract class TypedClass implements TypedInterface, Persistable
 		return $this->{$k};
 	}
 
+	private function _init()
+	{
+		$this->_calledClass = get_called_class();
+
+		if (!isset($this->_arrayOptions)) {
+			$this->_arrayOptions = new ArrayOptions();
+		}
+
+		//	Build array of default values.
+		//	First get all class properties then remove elements with names starting with underscore.
+		//	Then convert strings with class names into actual instances.
+		$this->_defaultVars = get_class_vars($this->_calledClass);
+		foreach ($this->_defaultVars as $k => $v) {
+			if ($k[0] === '_') {
+				unset($this->_defaultVars[$k]);
+			}
+
+			//	TODO: Use of "eval" is deprecated.
+			//	Change class definition string into a real class for the defaults.
+			//	If $v is a string and has '__class__' at the start then instantiate the named object.
+			elseif (is_string($v) && 0 === stripos($v, '__class__')) {
+				//	We must use `eval` because we want to handle
+				//		'__class__Date' and
+				//		'__class__DateTime("Jan 1, 2015")' with 1 or more parameters.
+				$this->_defaultVars[$k] = eval('return new ' . substr($v, 9) . ';');    //	DEPRECATED
+
+				//	Objects are always passed by reference,
+				//		but we want a separate copy so the original stays unchanged.
+				$this->{$k} = clone $this->_defaultVars[$k];
+			}
+
+			elseif (is_array($v) && isset($v['__type__'])) {
+				$propTypeName = $v['__type__'];
+				unset($v['__type__']);
+
+				$this->_defaultVars[$k] = new $propTypeName(...$v);
+				$this->{$k}             = clone $this->_defaultVars[$k];
+			}
+		}
+
+		$this->_publicNames = array_keys($this->_defaultVars);
+		$this->_count       = count($this->_defaultVars);
+	}
+
 	/**
-	 * Is a variable set?
+	 * Returns true if key/prop name exists.
 	 *
 	 * @param string $k
 	 *
 	 * @return bool
 	 */
-	public function __isset($k): bool
+	private function _keyExists($k): bool
 	{
-		if ($k[0] === '_') {
-			return false;
-		}
-
-		return isset($this->{$k});
-	}
-
-	/**
-	 * Called automatically by MongoDB.
-	 *
-	 * @return array
-	 */
-	public function bsonSerialize(): array
-	{
-		$origOptions = $this->_arrayOptions->get();
-		$this->setArrayOptions(ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
-
-//		$arr = array_merge($this->toArray(), ['_arrayOptions' => $origOptions]);
-		$arr = $this->toArray();
-
-		$this->_arrayOptions->set($origOptions);
-
-		return $arr;
-	}
-
-	/**
-	 * Called automatically by MongoDB when a document has a field namaed "__pclass".
-	 *
-	 * @param array $data
-	 */
-	public function bsonUnserialize(array $data)
-	{
-		$this->_init();
-		if (array_key_exists('_arrayOptions', $data)) {
-			$this->_arrayOptions->set($data['_arrayOptions']);
-		}
-		$this->assign($data);
+		return array_key_exists($k, $this->_defaultVars) ||
+			(array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
 	}
 
 }

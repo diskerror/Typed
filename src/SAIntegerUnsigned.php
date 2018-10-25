@@ -15,7 +15,7 @@ class SAIntegerUnsigned extends SAInteger
 	{
 		parent::set($in);
 
-		//	null casts to zero so is unchanged
+		//	null casts to zero so null is unchanged
 		if ($this->_value < 0) {
 			$this->_value = 0;
 		}
