@@ -235,7 +235,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 					yield $k => $v;
 
-					//	These classes might do additional filtering beyond checking the type.
 					if ($v !== $vOrig) {
 						$this->{$k}->set($v);
 					}
@@ -709,12 +708,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 	{
 		if ($this->{$k} instanceof ScalarAbstract) {
 			return $this->{$k}->get();
-		}
-
-		//	Create a method with a name like the next line and it will be called here.
-		$getter = '_get_' . $k;
-		if (method_exists($this->_calledClass, $getter)) {
-			return $this->$getter();
 		}
 
 		return $this->{$k};

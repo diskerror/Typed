@@ -45,7 +45,7 @@ The derivitives of *TypedClass* are contracted to do these things:
   * Map alternate names to proper names.
   * Reset single property or entire object's members to their default values.
 
-The users class properties must be declared as *protected* or *private*. The names for the properties must follow the naming convention that the intended *public* members must NOT start with an underscore. This borrows from the Zend Framework property naming convention of protected and private property names start with an underscore.
+The users class properties must be declared as *protected* or *private*. The names for the properties must follow the naming convention that the intended *public* members must NOT start with an underscore. This borrows from the Zend Framework property naming convention of protected and private property names starting with an underscore.
 
 These properties must also be initialized with a value. The values' initial type is stored within the object and used to cast new values to the same type.
 
