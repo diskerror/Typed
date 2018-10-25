@@ -260,6 +260,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 	{
 		return serialize([
 			'_type' => $this->_type,
+			'_iteratorType' => $this->_iteratorType,
 			'_arrayOptions' => $this->_arrayOptions->get(),
 			'_container' => $this->_container
 		]);
@@ -279,6 +280,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 		$data = unserialize($serialized);
 
 		$this->_type         = $data['_type'];
+		$this->_iteratorType = $data['_iteratorType'];
 		$this->_arrayOptions = new ArrayOptions($data['_arrayOptions']);
 		$this->_container    = $data['_container'];
 	}
