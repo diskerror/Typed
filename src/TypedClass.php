@@ -229,30 +229,36 @@ abstract class TypedClass implements TypedInterface, Persistable
 	{
 		return (function &() {
 			foreach ($this->_defaultVars as $k => &$vDefault) {
-				if ($vDefault instanceof ScalarAbstract) {
+				$isSA = $vDefault instanceof ScalarAbstract;
+				if ($isSA) {
 					$v     = $this->{$k}->get();
 					$vOrig = $v;
+				}
+				else {
+					$v = &$this->{$k};
+				}
 
-					yield $k => $v;
+				yield $k => $v;
 
+				if ($isSA) {
 					if ($v !== $vOrig) {
 						$this->{$k}->set($v);
 					}
 				}
 				else {
-					yield $k => $this->{$k};
-
-					$thisType3 = substr(gettype($vDefault), 0, 3);
-					switch ($thisType3) {
-						case 'boo':
+					$thisType = gettype($vDefault);
+					switch ($thisType) {
+						case 'bool':
+						case 'boolean':
 						case 'int':
-						case 'flo':
-						case 'dou':
-						case 'rea':
-						case 'str':
-						case 'res':
+						case 'integer':
+						case 'float':
+						case 'double':
+						case 'real':
+						case 'string':
+						case 'resource':
 							//	Cast if not the same type.
-							if (substr(gettype($this->{$k}), 0, 3) !== $thisType3) {
+							if (gettype($this->{$k}) !== $thisType) {
 								$this->_setByName($k, $this->{$k});
 							}
 							break;
