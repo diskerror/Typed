@@ -119,6 +119,8 @@ class TypedArray implements TypedInterface, ArrayAccess
 				throw new InvalidArgumentException('bad input type ' . $inputType . ', value: "' . $in . '"');
 		}
 
+		$this->_container = [];
+
 		foreach ($in as $k => $v) {
 			$this->offsetSet($k, $v);
 		}
@@ -599,5 +601,22 @@ class TypedArray implements TypedInterface, ArrayAccess
 	public function getValues()
 	{
 		return array_values($this->_container);
+	}
+
+	/**
+	 * @param \Traversable|array $ta
+	 */
+	public function merge($ta)
+	{
+		if (is_array($ta) && $ta === array_values($ta)) {
+			foreach ($ta as $v) {
+				$this->offsetSet(null, $v);
+			}
+		}
+		else {
+			foreach ($ta as $k => $v) {
+				$this->offsetSet($k, $v);
+			}
+		}
 	}
 }

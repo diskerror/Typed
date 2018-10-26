@@ -725,34 +725,54 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 		//	Build array of default values.
 		//	First get all class properties then remove elements with names starting with underscore.
-		//	Then convert strings with class names into actual instances.
 		$this->_defaultVars = get_class_vars($this->_calledClass);
-		foreach ($this->_defaultVars as $k => $v) {
+		foreach ($this->_defaultVars as $k => &$v) {
 			if ($k[0] === '_') {
 				unset($this->_defaultVars[$k]);
+				continue;
 			}
 
-			//	TODO: Use of "eval" is deprecated.
-			//	Change class definition string into a real class for the defaults.
-			//	If $v is a string and has '__class__' at the start then instantiate the named object.
-			elseif (is_string($v) && 0 === stripos($v, '__class__')) {
-				//	We must use `eval` because we want to handle
-				//		'__class__Date' and
-				//		'__class__DateTime("Jan 1, 2015")' with 1 or more parameters.
-				$this->_defaultVars[$k] = eval('return new ' . substr($v, 9) . ';');    //	DEPRECATED
+			switch (gettype($v)) {
+				case 'bool':
+				case 'boolean':
+					$v = new SABoolean($v, true);
+					break;
 
-				//	Objects are always passed by reference,
-				//		but we want a separate copy so the original stays unchanged.
-				$this->{$k} = clone $this->_defaultVars[$k];
+				case 'int':
+				case 'integer':
+					$v = new SAInteger($v, true);
+					break;
+
+				case 'float':
+				case 'double':
+				case 'real':
+					$v = new SAFloat($v, true);
+					break;
+
+				case 'string':
+					$v = new SABinary($v, true);
+					break;
+
+				case 'array':
+					if (isset($v['__type__'])) {
+						$className = $v['__type__'];
+						unset($v['__type__']);
+
+						$v = new $className(...$v);
+					}
+					else {
+						$v = new TypedArray($v);
+					}
+					break;
+
+				default:
+					//	Do nothing. Don't try to cast.
 			}
 
-			elseif (is_array($v) && isset($v['__type__'])) {
-				$propTypeName = $v['__type__'];
-				unset($v['__type__']);
-
-				$this->_defaultVars[$k] = new $propTypeName(...$v);
-				$this->{$k}             = clone $this->_defaultVars[$k];
+			if (is_object($v)) {
+				$this->{$k} = clone $v;
 			}
+			//	else the original value is already in $this->{$k}
 		}
 
 		$this->_publicNames = array_keys($this->_defaultVars);

@@ -1,10 +1,10 @@
 <?php
 
-namespace Tweet\Entities;
+namespace Tweet\Entity;
 
 use Diskerror\Typed\{TypedClass, TypedArray};
 
-class UserMentions extends TypedClass
+class UserMention extends TypedClass
 {
 	protected $id          = '';
 
@@ -12,7 +12,6 @@ class UserMentions extends TypedClass
 
 	protected $name        = '';
 
-//	protected $indices     = '__class__Diskerror\Typed\TypedArray(null, "int")';
 	protected $indices     = ['__type__' => TypedArray::class, null, 'int'];
 
 }

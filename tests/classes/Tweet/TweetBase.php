@@ -17,15 +17,13 @@ class TweetBase extends TypedClass
 	//	The "getSpecialArr" method changes "id_" to "_id".
 	protected $id_                       = 0;
 
-//	protected $created_at                = '__class__\Diskerror\Typed\DateTime("2018-07-18 17:10:28")';
 	protected $created_at                = ['__type__' => DateTime::class, '2018-07-18 17:10:28'];
 
 	protected $contributors              = null;
 
-//	protected $entities                  = '__class__\Tweet\Entities\Entities';
-	protected $entities                  = ['__type__' => Entities\Entities::class];
+	protected $entities                  = ['__type__' => Entity\Entity::class];
 
-	protected $extended_entities         = '__class__\Tweet\ExtendedEntities';
+	protected $extended_entities         = ['__type__' => ExtendedEntities::class];
 
 	protected $favorite_count            = 0;
 
@@ -41,7 +39,7 @@ class TweetBase extends TypedClass
 
 	protected $lang                      = 'en';
 
-	protected $place                     = '__class__\Tweet\Place';
+	protected $place                     = ['__type__' => Place::class];
 
 	protected $possibly_sensitive        = false;
 
@@ -53,7 +51,7 @@ class TweetBase extends TypedClass
 
 	protected $truncated                 = false;
 
-	protected $user                      = '__class__\Tweet\User';
+	protected $user                      = ['__type__' => User::class];
 
 
 	protected function _set_text($v)

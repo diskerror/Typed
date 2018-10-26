@@ -23,7 +23,7 @@ set_exception_handler(
 
 function jsonPrint($in)
 {
-	//	Using STDOUT no longer works.
+	//	Using STDOUT no longer works with PHPUnit.
 	fwrite(STDERR, json_encode($in, JSON_PRETTY_PRINT) . "\n");
 }
 

@@ -5,16 +5,15 @@ class PrefListTest extends PHPUnit\Framework\TestCase
 	public function testComplex()
 	{
 		$prefListList = PrefListList::getDefault();
-		// echo jsonEncode($prefListList); exit;
+//		jsonPrint($prefListList); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/prefone.json',
 			json_encode($prefListList),
 			'Creation of complex object.'
 		);
 
-
 		$prefListList['Option ZIP']['name'] = ['sort' => 'desc'];
-		// echo jsonEncode($prefListList['Option ZIP']); exit;
+//		jsonPrint($prefListList['Option ZIP']); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/prefoptname.json',
 			json_encode($prefListList['Option ZIP']),
@@ -22,8 +21,8 @@ class PrefListTest extends PHPUnit\Framework\TestCase
 		);
 
 
-		$prefListList['Option ZIP'] = ['state' => ['included' => 1], 'name' => ['compare' => '!=']];
-		// echo jsonEncode($prefListList); exit;
+		$prefListList['Option ZIP']->merge(['state' => ['included' => 1], 'name' => ['compare' => '!=']]);
+//		jsonPrint($prefListList); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/preftwo.json',
 			json_encode($prefListList),
@@ -38,7 +37,7 @@ class PrefListTest extends PHPUnit\Framework\TestCase
 		foreach ($order as $o) {
 			$prefListList['Option ZIP'][$o] = $oldOrder[$o];
 		}
-		// echo jsonEncode($prefListList['Option ZIP']); exit;
+//		jsonPrint($prefListList['Option ZIP']); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/preforder.json',
 			json_encode($prefListList['Option ZIP']),

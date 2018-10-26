@@ -2,6 +2,17 @@
 
 use Diskerror\Typed\{TypedClass, TypedArray};
 
+/**
+ * Class SimpleTyped
+ *
+ * @property $myBool
+ * @property $myInt
+ * @property $myFloat
+ * @property $myString
+ * @property $myArray
+ * @property $myObj
+ * @property $myTypedArray
+ */
 class SimpleTyped extends TypedClass
 {
 	protected $myBool       = true;
@@ -9,8 +20,7 @@ class SimpleTyped extends TypedClass
 	protected $myFloat      = 3.14;
 	protected $myString     = '';
 	protected $myArray      = [];
-	protected $myObj        = '__class__stdClass';
-//	protected $myTypedArray = '__class__Diskerror\Typed\TypedArray(null, "JRandomClass")';
+	protected $myObj        = ['__type__' => 'stdClass'];
 	protected $myTypedArray = ['__type__' => TypedArray::class, null, JRandomClass::class];
 	protected $_map         = ['myDouble' => 'myFloat'];
 

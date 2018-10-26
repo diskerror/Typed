@@ -17,6 +17,8 @@ use UnexpectedValueException;
  *
  * We don't want certain bytes in a text string.
  *
+ * Is removing "\x7F" safe for UTF8 strings?
+ *
  * @package Diskerror\Typed
  */
 class SAString extends SABinary
