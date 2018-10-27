@@ -114,7 +114,8 @@ abstract class TypedClass implements TypedInterface, Persistable
 				if (!$in) {
 					return;
 				}
-			//	bool TRUE falls through
+			//	"True" falls through and triggers exception.
+			//	We allow "false" because some DB frameworks return "false" for empty result sets.
 
 			default:
 				throw new InvalidArgumentException('bad value to constructor');
@@ -242,33 +243,11 @@ abstract class TypedClass implements TypedInterface, Persistable
 				else {
 					yield $k => $this->{$k};
 
-					$thisType = gettype($vDefault);
-					switch ($thisType) {
-						case 'bool':
-						case 'boolean':
-						case 'int':
-						case 'integer':
-						case 'float':
-						case 'double':
-						case 'real':
-						case 'string':
-						case 'resource':
-							//	Cast if not the same type.
-							if (gettype($this->{$k}) !== $thisType) {
-								$this->_setByName($k, $this->{$k});
-							}
-							break;
-
-						case 'obj':
-						case 'cla':
-							//	Cast if not the same type.
-							if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($vDefault)) {
-								$this->_setByName($k, $this->{$k});
-							}
-							break;
-
-						//	Null property types don't get checked.
+					//	Cast if not the same type.
+					if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($vDefault)) {
+						$this->_setByName($k, $this->{$k});
 					}
+					//	Null property types don't get checked.
 				}
 			}
 		})();
@@ -345,7 +324,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
-			$v = $this->_getByName($k);
+			$v = $this->_getByName($k);    //	ScalarAbstract objects are returned as scalars.
 
 			switch (gettype($v)) {
 				case 'null':
@@ -355,27 +334,33 @@ abstract class TypedClass implements TypedInterface, Persistable
 					}
 					break;
 
-				case 'resource':
-					if (!$omitResource) {
-						$arr[$k] = $v;
-					}
-					break;
-
 				case 'string':
 					if ('' !== $v || !$omitEmpty) {
 						$arr[$k] = $v;
 					}
 					break;
 
+				case 'array':
+					if (count($v) || !$omitEmpty) {
+						$arr[$k] = $v;
+					}
+					break;
+
+				case 'resource':
+					if (!$omitResource) {
+						$arr[$k] = $v;
+					}
+					break;
+
 				case 'object':
-					if (($this->$k instanceof $ZJE_STRING) && $keepJsonExpr) {
-						$arr[$k] = $this->$k;    // maintain the type
+					if (($this->{$k} instanceof $ZJE_STRING) && $keepJsonExpr) {
+						$arr[$k] = $this->{$k};    // maintain the type
 					}
-					elseif ($this->$k instanceof UTCDateTime && $bsonDate) {
-						$arr[$k] = $this->$k;    // maintain the type
+					elseif ($this->{$k} instanceof UTCDateTime && $bsonDate) {
+						$arr[$k] = $this->{$k};    // maintain the type
 					}
-					elseif ($this->$k instanceof DateTimeInterface && $bsonDate) {
-						$dtMilliSeconds = ($this->$k->getTimestamp() * 1000) + (int)$this->$k->format('v');
+					elseif ($this->{$k} instanceof DateTimeInterface && $bsonDate) {
+						$dtMilliSeconds = ($this->{$k}->getTimestamp() * 1000) + (int)$this->{$k}->format('v');
 						$arr[$k]        = new UTCDateTime($dtMilliSeconds);
 					}
 					elseif (method_exists($v, 'toArray')) {
@@ -414,12 +399,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 						if (count((array)$v) || !$omitEmpty) {
 							$arr[$k] = $v;
 						}
-					}
-					break;
-
-				case 'array':
-					if (count($v) || !$omitEmpty) {
-						$arr[$k] = $v;
 					}
 					break;
 
@@ -553,52 +532,75 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 		$setter = '_set_' . $k;
 		if (method_exists($this->_calledClass, $setter)) {
-			$this->$setter($v);
-
+			$this->{$setter}($v);
 			return;
 		}
 
-		//	Get the original type as the current member might contain null.
-		switch (gettype($this->_defaultVars[$k])) {
-			//	If the original is NULL then allow any value.
-			case 'null':
-			case 'NULL':
-			case '':        //	Is there a possibility that "gettype()" might return an empty string?
-			case null:
-				$this->{$k} = $v;
-				break;
+		if (is_object($this->_defaultVars[$k])) {
+			$propertyDefaultValue = $this->_defaultVars[$k];
 
-			case 'bool':
-			case 'boolean':
-				$this->{$k} = Cast::toBoolean($v);
-				break;
+			//	Handle our two special object types.
+			if ($propertyDefaultValue instanceof ScalarAbstract) {
+				$this->{$k}->set($v);
+				return;
+			}
 
-			case 'int':
-			case 'integer':
-				$this->{$k} = Cast::toInteger($v);
-				break;
+			if ($propertyDefaultValue instanceof TypedInterface) {
+				$this->{$k}->assign($v);
+				return;
+			}
 
-			case 'float':
-			case 'double':
-			case 'real':
-				$this->{$k} = Cast::toDouble($v);
-				break;
+			//	Handle for other types of objects.
+			$propertyClassType = get_class($propertyDefaultValue);
 
-			case 'string':
-				$this->{$k} = Cast::toString($v);
-				break;
+			if (is_object($v)) {
+				//	if identical types then reference the original object
+				if ($propertyClassType === get_class($v)) {
+					$this->{$k} = $v;
+				}
 
-			case 'array':
-				$this->{$k} = Cast::toArray($v);
-				break;
+				//	Treat DateTime related objects as atomic in these next cases.
+				elseif (
+					($propertyDefaultValue instanceof DateTimeInterface) && ($v instanceof UTCDateTimeInterface)
+				) {
+					$this->{$k} = new $propertyClassType($v->toDateTime());
+				}
+				elseif (
+					($propertyDefaultValue instanceof UTCDateTimeInterface) && ($v instanceof DateTimeInterface)
+				) {
+					$this->{$k} = new $propertyClassType($v->getTimestamp() * 1000);
+				}
 
-			case 'object':
-				$this->_castToObject($k, $v);
-				break;
+				//	if this->k is a DateTime object and v is any other type
+				//		then absorb v or v's properties into this->k's properties
+				//		But only if $v object has __toString.
+				elseif ($propertyDefaultValue instanceof DateTimeInterface && method_exists($v, '__toString')) {
+					$this->{$k} = new $propertyClassType($v->__toString());
+				}
 
-			default:    //	resource
-				$this->{$k} = $v;
-				break;
+				//	Else give up.
+				else {
+					throw new InvalidArgumentException('cannot coerce object types');
+				}
+			}
+			else {
+				//	Then $v is not an object.
+				if ($v === null) {
+					$this->{$k} = clone $propertyDefaultValue;
+				}
+				elseif ($propertyClassType === 'stdClass' && is_array($v)) {
+					$this->{$k} = (object)$v;
+				}
+				else {
+					//	Other classes might be able to absorb/convert other input,
+					//		like «DateTime::__construct("now")» accepts a string.
+					$this->{$k} = new $propertyClassType($v);
+				}
+			}
+		}
+		else {
+			//	else the default is null and therefore can be anything
+			$this->{$k} = $v;
 		}
 	}
 
@@ -609,80 +611,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	protected function _checkRelatedProperties()
 	{
-	}
-
-	/**
-	 * Casting to an object type is dependent on original value and input value.
-	 *
-	 * @param string $k
-	 * @param mixed  $v
-	 */
-	protected function _castToObject($k, $v)
-	{
-		$propertyDefaultValue = $this->_defaultVars[$k];
-
-		if ($propertyDefaultValue instanceof ScalarAbstract) {
-			$this->{$k}->set($v);
-			return;
-		}
-
-		//	if this->k is a TypedAbstract object and v is any other type
-		//		then absorb v or v's properties into this->k's properties
-		if ($propertyDefaultValue instanceof TypedInterface) {
-			if ($this->{$k} === null) {
-				$this->{$k} = clone $propertyDefaultValue; //	cloned for possible default values
-			}
-
-			$this->{$k}->assign($v);
-			return;
-		}
-
-		$propertyClassType = get_class($propertyDefaultValue);
-
-		if (is_object($v)) {
-			//	if identical types then reference the original object
-			if ($propertyClassType === get_class($v)) {
-				$this->{$k} = $v;
-			}
-
-			//	Treat DateTime related objects as atomic in these next cases.
-			elseif (
-				($propertyDefaultValue instanceof DateTimeInterface) && ($v instanceof UTCDateTimeInterface)
-			) {
-				$this->{$k} = new $propertyClassType($v->toDateTime());
-			}
-			elseif (
-				($propertyDefaultValue instanceof UTCDateTimeInterface) && ($v instanceof DateTimeInterface)
-			) {
-				$this->{$k} = new $propertyClassType($v->getTimestamp() * 1000);
-			}
-
-			//	if this->k is a DateTime object and v is any other type
-			//		then absorb v or v's properties into this->k's properties
-			//		But only if $v object has __toString.
-			elseif ($propertyDefaultValue instanceof DateTimeInterface && method_exists($v, '__toString')) {
-				$this->{$k} = new $propertyClassType($v->__toString());
-			}
-
-			//	Else give up.
-			else {
-				throw new InvalidArgumentException('cannot coerce object types');
-			}
-
-			return;
-		}
-
-		if ($v === null) {
-			$this->{$k} = clone $propertyDefaultValue;
-		}
-		elseif ($propertyClassType === 'stdClass' && is_array($v)) {
-			$this->{$k} = (object)$v;
-		}
-		else {
-			//	Other classes might be able to absorb/convert other input,
-			//		like «DateTime::__construct("now")» accepts a string.
-			$this->{$k} = new $propertyClassType($v);
-		}
 	}
 
 	/**
@@ -710,6 +638,11 @@ abstract class TypedClass implements TypedInterface, Persistable
 	{
 		if ($this->{$k} instanceof ScalarAbstract) {
 			return $this->{$k}->get();
+		}
+
+		$getter = '_get_' . $k;
+		if (method_exists($this->_calledClass, $getter)) {
+			return $this->{$getter}($v);
 		}
 
 		return $this->{$k};

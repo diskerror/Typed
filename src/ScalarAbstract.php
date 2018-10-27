@@ -44,7 +44,12 @@ abstract class ScalarAbstract
 	public function __construct($in = '', bool $allowNull = false)
 	{
 		$this->_allowNull = $allowNull;
-		$this->set($in);
+		if($in instanceof ScalarAbstract){
+			$this->set($in->get());
+		}
+		else {
+			$this->set($in);
+		}
 		$this->_defaultValue = $this->_value;
 	}
 
