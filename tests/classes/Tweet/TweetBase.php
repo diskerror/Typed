@@ -7,15 +7,12 @@ use Diskerror\Typed\{TypedClass, DateTime};
 class TweetBase extends TypedClass
 {
 	protected $_map                     = [
-		'id'  => 'id_',    //	from Twitter
-		'_id' => 'id_',    //	from Mongo
+		'id'  => '_id',    //	from Twitter
 	];
 
 	protected $_nullCreatesNullInstance = true;
 
-	//	Only this top level "id" is used for the MongoDb "_id" auto index.
-	//	The "getSpecialArr" method changes "id_" to "_id".
-	protected $id_                       = 0;
+	protected $_id                       = 0;
 
 	protected $created_at                = ['__type__' => DateTime::class, '2018-07-18 17:10:28'];
 

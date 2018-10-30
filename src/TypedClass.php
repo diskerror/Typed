@@ -60,6 +60,20 @@ abstract class TypedClass implements TypedInterface, Persistable
 	protected $_arrayOptions;
 
 	/**
+	 * Holds options for "toArray" customizations when used by json_encode.
+	 *
+	 * @var \Diskerror\Typed\ArrayOptions
+	 */
+	protected $_toJsonOptions;
+
+	/**
+	 * Holds options for "toArray" customizations when used by MongoDB.
+	 *
+	 * @var \Diskerror\Typed\ArrayOptions
+	 */
+	protected $_toBsonOptions;
+
+	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
 	 *
 	 * @var string
@@ -96,7 +110,8 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	public function __construct($in = null)
 	{
-		$this->_init();
+		$this->_initArrayOptions();
+		$this->_initMetaProperties();
 
 		switch (gettype($in)) {
 			case 'string':
@@ -260,7 +275,14 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	public function jsonSerialize()
 	{
-		return $this->toArray();
+		$origOptions         = $this->_arrayOptions;
+		$this->_arrayOptions = $this->_toJsonOptions;
+
+		$arr = $this->toArray();
+
+		$this->_arrayOptions = $origOptions;
+
+		return $arr;
 	}
 
 	/**
@@ -271,7 +293,11 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	public function serialize(): string
 	{
-		$toSerialize = ['_arrayOptions' => $this->_arrayOptions->get()];
+		$toSerialize = [
+			'_arrayOptions' => $this->_arrayOptions,
+			'_toJsonOptions' => $this->_toJsonOptions,
+			'_toBsonOptions' => $this->_toBsonOptions
+		];
 		foreach ($this->_publicNames as $k) {
 			$toSerialize[$k] = $this->{$k};
 		}
@@ -290,12 +316,10 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	public function unserialize($serialized)
 	{
-		$this->_init();
+		//	Array options have been serialized and do not need initialization.
+		$this->_initMetaProperties();
 
 		$data = unserialize($serialized);
-
-		$this->_arrayOptions->set($data['_arrayOptions']);
-		unset($data['_arrayOptions']);
 
 		foreach ($data as $k => $v) {
 			$this->{$k} = $v;
@@ -313,17 +337,25 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	final public function toArray(): array
 	{
-		$omitEmpty      = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$omitResource   = $this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE);
-		$switchID       = $this->_arrayOptions->has(ArrayOptions::SWITCH_ID);
-		$keepJsonExpr   = $this->_arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$bsonDate       = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
-		$switchNestedID = $this->_arrayOptions->has(ArrayOptions::SWITCH_NESTED_ID);
+		$omitEmpty    = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$keepJsonExpr = $this->_arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+		$bsonDate     = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
 
 		$ZJE_STRING = '\\Zend\\Json\\Expr';
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
+			if ($k === '_id') {
+				if ($this->_arrayOptions->has(ArrayOptions::OMIT_ID)) {
+					continue;
+				}
+
+				if ($this->_arrayOptions->has(ArrayOptions::NO_CAST_BSON_ID)) {
+					$arr['_id'] = $v;
+					continue;
+				}
+			}
+
 			$v = $this->_getByName($k);    //	ScalarAbstract objects are returned as scalars.
 
 			switch (gettype($v)) {
@@ -347,7 +379,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 					break;
 
 				case 'resource':
-					if (!$omitResource) {
+					if (!$this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE)) {
 						$arr[$k] = $v;
 					}
 					break;
@@ -367,14 +399,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 						if (method_exists($v, 'getArrayOptions')) {
 							$vOrigOpts  = $v->getArrayOptions();
 							$thisArrOpt = $this->_arrayOptions->get();
-							if (!$switchNestedID) {
-								if (($vOrigOpts & ArrayOptions::SWITCH_ID) > 0) {
-									$thisArrOpt |= ArrayOptions::SWITCH_ID;
-								}
-								else {
-									$thisArrOpt &= ~ArrayOptions::SWITCH_ID;
-								}
-							}
 							$v->setArrayOptions($thisArrOpt);
 						}
 
@@ -405,11 +429,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 				//	ints and floats
 				default:
 					$arr[$k] = $v;
-			}
-
-			if ($k === 'id_' && $switchID) {
-				$arr['_id'] = &$arr['id_'];
-				unset($arr['id_']);
 			}
 		}
 
@@ -470,17 +489,15 @@ abstract class TypedClass implements TypedInterface, Persistable
 	/**
 	 * Is a variable set?
 	 *
+	 * Behavior for "isset()" expects the variable (property) to exist and not be null.
+	 *
 	 * @param string $k
 	 *
 	 * @return bool
 	 */
 	public function __isset($k): bool
 	{
-		if ($k[0] === '_') {
-			return false;
-		}
-
-		return isset($this->{$k});
+		return $this->_keyExists($k) && ($this->{$k} !== null);
 	}
 
 	/**
@@ -490,13 +507,12 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	public function bsonSerialize(): array
 	{
-		$origOptions = $this->_arrayOptions->get();
-		$this->setArrayOptions(ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::SWITCH_ID | ArrayOptions::TO_BSON_DATE);
+		$origOptions         = $this->_arrayOptions;
+		$this->_arrayOptions = $this->_toBsonOptions;
 
-//		$arr = array_merge($this->toArray(), ['_arrayOptions' => $origOptions]);
 		$arr = $this->toArray();
 
-		$this->_arrayOptions->set($origOptions);
+		$this->_arrayOptions = $origOptions;
 
 		return $arr;
 	}
@@ -508,10 +524,8 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	public function bsonUnserialize(array $data)
 	{
-		$this->_init();
-		if (array_key_exists('_arrayOptions', $data)) {
-			$this->_arrayOptions->set($data['_arrayOptions']);
-		}
+		$this->_initArrayOptions();
+		$this->_initMetaProperties();
 		$this->assign($data);
 	}
 
@@ -636,6 +650,10 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	protected function _getByName($k)
 	{
+		if (array_key_exists($k, $this->_map)) {
+			$k = $this->_map[$k];
+		}
+
 		if ($this->{$k} instanceof ScalarAbstract) {
 			return $this->{$k}->get();
 		}
@@ -648,19 +666,15 @@ abstract class TypedClass implements TypedInterface, Persistable
 		return $this->{$k};
 	}
 
-	private function _init()
+	private function _initMetaProperties()
 	{
 		$this->_calledClass = get_called_class();
 
-		if (!isset($this->_arrayOptions)) {
-			$this->_arrayOptions = new ArrayOptions();
-		}
-
 		//	Build array of default values.
-		//	First get all class properties then remove elements with names starting with underscore.
+		//	First get all class properties then remove elements with names starting with underscore, except "_id".
 		$this->_defaultVars = get_class_vars($this->_calledClass);
 		foreach ($this->_defaultVars as $k => &$v) {
-			if ($k[0] === '_') {
+			if ($k[0] === '_' && $k !== '_id') {
 				unset($this->_defaultVars[$k]);
 				continue;
 			}
@@ -703,13 +717,32 @@ abstract class TypedClass implements TypedInterface, Persistable
 			}
 
 			if (is_object($v)) {
-				$this->{$k} = clone $v;
+				$this->{$k} = clone $v;    //	clone so the original default value doesn't change
 			}
 			//	else the original value is already in $this->{$k}
 		}
 
 		$this->_publicNames = array_keys($this->_defaultVars);
 		$this->_count       = count($this->_defaultVars);
+	}
+
+	private function _initArrayOptions()
+	{
+		if (!isset($this->_arrayOptions)) {
+			$this->_arrayOptions = new ArrayOptions();
+		}
+
+		if (!isset($this->_toJsonOptions)) {
+			$this->_toJsonOptions = new ArrayOptions(
+				ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR
+			);
+		}
+
+		if (!isset($this->_toBsonOptions)) {
+			$this->_toBsonOptions = new ArrayOptions(
+				ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::OMIT_ID | ArrayOptions::TO_BSON_DATE | ArrayOptions::NO_CAST_BSON_ID
+			);
+		}
 	}
 
 	/**
@@ -721,7 +754,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	private function _keyExists($k): bool
 	{
-		return array_key_exists($k, $this->_defaultVars) ||
+		return in_array($k, $this->_publicNames) ||
 			(array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
 	}
 

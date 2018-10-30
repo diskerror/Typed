@@ -297,7 +297,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 	public function toArray(): array
 	{
 		$omitEmpty = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$switchID  = $this->_arrayOptions->has(ArrayOptions::SWITCH_ID);
+		$omitID    = $this->_arrayOptions->has(ArrayOptions::OMIT_ID);
 		$bsonDate  = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
 
 		$output = [];
@@ -311,7 +311,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 			case 'real':
 			case 'resource':
 				foreach ($this->_container as $k => &$v) {
-					if ($v !== null || !$omitEmpty) {
+					if ($v !== null || !$omitEmpty || ($k === '_id' && !$omitID)) {
 						$output[$k] = $v;
 					}
 				}
@@ -320,7 +320,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 
 			case 'string':
 				foreach ($this->_container as $k => &$v) {
-					if (($v !== '' && $v !== null) || !$omitEmpty) {
+					if (($v !== '' && $v !== null) || !$omitEmpty || ($k === '_id' && !$omitID)) {
 						$output[$k] = $v;
 					}
 				}
@@ -329,7 +329,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 
 			case 'array':
 				foreach ($this->_container as $k => &$v) {
-					if ((count($v) && $v !== null) || !$omitEmpty) {
+					if ((count($v) && $v !== null) || !$omitEmpty || ($k === '_id' && !$omitID)) {
 						$output[$k] = $v;
 					}
 				}
@@ -384,11 +384,6 @@ class TypedArray implements TypedInterface, ArrayAccess
 					$output[$k] = $v;
 				}
 			}
-		}
-
-		if ($switchID && array_key_exists('id_', $output)) {
-			$output['_id'] = &$output['id_'];
-			unset($output['id_']);
 		}
 
 		return $output;

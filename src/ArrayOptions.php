@@ -25,11 +25,11 @@ final class ArrayOptions
 	const OMIT_RESOURCE = 2;
 
 	/**
-	 * In the "Typed" classes a leading "_" on a variable means it's to considered protected or private.
-	 * But MongoDB uses "_id" as the name of the primary key field name for the document. This sets the resulting array
-	 * to switch a stored "id_" to "_id".
+	 * Sometimes we want MongoDB to generate an "_id" that we will want the Persist
+	 * mechanism to return on find. This only omits the top level _id on saving.
+	 * Don't use this when you want to create and save your own _id.
 	 */
-	const SWITCH_ID = 4;
+	const OMIT_ID = 4;
 
 	/**
 	 * For Zend JSON encoding to JSON, these objects contain strings that should not be quoted.
@@ -43,9 +43,9 @@ final class ArrayOptions
 	const TO_BSON_DATE = 16;
 
 	/**
-	 * This tells toArray() to pass the current SWITCH_ID state to nested classes.
+	 * Setting this will instruct the conversion to an array to leave "_id" alone.
 	 */
-	const SWITCH_NESTED_ID = 256;
+	const NO_CAST_BSON_ID = 32;
 
 	/**
 	 * @var int

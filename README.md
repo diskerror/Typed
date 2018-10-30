@@ -5,19 +5,19 @@ PHP classes to strictly define member structure, to control their data types, an
 This declares the convenience methods that are to be implemented in the classes below.
 
 ### assign
-Copies all matching member names while maintaining original types and doing a deep copy where appropriate. This method silently ignores extra properties in the input object, leaves unmatched properties in the current class untouched, and skips names starting with an underscore (per Zend Framework coding style).
+Copies all matching member names while maintaining original types and doing a deep copy where appropriate. This method silently ignores extra properties in the input object, leaves unmatched properties in the current class untouched, and skips names starting with an underscore (per Zend Framework coding style). EXCEPT: the property name "_id" is allowed for use with MongoDB.
 
 Input can be an object or an array. A NULL or FALSE will set the *Typed* object to it's default values.
 
 ### toArray
 Returns an associative array of this object with only the appropriate members. A deep copy/conversion to an associative array from objects is also performed. Options can be set for the returned array and are stored in the *ArrayOptions* class. The top level setting will override each nested object of type *Typed*, though nested objects will retain their original settings.
 
-* OMIT_EMPTY: null or empty members are omitted to shrink storage or transmission needs.
-* OMIT_RESOURCE: resource IDs are meaningless for transmitted data.
-* SWITCH_ID: a top level member with the name "id_" is assumed to be intended to be a Mongo primary key and the name is changed to "_id".
-* KEEP_JSON_EXPR: objects of type *Zend\Json\Expr* remain untouched.
-* TO_BSON_DATE: conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC. *MongoDB\BSON\UTCDateTime* objects will remain untouched.
-* SWITCH_NESTED_ID: pass the current SWITCH_ID state to nested objects.
+* OMIT\_EMPTY: null or empty members are omitted to shrink storage or transmission needs.
+* OMIT\_RESOURCE: resource IDs are meaningless for transmitted data.
+* OMIT\_ID: a top level member with the name "\_id" is assumed to be intended to be a Mongo primary key and this option tells us to omit it from the saved object forcing MongoDB to automatically create a BSON ObjectId.
+* KEEP\_JSON\_EXPR: objects of type *Zend\Json\Expr* remain untouched.
+* TO\_BSON\_DATE: conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC. *MongoDB\BSON\UTCDateTime* objects will remain untouched.
+* NO\_CAST\_BSON\_ID: pass the data in "\_id" as is.
 
 ### getArrayOptions & setArrayOptions
 These manage the usage of the options for how these classes are converted to an array.
