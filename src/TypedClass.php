@@ -118,7 +118,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 			case 'array':
 			case 'object':
 				$this->assign($in);
-				break;
+			break;
 
 			//	Don't waste time with assign if input is one of these.
 			//		Just return leaving the default values.
@@ -157,7 +157,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 		//	First check if the input data is good or needs to be massaged.
 		switch (gettype($in)) {
 			case 'object':
-				break;
+			break;
 
 			case 'array':
 				//	Test to see if it's an indexed or an associative array.
@@ -172,7 +172,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 					$in = &$newArr;
 				}
-				break;
+			break;
 
 			case 'string':
 				$in          = json_decode($in);
@@ -183,7 +183,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 						$jsonLastErr
 					);
 				}
-				break;
+			break;
 
 			case 'null':
 			case 'NULL':
@@ -345,6 +345,8 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
+			$v = $this->_getByName($k);    //	ScalarAbstract objects are returned as scalars.
+
 			if ($k === '_id') {
 				if ($this->_arrayOptions->has(ArrayOptions::OMIT_ID)) {
 					continue;
@@ -356,33 +358,21 @@ abstract class TypedClass implements TypedInterface, Persistable
 				}
 			}
 
-			$v = $this->_getByName($k);    //	ScalarAbstract objects are returned as scalars.
-
 			switch (gettype($v)) {
 				case 'null':
 				case 'NULL':
-					if (!$omitEmpty) {
-						$arr[$k] = null;
-					}
-					break;
-
 				case 'string':
-					if ('' !== $v || !$omitEmpty) {
-						$arr[$k] = $v;
-					}
-					break;
-
 				case 'array':
-					if (count($v) || !$omitEmpty) {
+					if (!$omitEmpty || !empty($v)) {
 						$arr[$k] = $v;
 					}
-					break;
+				break;
 
 				case 'resource':
 					if (!$this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE)) {
 						$arr[$k] = $v;
 					}
-					break;
+				break;
 
 				case 'object':
 					if (($this->{$k} instanceof $ZJE_STRING) && $keepJsonExpr) {
@@ -397,9 +387,8 @@ abstract class TypedClass implements TypedInterface, Persistable
 					}
 					elseif (method_exists($v, 'toArray')) {
 						if (method_exists($v, 'getArrayOptions')) {
-							$vOrigOpts  = $v->getArrayOptions();
-							$thisArrOpt = $this->_arrayOptions->get();
-							$v->setArrayOptions($thisArrOpt);
+							$vOrigOpts = $v->getArrayOptions();
+							$v->setArrayOptions($this->_arrayOptions->get());
 						}
 
 						$arr[$k] = $v->toArray();
@@ -408,28 +397,32 @@ abstract class TypedClass implements TypedInterface, Persistable
 							$v->setArrayOptions($vOrigOpts);
 							unset($vOrigOpts);
 						}
-
-						if (count($arr[$k]) === 0 && $omitEmpty) {
-							unset($arr[$k]);
-						}
 					}
 					elseif (method_exists($v, '__toString')) {
 						$arr[$k] = $v->__toString();
-						if ($arr[$k] === '' && $omitEmpty) {
-							unset($arr[$k]);
-						}
 					}
 					else {
-						if (count((array)$v) || !$omitEmpty) {
-							$arr[$k] = $v;
-						}
+						$arr[$k] = $v;
 					}
-					break;
+
+					/** For anything that might have been converted to one of the following types: */
+					switch (gettype($arr[$k])) {
+						case 'null':
+						case 'NULL':
+						case 'string':
+						case 'array':
+							if ($omitEmpty && empty($arr[$k])) {
+								unset($arr[$k]);
+							}
+						break;
+					}
+				break;
 
 				//	ints and floats
 				default:
 					$arr[$k] = $v;
 			}
+
 		}
 
 		return $arr;
@@ -533,88 +526,89 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 * Set data to named variable.
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
-	 * @param string $k
-	 * @param mixed  $v
+	 * @param string $propName
+	 * @param mixed  $in
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _setByName($k, $v)
+	protected function _setByName($propName, $in)
 	{
-		if (array_key_exists($k, $this->_map)) {
-			$k = $this->_map[$k];
+		if (array_key_exists($propName, $this->_map)) {
+			$propName = $this->_map[$propName];
 		}
 
-		$setter = '_set_' . $k;
+		$setter = '_set_' . $propName;
 		if (method_exists($this->_calledClass, $setter)) {
-			$this->{$setter}($v);
+			$this->{$setter}($in);
 			return;
 		}
 
-		if (is_object($this->_defaultVars[$k])) {
-			$propertyDefaultValue = $this->_defaultVars[$k];
+		/** If the default value is a null then we allow anything. */
+		if (null === $this->_defaultVars[$propName]) {
+			$this->{$propName} = $in;
+			return;
+		}
 
-			//	Handle our two special object types.
-			if ($propertyDefaultValue instanceof ScalarAbstract) {
-				$this->{$k}->set($v);
-				return;
+		/** All properties are now handled as objects. */
+		$propertyDefaultValue = $this->_defaultVars[$propName];
+
+		//	Handle our two special object types.
+		if ($propertyDefaultValue instanceof ScalarAbstract) {
+			$this->{$propName}->set($in);
+			return;
+		}
+
+		if ($propertyDefaultValue instanceof TypedInterface) {
+			$this->{$propName}->assign($in);
+			return;
+		}
+
+		//	Handle for other types of objects.
+		$propertyClassType = get_class($propertyDefaultValue);
+
+		if (is_object($in)) {
+			//	if identical types then reference the original object
+			if ($propertyClassType === get_class($in)) {
+				$this->{$propName} = $in;
 			}
 
-			if ($propertyDefaultValue instanceof TypedInterface) {
-				$this->{$k}->assign($v);
-				return;
+			//	Treat DateTime related objects as atomic in these next cases.
+			elseif (
+				($propertyDefaultValue instanceof DateTimeInterface) && ($in instanceof UTCDateTimeInterface)
+			) {
+				$this->{$propName} = new $propertyClassType($in->toDateTime());
+			}
+			elseif (
+				($propertyDefaultValue instanceof UTCDateTimeInterface) && ($in instanceof DateTimeInterface)
+			) {
+				$this->{$propName} = new $propertyClassType($in->getTimestamp() * 1000);
 			}
 
-			//	Handle for other types of objects.
-			$propertyClassType = get_class($propertyDefaultValue);
-
-			if (is_object($v)) {
-				//	if identical types then reference the original object
-				if ($propertyClassType === get_class($v)) {
-					$this->{$k} = $v;
-				}
-
-				//	Treat DateTime related objects as atomic in these next cases.
-				elseif (
-					($propertyDefaultValue instanceof DateTimeInterface) && ($v instanceof UTCDateTimeInterface)
-				) {
-					$this->{$k} = new $propertyClassType($v->toDateTime());
-				}
-				elseif (
-					($propertyDefaultValue instanceof UTCDateTimeInterface) && ($v instanceof DateTimeInterface)
-				) {
-					$this->{$k} = new $propertyClassType($v->getTimestamp() * 1000);
-				}
-
-				//	if this->k is a DateTime object and v is any other type
-				//		then absorb v or v's properties into this->k's properties
-				//		But only if $v object has __toString.
-				elseif ($propertyDefaultValue instanceof DateTimeInterface && method_exists($v, '__toString')) {
-					$this->{$k} = new $propertyClassType($v->__toString());
-				}
-
-				//	Else give up.
-				else {
-					throw new InvalidArgumentException('cannot coerce object types');
-				}
+			//	if this->k is a DateTime object and v is any other type
+			//		then absorb v or v's properties into this->k's properties
+			//		But only if $v object has __toString.
+			elseif ($propertyDefaultValue instanceof DateTimeInterface && method_exists($in, '__toString')) {
+				$this->{$propName} = new $propertyClassType($in->__toString());
 			}
+
+			//	Else give up.
 			else {
-				//	Then $v is not an object.
-				if ($v === null) {
-					$this->{$k} = clone $propertyDefaultValue;
-				}
-				elseif ($propertyClassType === 'stdClass' && is_array($v)) {
-					$this->{$k} = (object)$v;
-				}
-				else {
-					//	Other classes might be able to absorb/convert other input,
-					//		like «DateTime::__construct("now")» accepts a string.
-					$this->{$k} = new $propertyClassType($v);
-				}
+				throw new InvalidArgumentException('cannot coerce object types');
 			}
 		}
 		else {
-			//	else the default is null and therefore can be anything
-			$this->{$k} = $v;
+			//	Then $v is not an object.
+			if ($in === null) {
+				$this->{$propName} = clone $propertyDefaultValue;
+			}
+			elseif ($propertyClassType === 'stdClass' && is_array($in)) {
+				$this->{$propName} = (object)$in;
+			}
+			else {
+				//	Other classes might be able to absorb/convert other input,
+				//		like «DateTime::__construct("now")» accepts a string.
+				$this->{$propName} = new $propertyClassType($in);
+			}
 		}
 	}
 
@@ -654,13 +648,13 @@ abstract class TypedClass implements TypedInterface, Persistable
 			$k = $this->_map[$k];
 		}
 
-		if ($this->{$k} instanceof ScalarAbstract) {
-			return $this->{$k}->get();
-		}
-
 		$getter = '_get_' . $k;
 		if (method_exists($this->_calledClass, $getter)) {
 			return $this->{$getter}($v);
+		}
+
+		if ($this->{$k} instanceof ScalarAbstract) {
+			return $this->{$k}->get();
 		}
 
 		return $this->{$k};
@@ -683,22 +677,22 @@ abstract class TypedClass implements TypedInterface, Persistable
 				case 'bool':
 				case 'boolean':
 					$v = new SABoolean($v, true);
-					break;
+				break;
 
 				case 'int':
 				case 'integer':
 					$v = new SAInteger($v, true);
-					break;
+				break;
 
 				case 'float':
 				case 'double':
 				case 'real':
 					$v = new SAFloat($v, true);
-					break;
+				break;
 
 				case 'string':
 					$v = new SABinary($v, true);
-					break;
+				break;
 
 				case 'array':
 					if (isset($v['__type__'])) {
@@ -710,7 +704,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 					else {
 						$v = new TypedArray($v);
 					}
-					break;
+				break;
 
 				default:
 					//	Do nothing. Don't try to cast.
@@ -746,7 +740,8 @@ abstract class TypedClass implements TypedInterface, Persistable
 	}
 
 	/**
-	 * Returns true if key/prop name exists.
+	 * Returns true if key/prop name exists or is mappable.
+	 * Checks for entry to exist in _map but is mapped to nothing.
 	 *
 	 * @param string $k
 	 *
@@ -754,8 +749,11 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 */
 	private function _keyExists($k): bool
 	{
-		return in_array($k, $this->_publicNames) ||
-			(array_key_exists($k, $this->_map) && array_key_exists($this->_map[$k], $this->_defaultVars));
+		if (array_key_exists($k, $this->_map)) {
+			$k = $this->_map[$k];
+		}
+
+		return in_array($k, $this->_publicNames);
 	}
 
 }
