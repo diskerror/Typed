@@ -111,7 +111,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 	public function __construct($in = null)
 	{
 		$this->_initArrayOptions();
-		$this->_initMetaProperties();
+		$this->_initProperties();
 
 		switch (gettype($in)) {
 			case 'string':
@@ -317,7 +317,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 	public function unserialize($serialized)
 	{
 		//	Array options have been serialized and do not need initialization.
-		$this->_initMetaProperties();
+		$this->_initProperties();
 
 		$data = unserialize($serialized);
 
@@ -525,7 +525,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 	public function bsonUnserialize(array $data)
 	{
 		$this->_initArrayOptions();
-		$this->_initMetaProperties();
+		$this->_initProperties();
 		$this->assign($data);
 	}
 
@@ -666,7 +666,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 		return $this->{$k};
 	}
 
-	private function _initMetaProperties()
+	private function _initProperties()
 	{
 		$this->_calledClass = get_called_class();
 

@@ -44,7 +44,7 @@ abstract class ScalarAbstract
 	public function __construct($in = '', bool $allowNull = false)
 	{
 		$this->_allowNull = $allowNull;
-		if($in instanceof ScalarAbstract){
+		if ($in instanceof ScalarAbstract) {
 			$this->set($in->get());
 		}
 		else {
