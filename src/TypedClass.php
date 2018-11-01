@@ -712,9 +712,9 @@ abstract class TypedClass implements TypedInterface, Persistable
 					//	Do nothing. Don't try to cast.
 			}
 
-			if (is_object($v)) {
-				$this->{$k} = clone $v;    //	clone so the original default value doesn't change
-			}
+			//	everything is an object now
+			$this->{$k} = clone $v;    //	clone so the original default value doesn't change
+
 			//	else the original value is already in $this->{$k}
 		}
 
