@@ -400,35 +400,20 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 */
 	public function offsetSet($k, $v)
 	{
-		if (is_a($this->_type, ScalarAbstract::class, true)) {
-			if (null === $k) {
-				$this->_container[] = new $this->_type($v);
-			}
-			elseif (!isset($this->_container[$k])) {
-				$this->_container[$k] = new $this->_type($v);
-			}
-			else {
-				$this->_container[$k]->set($v);
-			}
+		if (null === $k) {
+			$this->_container[] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+		}
+		elseif (!isset($this->_container[$k])) {
+			$this->_container[$k] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+		}
+		elseif (is_a($this->_type, ScalarAbstract::class, true)) {
+			$this->_container[$k]->set($v);
 		}
 		elseif (is_a($this->_type, TypedInterface::class, true)) {
-			if (null === $k) {
-				$this->_container[] = new $this->_type($v);
-			}
-			elseif (!isset($this->_container[$k])) {
-				$this->_container[$k] = new $this->_type($v);
-			}
-			else {
-				$this->_container[$k]->assign($v);
-			}
+			$this->_container[$k]->assign($v);
 		}
 		else {
-			if (null === $k) {
-				$this->_container[] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
-			}
-			else {
-				$this->_container[$k] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
-			}
+			$this->_container[$k] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
 		}
 	}
 
