@@ -454,11 +454,6 @@ class TypedArray implements TypedInterface, ArrayAccess
 		}
 	}
 
-	public function &getContainerReference()
-	{
-		return $this->_container;
-	}
-
 	/**
 	 * Returns array keys.
 	 *
