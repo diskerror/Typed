@@ -10,6 +10,7 @@ namespace Diskerror\Typed;
 
 /**
  * Class ArrayOptions
+ *
  * @package Diskerror\Typed
  */
 final class ArrayOptions
@@ -43,7 +44,7 @@ final class ArrayOptions
 	const TO_BSON_DATE = 16;
 
 	/**
-	 * Setting this will instruct the conversion to an array to leave "_id" alone.
+	 * Setting this will instruct the conversion to an array to leave "_id" alone, don't convert to string.
 	 */
 	const NO_CAST_BSON_ID = 32;
 
@@ -63,7 +64,7 @@ final class ArrayOptions
 	/**
 	 * @return int
 	 */
-	public function get() : int
+	public function get(): int
 	{
 		return $this->_options;
 	}
@@ -81,7 +82,7 @@ final class ArrayOptions
 	 *
 	 * @return bool
 	 */
-	public function has(int $opt) : bool
+	public function has(int $opt): bool
 	{
 		return ($this->_options & $opt) > 0;
 	}

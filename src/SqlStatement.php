@@ -15,6 +15,7 @@ use UnexpectedValueException;
 
 /**
  * Class SqlStatement
+ *
  * @package Diskerror\Typed
  */
 class SqlStatement
@@ -22,7 +23,9 @@ class SqlStatement
 	/**
 	 * Ya don't need to make an instance of this class to use the static methods.
 	 */
-	protected function __construct() { }
+	protected function __construct()
+	{
+	}
 
 	/**
 	 * Returns a string formatted for an SQL insert or update.

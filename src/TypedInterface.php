@@ -1,6 +1,7 @@
 <?php
 /**
  * Methods for maintaining variable type.
+ *
  * @name        TypedInterface
  * @copyright      Copyright (c) 2012 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
@@ -16,6 +17,7 @@ use JsonSerializable;
 /**
  * Class TypedInterface
  * Provides common interface TypedClass and TypedArray.
+ *
  * @package Diskerror\Typed
  */
 interface TypedInterface extends Countable, IteratorAggregate, Serializable, JsonSerializable

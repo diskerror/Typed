@@ -16,12 +16,12 @@ class SABoolean extends ScalarAbstract
 		switch (gettype($in)) {
 			case 'object':
 				$this->_value = (bool)self::_castObject($in);
-				break;
+			break;
 
 			case 'null':
 			case 'NULL':
 				$this->_setNullOrDefault();
-				break;
+			break;
 
 			default:
 				$this->_value = (bool)$in;

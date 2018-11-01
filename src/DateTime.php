@@ -49,7 +49,7 @@ class DateTime extends \DateTime
 				parent::__construct('now', $timezone);
 				$this->setDate($time);
 				$this->setTime($time);
-				break;
+			break;
 
 			case 'string':
 				if ($time === '') {
@@ -60,16 +60,42 @@ class DateTime extends \DateTime
 					$time = substr($time, 0, 14);
 				}
 				parent::__construct($time, $timezone);
-				break;
+			break;
 
 			case 'null':
 			case 'NULL':
 				parent::__construct('now', $timezone);
-				break;
+			break;
 
 			default:
 				throw new InvalidArgumentException('first argument is the wrong type: ' . gettype($time));
 		}
+	}
+
+	/**
+	 * Create DateTime object defaults to something that will accept
+	 * the default MySQL datetime format of "Y-m-d H:i:s.u".
+	 *
+	 * @param string        $formatOrTime
+	 * @param string        $time     -OPTIONAL
+	 * @param \DateTimeZone $timezone -OPTIONAL
+	 *
+	 * @return DateTime
+	 */
+	public static function createFromFormat($formatOrTime, $time = '', $timezone = null): self
+	{
+		$parsed = ($time === '') ? date_parse($formatOrTime) : date_parse_from_format($formatOrTime, $time);
+
+		$d = new self();
+
+		if ($timezone !== null) {
+			$d->setTimezone($timezone);
+		}
+
+		$d->setDate($parsed);
+		$d->setTime($parsed);
+
+		return $d;
 	}
 
 	/**
@@ -103,18 +129,18 @@ class DateTime extends \DateTime
 					switch (substr($k, 0, 3)) {
 						case 'yea':
 							$year = $v;
-							break;
+						break;
 
 						case 'mon':
 							$month = $v;
-							break;
+						break;
 
 						case 'day':
 							$day = $v;
-							break;
+						break;
 					}
 				}
-				break;
+			break;
 		}
 
 		parent::setDate((int)$year, (int)$month, (int)$day);
@@ -152,23 +178,23 @@ class DateTime extends \DateTime
 					switch (substr(strtolower($k), 0, 3)) {
 						case 'hou':
 							$hour = $v;
-							break;
+						break;
 
 						case 'min':
 							$minute = $v;
-							break;
+						break;
 
 						case 'sec':
 							$second = $v;
-							break;
+						break;
 
 						case 'mcs':
 							$mcs = $v;
-							break;
+						break;
 
 						case 'fra': //	"fraction" which is a float
 							$mcs = $v * 1000000;
-							break;
+						break;
 					}
 				}
 		}
@@ -176,32 +202,6 @@ class DateTime extends \DateTime
 		parent::setTime((int)$hour, (int)$minute, (int)$second, (int)$mcs);
 
 		return $this;
-	}
-
-	/**
-	 * Create DateTime object defaults to something that will accept
-	 * the default MySQL datetime format of "Y-m-d H:i:s.u".
-	 *
-	 * @param string        $formatOrTime
-	 * @param string        $time     -OPTIONAL
-	 * @param \DateTimeZone $timezone -OPTIONAL
-	 *
-	 * @return DateTime
-	 */
-	public static function createFromFormat($formatOrTime, $time = '', $timezone = null): self
-	{
-		$parsed = ($time === '') ? date_parse($formatOrTime) : date_parse_from_format($formatOrTime, $time);
-
-		$d = new self();
-
-		if ($timezone !== null) {
-			$d->setTimezone($timezone);
-		}
-
-		$d->setDate($parsed);
-		$d->setTime($parsed);
-
-		return $d;
 	}
 
 	/**
@@ -224,7 +224,7 @@ class DateTime extends \DateTime
 	 *
 	 * @return int
 	 */
-	public function getTimestampMilli():int
+	public function getTimestampMilli(): int
 	{
 		return ($this->getTimestamp() * 1000) + $this->format('v');
 	}

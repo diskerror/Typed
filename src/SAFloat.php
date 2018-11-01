@@ -40,16 +40,16 @@ class SAFloat extends ScalarAbstract
 				}
 
 				$this->_value = (float)$in;
-				break;
+			break;
 
 			case 'object':
 				$this->_value = (float)self::_castObject($in);
-				break;
+			break;
 
 			case 'null':
 			case 'NULL':
 				$this->_setNullOrDefault();
-				break;
+			break;
 
 			default:
 				$this->_value = (float)$in;

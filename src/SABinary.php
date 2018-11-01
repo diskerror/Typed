@@ -40,12 +40,12 @@ class SABinary extends ScalarAbstract
 					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 				}
 				$this->_value = $jsonStr;
-				break;
+			break;
 
 			case 'null':
 			case 'NULL':
 				$this->_setNullOrDefault();
-				break;
+			break;
 
 			default:
 				$this->_value = (string)$in;
