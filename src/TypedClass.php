@@ -671,6 +671,11 @@ abstract class TypedClass implements TypedInterface, Persistable
 			}
 
 			switch (gettype($v)) {
+				case 'null':
+				case 'NULL':
+					$v = new SAAnything($v, true);
+				break;
+
 				case 'bool':
 				case 'boolean':
 					$v = new SABoolean($v, true);
