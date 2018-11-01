@@ -135,7 +135,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 			default:
 				throw new InvalidArgumentException('bad value to constructor');
 		}
-
 	}
 
 	/**
@@ -205,11 +204,9 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 		//	Then copy each field to the appropriate place.
 		foreach ($in as $k => $v) {
-			if (!$this->_keyExists($k)) {
-				continue;
+			if ($this->_keyExists($k)) {
+				$this->_setByName($k, $v);
 			}
-
-			$this->_setByName($k, $v);
 		}
 
 		$this->_checkRelatedProperties();
