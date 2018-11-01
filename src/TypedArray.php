@@ -37,13 +37,6 @@ class TypedArray implements TypedInterface, ArrayAccess
 	private $_arrayOptions;
 
 	/**
-	 * Holds the type of iterator needed to iterate over values in the container.
-	 *
-	 * @var
-	 */
-	private $_iteratorType;
-
-	/**
 	 * An array that contains the items of interest.
 	 *
 	 * @var array
@@ -64,13 +57,46 @@ class TypedArray implements TypedInterface, ArrayAccess
 			$this->_arrayOptions = new ArrayOptions();
 		}
 
-		if (isset($this->_type)) {
-			if (null !== $type) {
-				throw new LogicException('Can\'t set type in constructor when type is set in child class.');
-			}
+		if (!isset($this->_type) && isset($type)) {
+			$this->_type = $type;
 		}
-		else {
-			$this->_type = null === $type ? 'null' : $type;
+		elseif (!isset($this->_type) && !isset($type)) {
+			$this->_type = 'anything';    //	or 'null'
+		}
+		elseif (isset($this->_type) && isset($type)) {
+			throw new LogicException('Can\'t set type in constructor when type is set in child class.');
+		}
+
+		switch (strtolower($this->_type)) {
+			case 'null':
+			case 'anything':
+			case 'scalar':
+				$this->_type = SAAnything::class;
+			break;
+
+			case 'bool':
+			case 'boolean':
+				$this->_type = SABoolean::class;
+			break;
+
+			case 'int':
+			case 'integer':
+				$this->_type = SAInteger::class;
+			break;
+
+			case 'float':
+			case 'double':
+			case 'real':
+				$this->_type = SAFloat::class;
+			break;
+
+			case 'string':
+				$this->_type = SABinary::class;
+			break;
+
+			case 'array':
+				$this->_type = TypedArray::class;
+			break;
 		}
 
 		$this->_container = [];
@@ -96,7 +122,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 		switch ($inputType) {
 			case 'object':
 			case 'array':
-				break;
+			break;
 
 			case 'string':
 				$in          = json_decode($in);
@@ -108,7 +134,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 					$this->_container = [];    //	remove all current values
 					return;
 				}
-				break;
+			break;
 
 			case 'null':
 			case 'NULL':
@@ -167,78 +193,29 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 */
 	public function getIterator(): \Traversable
 	{
-		if (!isset($this->_iteratorType)) {
-			$thisType3 = substr($this->_type, 0, 3);
-			switch ($thisType3) {
-				case 'nul':
-				case 'NUL':
-					$this->_iteratorType = 'null';
-					break;
-
-				case 'boo':
-				case 'int':
-				case 'flo':
-				case 'dou':
-				case 'rea':
-				case 'str':
-				case 'arr':
-				case 'res':
-					$this->_iteratorType = 'base';
-					break;
-
-				default:
-					$this->_iteratorType =
-						is_subclass_of($this->_type, ScalarAbstract::class, true) ?
-							'scalarAbstract' :
-							'object';
-			}
+		if (is_a($this->_type, ScalarAbstract::class, true)) {
+			return (function &() {
+				foreach ($this->_container as $k => $v) {
+					$v     = $v->get();
+					$vOrig = $v;
+					yield $k => $v;
+					if ($v !== $vOrig) {
+						$this->_container[$k]->set($v);
+					}
+				}
+			})();
 		}
+		else {
+			return (function &() {
+				foreach ($this->_container as $k => &$v) {
+					yield $k => $v;
 
-		switch ($this->_iteratorType) {
-			case 'base':
-				return (function &() {
-					foreach ($this->_container as $k => &$v) {
-						yield $k => $v;
-
-						//	Cast if not the same type.
-						if (gettype($v) !== $this->_type) {
-							$this->offsetSet($k, $v);
-						}
+					//	Compare whole class names.
+					if (get_class($v) !== $this->_type) {
+						$this->offsetSet($k, $v);
 					}
-				})();
-
-			case 'scalarAbstract':
-				return (function &() {
-					foreach ($this->_container as $k => $v) {
-						$v     = $v->get();
-						$vOrig = $v;
-						yield $k => $v;
-						if ($v !== $vOrig) {
-							$this->_container[$k]->set($v);
-						}
-					}
-				})();
-
-			case 'object':
-				return (function &() {
-					foreach ($this->_container as $k => &$v) {
-						yield $k => $v;
-
-						//	Compare whole class names.
-						if (get_class($v) !== $this->_type) {
-							$this->offsetSet($k, $v);
-						}
-					}
-				})();
-
-			case 'null':
-			default:
-				//	It can be anything. Don't check it.
-				return (function &() {
-					foreach ($this->_container as $k => &$v) {
-						yield $k => $v;
-					}
-				})();
+				}
+			})();
 		}
 	}
 
@@ -262,8 +239,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 	{
 		return serialize([
 			'_type' => $this->_type,
-			'_iteratorType' => $this->_iteratorType,
-			'_arrayOptions' => $this->_arrayOptions->get(),
+			'_arrayOptions' => $this->_arrayOptions,
 			'_container' => $this->_container
 		]);
 	}
@@ -282,8 +258,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 		$data = unserialize($serialized);
 
 		$this->_type         = $data['_type'];
-		$this->_iteratorType = $data['_iteratorType'];
-		$this->_arrayOptions = new ArrayOptions($data['_arrayOptions']);
+		$this->_arrayOptions = $data['_arrayOptions'];
 		$this->_container    = $data['_container'];
 	}
 
@@ -301,51 +276,22 @@ class TypedArray implements TypedInterface, ArrayAccess
 		$bsonDate  = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
 
 		$output = [];
-		switch ($this->_type) {
-			case 'bool':
-			case 'boolean':
-			case 'int':
-			case 'integer':
-			case 'float':
-			case 'double':
-			case 'real':
-			case 'resource':
-				foreach ($this->_container as $k => &$v) {
-					if ($v !== null || !$omitEmpty || ($k === '_id' && !$omitID)) {
-						$output[$k] = $v;
-					}
-				}
-
-				return $output;
-
-			case 'string':
-				foreach ($this->_container as $k => &$v) {
-					if (($v !== '' && $v !== null) || !$omitEmpty || ($k === '_id' && !$omitID)) {
-						$output[$k] = $v;
-					}
-				}
-
-				return $output;
-
-			case 'array':
-				foreach ($this->_container as $k => &$v) {
-					if ((count($v) && $v !== null) || !$omitEmpty || ($k === '_id' && !$omitID)) {
-						$output[$k] = $v;
-					}
-				}
-
-				return $output;
-		}
-
-		$MBDateTime = '\\MongoDB\\BSON\\UTCDateTime';
 
 		//	At this point all items are some type of object.
-		if ($this->_type instanceof \DateTime && $bsonDate) {
+		if (is_a($this->_type, ScalarAbstract::class, true)) {
+			foreach ($this->_container as $k => $v) {
+				$v = $v->get();
+				if (($v !== '' && $v !== null) || !$omitEmpty || ($k === '_id' && !$omitID)) {
+					$output[$k] = $v;
+				}
+			}
+		}
+		elseif (is_a($this->_type, \DateTime::class, true) && $bsonDate) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = new \MongoDB\BSON\UTCDateTime($v->getTimestamp() * 1000);
 			}
 		}
-		elseif ($this->_type instanceof $MBDateTime && $bsonDate) {
+		elseif (is_a($this->_type, '\\MongoDB\\BSON\\UTCDateTime', true) && $bsonDate) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}
@@ -380,7 +326,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 		else {
 			//	else this is some generic object then copy non-null/non-empty members or properties
 			foreach ($this->_container as $k => $v) {
-				if (($v !== null && $v !== '') || !$omitEmpty) {
+				if (($v !== '' && $v !== null) || !$omitEmpty || ($k === '_id' && !$omitID)) {
 					$output[$k] = $v;
 				}
 			}
@@ -415,25 +361,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 	{
 		if (!$this->offsetExists($offset)) {
 			//	Be sure offset exists before accessing it.
-			switch ($this->_type) {
-				case 'bool':
-				case 'boolean':    //	'' -> false
-				case 'int':
-				case 'integer':    //	'' -> 0
-				case 'float':
-				case 'double':
-				case 'real':       //	'' -> 0.0
-				case 'string':     //	'' -> ''
-					//	We don't need the value that this sets into the container,
-					//		but do we need the good offset created by this for scalars?
-					$this->offsetSet($offset, '');
-					break;
-
-				default:    //	arrays or objects
-					$this->offsetSet($offset, null);
-					break;
-
-			}
+			$this->offsetSet($offset, null);
 
 			//	Returns new offset created by ::offsetSet().
 			if (null === $offset) {
@@ -472,55 +400,35 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 */
 	public function offsetSet($k, $v)
 	{
-		switch ($this->_type) {
-			case 'null':
-			case 'NULL':
-				$newValue = $v;
-				break;
-
-			case 'bool':
-			case 'boolean':
-				$newValue = Cast::toBoolean($v);
-				break;
-
-			case 'int':
-			case 'integer':
-				$newValue = Cast::toInteger($v);
-				break;
-
-			case 'float':
-			case 'double':
-			case 'real':
-				$newValue = Cast::toDouble($v);
-				break;
-
-			case 'string':
-				$newValue = Cast::toString($v);
-				break;
-
-			case 'array':
-				$newValue = Cast::toArray($v);
-				break;
-
-			//	All object and class types.
-			default:
-				if (null === $k || !isset($this->_container[$k]) || !($this->_container[$k] instanceof TypedInterface)) {
-					$newValue = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
-				}
-				//	Else it is an instance of our special type.
-				else {
-					$this->_container[$k]->assign($v);
-
-					return; //	value already assigned to container
-				}
-				break;
+		if (is_a($this->_type, ScalarAbstract::class, true)) {
+			if (null === $k) {
+				$this->_container[] = new $this->_type($v);
+			}
+			elseif (!isset($this->_container[$k])) {
+				$this->_container[$k] = new $this->_type($v);
+			}
+			else {
+				$this->_container[$k]->set($v);
+			}
 		}
-
-		if (null === $k) {
-			$this->_container[] = &$newValue;
+		elseif (is_a($this->_type, TypedInterface::class, true)) {
+			if (null === $k) {
+				$this->_container[] = new $this->_type($v);
+			}
+			elseif (!isset($this->_container[$k])) {
+				$this->_container[$k] = new $this->_type($v);
+			}
+			else {
+				$this->_container[$k]->assign($v);
+			}
 		}
 		else {
-			$this->_container[$k] = &$newValue;
+			if (null === $k) {
+				$this->_container[] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+			}
+			else {
+				$this->_container[$k] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+			}
 		}
 	}
 
