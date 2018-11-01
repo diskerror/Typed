@@ -9,22 +9,17 @@
 namespace Diskerror\Typed;
 
 
-class SABoolean extends ScalarAbstract
+/**
+ * Class SAAnything
+ *
+ * This class allows input to be any scalar.
+ *
+ * @package Diskerror\Typed
+ */
+class SAAnything extends ScalarAbstract
 {
 	public function set($in)
 	{
-		switch (gettype($in)) {
-			case 'object':
-				$this->_value = (bool)self::_castObject($in);
-				break;
-
-			case 'null':
-			case 'NULL':
-				$this->_setNullOrDefault();
-				break;
-
-			default:
-				$this->_value = (bool)$in;
-		}
+		$this->_value = $in;
 	}
 }
