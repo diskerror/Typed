@@ -53,11 +53,25 @@ abstract class TypedClass implements TypedInterface, Persistable
 	protected $_map = [];
 
 	/**
+	 * Holds options for "toArray" customizations.
+	 *
+	 * @var \Diskerror\Typed\ArrayOptions
+	 */
+	private $_arrayOptions;
+
+	/**
 	 * Holds default options for "toArray" customizations.
 	 *
 	 * @var int
 	 */
 	protected $_arrayOptionDefaults = 0;
+
+	/**
+	 * Holds options for "toArray" customizations when used by json_encode.
+	 *
+	 * @var \Diskerror\Typed\ArrayOptions
+	 */
+	private $_toJsonOptions;
 
 	/**
 	 * Holds default options for "toArray" customizations when used by json_encode.
@@ -71,7 +85,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 *
 	 * @var \Diskerror\Typed\ArrayOptions
 	 */
-	protected $_toBsonOptions;
+	private $_toBsonOptions;
 
 	/**
 	 * Holds default options for "toArray" customizations when used by MongoDB.
@@ -79,20 +93,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 * @var int
 	 */
 	protected $_toBsonOptionDefaults = ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::OMIT_ID | ArrayOptions::TO_BSON_DATE | ArrayOptions::NO_CAST_BSON_ID;
-
-	/**
-	 * Holds options for "toArray" customizations.
-	 *
-	 * @var \Diskerror\Typed\ArrayOptions
-	 */
-	private $_arrayOptions;
-
-	/**
-	 * Holds options for "toArray" customizations when used by json_encode.
-	 *
-	 * @var \Diskerror\Typed\ArrayOptions
-	 */
-	private $_toJsonOptions;
 
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
@@ -156,6 +156,78 @@ abstract class TypedClass implements TypedInterface, Persistable
 			default:
 				throw new InvalidArgumentException('bad value to constructor');
 		}
+	}
+
+	private function _initArrayOptions()
+	{
+		$this->_arrayOptions  = new ArrayOptions($this->_arrayOptionDefaults);
+		$this->_toJsonOptions = new ArrayOptions($this->_toJsonOptionDefaults);
+		$this->_toBsonOptions = new ArrayOptions($this->_toBsonOptionDefaults);
+	}
+
+	private function _initProperties()
+	{
+		$this->_calledClass = get_called_class();
+
+		//	Build array of default values.
+		//	First get all class properties then remove elements with names starting with underscore, except "_id".
+		$this->_defaultVars = get_class_vars($this->_calledClass);
+		foreach ($this->_defaultVars as $k => &$v) {
+			if ($k[0] === '_' && $k !== '_id') {
+				unset($this->_defaultVars[$k]);
+				continue;
+			}
+
+			switch (gettype($v)) {
+				case 'null':
+				case 'NULL':
+					$v = new SAAnything($v, true);
+				break;
+
+				case 'bool':
+				case 'boolean':
+					$v = new SABoolean($v, true);
+				break;
+
+				case 'int':
+				case 'integer':
+					$v = new SAInteger($v, true);
+				break;
+
+				case 'float':
+				case 'double':
+				case 'real':
+					$v = new SAFloat($v, true);
+				break;
+
+				case 'string':
+					$v = new SABinary($v, true);
+				break;
+
+				case 'array':
+					if (isset($v['__type__'])) {
+						$className = $v['__type__'];
+						unset($v['__type__']);
+
+						$v = new $className(...$v);
+					}
+					else {
+						$v = new TypedArray($v);
+					}
+				break;
+
+				default:
+					//	Do nothing. Don't try to cast.
+			}
+
+			//	everything is an object now
+			$this->{$k} = clone $v;    //	clone so the original default value doesn't change
+
+			//	else the original value is already in $this->{$k}
+		}
+
+		$this->_publicNames = array_keys($this->_defaultVars);
+		$this->_count       = count($this->_defaultVars);
 	}
 
 	/**
@@ -676,78 +748,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 		}
 
 		return $this->{$k};
-	}
-
-	private function _initProperties()
-	{
-		$this->_calledClass = get_called_class();
-
-		//	Build array of default values.
-		//	First get all class properties then remove elements with names starting with underscore, except "_id".
-		$this->_defaultVars = get_class_vars($this->_calledClass);
-		foreach ($this->_defaultVars as $k => &$v) {
-			if ($k[0] === '_' && $k !== '_id') {
-				unset($this->_defaultVars[$k]);
-				continue;
-			}
-
-			switch (gettype($v)) {
-				case 'null':
-				case 'NULL':
-					$v = new SAAnything($v, true);
-				break;
-
-				case 'bool':
-				case 'boolean':
-					$v = new SABoolean($v, true);
-				break;
-
-				case 'int':
-				case 'integer':
-					$v = new SAInteger($v, true);
-				break;
-
-				case 'float':
-				case 'double':
-				case 'real':
-					$v = new SAFloat($v, true);
-				break;
-
-				case 'string':
-					$v = new SABinary($v, true);
-				break;
-
-				case 'array':
-					if (isset($v['__type__'])) {
-						$className = $v['__type__'];
-						unset($v['__type__']);
-
-						$v = new $className(...$v);
-					}
-					else {
-						$v = new TypedArray($v);
-					}
-				break;
-
-				default:
-					//	Do nothing. Don't try to cast.
-			}
-
-			//	everything is an object now
-			$this->{$k} = clone $v;    //	clone so the original default value doesn't change
-
-			//	else the original value is already in $this->{$k}
-		}
-
-		$this->_publicNames = array_keys($this->_defaultVars);
-		$this->_count       = count($this->_defaultVars);
-	}
-
-	private function _initArrayOptions()
-	{
-		$this->_arrayOptions  = new ArrayOptions();
-		$this->_toJsonOptions = new ArrayOptions($this->_toJsonOptionDefaults);
-		$this->_toBsonOptions = new ArrayOptions($this->_toBsonOptionDefaults);
 	}
 
 	/**
