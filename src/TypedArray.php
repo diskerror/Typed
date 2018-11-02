@@ -58,21 +58,19 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 *
 	 * @throws LogicException
 	 */
-	public function __construct($values = null, string $type = null)
+	public function __construct($values = null, string $type = '')
 	{
 		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
 
-		if (!isset($this->_type) && isset($type)) {
+		if (!isset($this->_type)) {
 			$this->_type = $type;
 		}
-		elseif (!isset($this->_type) && !isset($type)) {
-			$this->_type = 'anything';    //	or 'null'
-		}
-		elseif (isset($this->_type) && isset($type)) {
+		elseif (isset($this->_type) && $type !== '') {
 			throw new LogicException('Can\'t set type in constructor when type is set in child class.');
 		}
 
 		switch (strtolower($this->_type)) {
+			case '':
 			case 'null':
 			case 'anything':
 			case 'scalar':
