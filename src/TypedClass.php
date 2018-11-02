@@ -53,18 +53,18 @@ abstract class TypedClass implements TypedInterface, Persistable
 	protected $_map = [];
 
 	/**
-	 * Holds options for "toArray" customizations.
+	 * Holds default options for "toArray" customizations.
 	 *
-	 * @var \Diskerror\Typed\ArrayOptions
+	 * @var int
 	 */
-	protected $_arrayOptions;
+	protected $_arrayOptionDefaults = 0;
 
 	/**
-	 * Holds options for "toArray" customizations when used by json_encode.
+	 * Holds default options for "toArray" customizations when used by json_encode.
 	 *
-	 * @var \Diskerror\Typed\ArrayOptions
+	 * @var int
 	 */
-	protected $_toJsonOptions;
+	protected $_toJsonOptionDefaults = ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR;
 
 	/**
 	 * Holds options for "toArray" customizations when used by MongoDB.
@@ -72,6 +72,27 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 * @var \Diskerror\Typed\ArrayOptions
 	 */
 	protected $_toBsonOptions;
+
+	/**
+	 * Holds default options for "toArray" customizations when used by MongoDB.
+	 *
+	 * @var int
+	 */
+	protected $_toBsonOptionDefaults = ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::OMIT_ID | ArrayOptions::TO_BSON_DATE | ArrayOptions::NO_CAST_BSON_ID;
+
+	/**
+	 * Holds options for "toArray" customizations.
+	 *
+	 * @var \Diskerror\Typed\ArrayOptions
+	 */
+	private $_arrayOptions;
+
+	/**
+	 * Holds options for "toArray" customizations when used by json_encode.
+	 *
+	 * @var \Diskerror\Typed\ArrayOptions
+	 */
+	private $_toJsonOptions;
 
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
@@ -724,21 +745,9 @@ abstract class TypedClass implements TypedInterface, Persistable
 
 	private function _initArrayOptions()
 	{
-		if (!isset($this->_arrayOptions)) {
-			$this->_arrayOptions = new ArrayOptions();
-		}
-
-		if (!isset($this->_toJsonOptions)) {
-			$this->_toJsonOptions = new ArrayOptions(
-				ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR
-			);
-		}
-
-		if (!isset($this->_toBsonOptions)) {
-			$this->_toBsonOptions = new ArrayOptions(
-				ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::OMIT_ID | ArrayOptions::TO_BSON_DATE | ArrayOptions::NO_CAST_BSON_ID
-			);
-		}
+		$this->_arrayOptions  = new ArrayOptions();
+		$this->_toJsonOptions = new ArrayOptions($this->_toJsonOptionDefaults);
+		$this->_toBsonOptions = new ArrayOptions($this->_toBsonOptionDefaults);
 	}
 
 	/**

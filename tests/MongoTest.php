@@ -9,7 +9,6 @@ class MongoTest extends PHPUnit\Framework\TestCase
 		date_default_timezone_set('UTC');
 
 		$tweet = new Tweet();
-		$tweet->setArrayOptions(AO::OMIT_EMPTY | AO::OMIT_RESOURCE | AO::TO_BSON_DATE);
 
 //		jsonPrint($tweet);exit;
 		$this->assertJsonStringEqualsJsonFile(
@@ -23,7 +22,7 @@ class MongoTest extends PHPUnit\Framework\TestCase
 //			json_encode($tweet)
 //		);
 
-		$tweet->setArrayOptions(0);
+//		$tweet->setArrayOptions(0);
 
 //		jsonPrint($tweet);exit;
 //		$this->assertJsonStringEqualsJsonFile(
