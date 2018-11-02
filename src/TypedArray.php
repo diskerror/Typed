@@ -37,6 +37,13 @@ class TypedArray implements TypedInterface, ArrayAccess
 	private $_arrayOptions;
 
 	/**
+	 * Holds default options for "toArray" customizations.
+	 *
+	 * @var int
+	 */
+	protected $_arrayOptionDefaults = 0;
+
+	/**
 	 * An array that contains the items of interest.
 	 *
 	 * @var array
@@ -53,9 +60,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 */
 	public function __construct($values = null, string $type = null)
 	{
-		if (!isset($this->_arrayOptions)) {
-			$this->_arrayOptions = new ArrayOptions();
-		}
+		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
 
 		if (!isset($this->_type) && isset($type)) {
 			$this->_type = $type;
