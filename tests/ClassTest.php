@@ -64,23 +64,23 @@ class ClassTest extends PHPUnit\Framework\TestCase
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 class TypedDate extends \Diskerror\Typed\TypedClass
 {
-	protected $date = ['__type__' => DateTime::class];
+	protected $date = [DateTime::class];
 }
 
 class Nested extends \Diskerror\Typed\TypedClass
 {
 	protected $name = 'secret';
 
-	protected $d = ['__type__' => TypedDate::class];
+	protected $d = [TypedDate::class];
 
-	protected $date = ['__type__' => DateTime::class, 'Jan 1, 2015'];
+	protected $date = [DateTime::class, 'Jan 1, 2015'];
 }
 
 class DateRange extends \Diskerror\Typed\TypedClass
 {
-	protected $start = ['__type__' => DateTime::class];
+	protected $start = [DateTime::class];
 
-	protected $end = ['__type__' => DateTime::class];
+	protected $end = [DateTime::class];
 
 	protected function _checkRelatedProperties()
 	{

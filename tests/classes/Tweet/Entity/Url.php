@@ -12,5 +12,5 @@ class Url extends TypedClass
 
 	protected $display_url  = '';
 
-	protected $indices      = ['__type__' => TypedArray::class, null, 'int'];
+	protected $indices      = [TypedArray::class, null, 'int'];
 }

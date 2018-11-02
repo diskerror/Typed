@@ -20,8 +20,8 @@ class SimpleTyped extends TypedClass
 	protected $myFloat      = 3.14;
 	protected $myString     = '';
 	protected $myArray      = [];
-	protected $myObj        = ['__type__' => 'stdClass'];
-	protected $myTypedArray = ['__type__' => TypedArray::class, null, JRandomClass::class];
+	protected $myObj        = ['stdClass'];
+	protected $myTypedArray = [TypedArray::class, null, JRandomClass::class];
 	protected $_map         = ['myDouble' => 'myFloat'];
 
 }

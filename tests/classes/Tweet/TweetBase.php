@@ -14,13 +14,13 @@ class TweetBase extends TypedClass
 
 	protected $_id                       = 0;
 
-	protected $created_at                = ['__type__' => DateTime::class, '2018-07-18 17:10:28'];
+	protected $created_at                = [DateTime::class, '2018-07-18 17:10:28'];
 
 	protected $contributors              = null;
 
-	protected $entities                  = ['__type__' => Entity\Entity::class];
+	protected $entities                  = [Entity\Entity::class];
 
-	protected $extended_entities         = ['__type__' => ExtendedEntities::class];
+	protected $extended_entities         = [ExtendedEntities::class];
 
 	protected $favorite_count            = 0;
 
@@ -36,7 +36,7 @@ class TweetBase extends TypedClass
 
 	protected $lang                      = 'en';
 
-	protected $place                     = ['__type__' => Place::class];
+	protected $place                     = [Place::class];
 
 	protected $possibly_sensitive        = false;
 
@@ -48,7 +48,7 @@ class TweetBase extends TypedClass
 
 	protected $truncated                 = false;
 
-	protected $user                      = ['__type__' => User::class];
+	protected $user                      = [User::class];
 
 
 	protected function _set_text($v)

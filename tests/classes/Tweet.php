@@ -10,6 +10,6 @@ class Tweet extends Tweet\TweetBase
 	//	We can only test JSON option here.
 	protected $_toJsonOptionDefaults = AO::OMIT_EMPTY | AO::OMIT_RESOURCE | AO::TO_BSON_DATE;
 
-	protected $retweeted_status      = ['__type__' => \Tweet\TweetBase::class];
+	protected $retweeted_status      = [\Tweet\TweetBase::class];
 
 }

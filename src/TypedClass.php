@@ -181,35 +181,33 @@ abstract class TypedClass implements TypedInterface, Persistable
 			switch (gettype($v)) {
 				case 'null':
 				case 'NULL':
-					$v = new SAAnything($v, true);
+					$v = new SAAnything($v);
 				break;
 
 				case 'bool':
 				case 'boolean':
-					$v = new SABoolean($v, true);
+					$v = new SABoolean($v);
 				break;
 
 				case 'int':
 				case 'integer':
-					$v = new SAInteger($v, true);
+					$v = new SAInteger($v);
 				break;
 
 				case 'float':
 				case 'double':
 				case 'real':
-					$v = new SAFloat($v, true);
+					$v = new SAFloat($v);
 				break;
 
 				case 'string':
-					$v = new SABinary($v, true);
+					$v = new SABinary($v);
 				break;
 
 				case 'array':
-					if (isset($v['__type__'])) {
-						$className = $v['__type__'];
-						unset($v['__type__']);
-
-						$v = new $className(...$v);
+					if (count($v) > 0 && array_values($v) === $v && is_string($v[0]) && class_exists($v[0])) {
+						$className = array_shift($v);
+						$v         = new $className(...$v);
 					}
 					else {
 						$v = new TypedArray($v);
