@@ -24,7 +24,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$this->assertFalse($t->myBool);
 
 		$t->myBool = null;
-		$this->assertNull($t->myBool);
+		$this->assertTrue($t->myBool);
 
 		$t->myBool = [];
 		$this->assertFalse($t->myBool);
@@ -73,7 +73,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$this->assertTrue(is_int($t->myInt));
 
 		$t->myInt = null;
-		$this->assertNull($t->myInt);
+		$this->assertEquals(0, $t->myInt);
 
 		$t->myInt = [];
 		$this->assertEquals(0, $t->myInt);
@@ -118,7 +118,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$this->assertTrue($t->myFloat === 0.0);
 
 		$t->myFloat = null;
-		$this->assertNull($t->myFloat);
+		$this->assertEquals(3.14, $t->myFloat);
 
 		$t->myFloat = [];
 		$this->assertTrue($t->myFloat === 0.0);
@@ -159,7 +159,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$this->assertEquals('', $t->myString);
 
 		$t->myString = null;
-		$this->assertNull($t->myString);
+		$this->assertEquals('', $t->myString);
 
 		$t->myString = ['a', 'b'];
 		$this->assertEquals('["a","b"]', $t->myString);
