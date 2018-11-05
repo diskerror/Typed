@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: reid
- * Date: 10/13/18
- * Time: 6:20 PM
+ * Provides support for class members/properties maintain their initial types.
+ *
+ * @name        \Diskerror\Typed\SAInteger
+ * @copyright      Copyright (c) 2018 Reid Woodbury Jr
+ * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed;

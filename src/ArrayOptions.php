@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: reid
- * Date: 7/6/18
- * Time: 6:36 PM
+ * Manages the bit-wise options for converting a typed object into an associative array.
+ *
+ * @name        \Diskerror\Typed\SABinary
+ * @copyright      Copyright (c) 2017 Reid Woodbury Jr
+ * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed;
