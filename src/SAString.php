@@ -31,7 +31,8 @@ class SAString extends SABinary
 	{
 		parent::set($in);
 		if (null !== $this->_value) {
-			$this->_value = strtr($this->_value, ["\x00" => '', "\x7F" => '']);
+			//	This does not remove \a, \b, \t, \n, \v, \f, \r, nor ESC.
+			$this->_value = preg_replace('/[\x00-\x06\x0E-\x1A\x1C-\x1F\x7F]/u', '', $this->_value);
 		}
 	}
 }
