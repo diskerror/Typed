@@ -8,5 +8,5 @@ class Hashtag extends TypedClass
 {
 	protected $text    = '';
 
-	protected $indices = [TypedArray::class, null, 'int'];
+	protected $indices = [TypedArray::class, 'int'];
 }

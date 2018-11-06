@@ -12,6 +12,6 @@ class UserMention extends TypedClass
 
 	protected $name        = '';
 
-	protected $indices     = [TypedArray::class, null, 'int'];
+	protected $indices     = [TypedArray::class, 'int'];
 
 }

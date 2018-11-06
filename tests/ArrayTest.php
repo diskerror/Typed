@@ -4,7 +4,7 @@ class ArrayTest extends PHPUnit\Framework\TestCase
 {
 	public function testWalk()
 	{
-		$walk = new Diskerror\Typed\TypedArray(['1', 2, '3', 'z', 5], 'string');
+		$walk = new Diskerror\Typed\TypedArray('string', ['1', 2, '3', 'z', 5]);
 //		jsonPrint($walk);exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array1.json',

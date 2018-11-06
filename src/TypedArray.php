@@ -53,12 +53,10 @@ class TypedArray implements TypedInterface, ArrayAccess
 	/**
 	 * Constructor.
 	 *
+	 * @param string                   $type   OPTIONAL ''
 	 * @param array|object|string|null $values OPTIONAL null
-	 * @param string                   $type   OPTIONAL null
-	 *
-	 * @throws LogicException
 	 */
-	public function __construct($values = null, string $type = '')
+	public function __construct(string $type = '', $values = null)
 	{
 		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
 

@@ -6,9 +6,9 @@ use Diskerror\Typed\{TypedClass, TypedArray};
 
 class Entity extends TypedClass
 {
-	protected $hashtags      = [TypedArray::class, null, Hashtag::class];
-	protected $urls          = [TypedArray::class, null, Url::class];
-	protected $user_mentions = [TypedArray::class, null, UserMention::class];
+	protected $hashtags      = [TypedArray::class, Hashtag::class];
+	protected $urls          = [TypedArray::class, Url::class];
+	protected $user_mentions = [TypedArray::class, UserMention::class];
 
 // 	protected $symbols  = '';
 // 	protected $polls  = '';

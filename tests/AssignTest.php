@@ -182,25 +182,25 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$this->assertEquals(new \Diskerror\Typed\TypedArray(), $t->myArray);
 
 		$t->myArray = [77];
-		$this->assertEquals(new \Diskerror\Typed\TypedArray([77]), $t->myArray);
+		$this->assertEquals(new \Diskerror\Typed\TypedArray('', [77]), $t->myArray);
 
 		$t->myArray = [3.14150];
-		$this->assertEquals(new \Diskerror\Typed\TypedArray([3.1415]), $t->myArray);
+		$this->assertEquals(new \Diskerror\Typed\TypedArray('', [3.1415]), $t->myArray);
 
 		$t->myArray = [true];
-		$this->assertEquals(new \Diskerror\Typed\TypedArray([true]), $t->myArray);
+		$this->assertEquals(new \Diskerror\Typed\TypedArray('', [true]), $t->myArray);
 
 		$t->myArray = null;
 		$this->assertEquals(new \Diskerror\Typed\TypedArray(), $t->myArray);
 		$this->assertTrue(is_object($t->myArray));
 
 		$t->myArray = ['a', 'b'];
-		$this->assertEquals(new \Diskerror\Typed\TypedArray(['a', 'b']), $t->myArray);
+		$this->assertEquals(new \Diskerror\Typed\TypedArray('', ['a', 'b']), $t->myArray);
 
 		$c          = new stdClass();
 		$c->aMember = 'string data';
 		$t->myArray = $c;
-		$this->assertEquals(new \Diskerror\Typed\TypedArray(['aMember' => 'string data']), $t->myArray);
+		$this->assertEquals(new \Diskerror\Typed\TypedArray('', ['aMember' => 'string data']), $t->myArray);
 
 		unset($t->myArray);
 		$this->assertEquals(new \Diskerror\Typed\TypedArray(), $t->myArray);

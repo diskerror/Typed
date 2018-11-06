@@ -210,7 +210,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 						$v         = new $className(...$v);
 					}
 					else {
-						$v = new TypedArray($v);
+						$v = new TypedArray('', $v);
 					}
 				break;
 

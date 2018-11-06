@@ -21,12 +21,12 @@ class SimpleTyped extends TypedClass
 	protected $myString     = '';
 	protected $myArray      = [];
 	protected $myObj        = ['stdClass'];
-	protected $myTypedArray = [TypedArray::class, null, JRandomClass::class];
+	protected $myTypedArray = [TypedArray::class, JRandom::class];
 	protected $_map         = ['myDouble' => 'myFloat'];
 
 }
 
-class JRandomClass extends TypedClass
+class JRandom extends TypedClass
 {
 	protected $jRandomVar = '';
 }
