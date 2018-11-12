@@ -2,7 +2,7 @@
 /**
  * Methods for maintaining variable type.
  *
- * @name        TypedInterface
+ * @name           \Diskerror\Typed\TypedAbstract
  * @copyright      Copyright (c) 2012 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -20,8 +20,22 @@ use JsonSerializable;
  *
  * @package Diskerror\Typed
  */
-interface TypedInterface extends Countable, IteratorAggregate, Serializable, JsonSerializable
+abstract class TypedAbstract implements Countable, IteratorAggregate, Serializable, JsonSerializable
 {
+	/**
+	 * Holds options for "toArray" customizations.
+	 *
+	 * @var \Diskerror\Typed\ArrayOptions
+	 */
+	protected $_arrayOptions;
+
+	/**
+	 * Holds default options for "toArray" customizations.
+	 *
+	 * @var int
+	 */
+	protected $_arrayOptionDefaults = 0;
+
 	/**
 	 * Copies all matching member names while maintaining original types and
 	 *     doing a deep copy where appropriate.
@@ -34,7 +48,7 @@ interface TypedInterface extends Countable, IteratorAggregate, Serializable, Jso
 	 *
 	 * @param mixed $in -OPTIONAL
 	 */
-	function assign($in = null);
+	abstract function assign($in = null);
 
 	/**
 	 * Returns an array of this object with only the appropriate members.
@@ -43,16 +57,23 @@ interface TypedInterface extends Countable, IteratorAggregate, Serializable, Jso
 	 *
 	 * @return array
 	 */
-	function toArray(): array;
+	abstract function toArray(): array;
 
 	/**
 	 * @return int
 	 */
-	function getArrayOptions(): int;
+	public function getArrayOptions(): int
+	{
+		return $this->_arrayOptions->get();
+	}
+
 
 	/**
 	 * @param int $opt
 	 */
-	function setArrayOptions(int $opt);
+	public function setArrayOptions(int $opts)
+	{
+		$this->_arrayOptions->set($opts);
+	}
 
 }

@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        TypedClass
+ * @name           \Diskerror\Typed\TypedClass
  * @copyright      Copyright (c) 2012 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -43,7 +43,7 @@ use InvalidArgumentException;
  *      object. It will help with filtering and insuring the existence of default
  *      values for missing input parameters.
  */
-abstract class TypedClass implements TypedInterface, Persistable
+abstract class TypedClass extends TypedAbstract implements Persistable
 {
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
@@ -51,20 +51,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 	 * @var array
 	 */
 	protected $_map = [];
-
-	/**
-	 * Holds options for "toArray" customizations.
-	 *
-	 * @var \Diskerror\Typed\ArrayOptions
-	 */
-	private $_arrayOptions;
-
-	/**
-	 * Holds default options for "toArray" customizations.
-	 *
-	 * @var int
-	 */
-	protected $_arrayOptionDefaults = 0;
 
 	/**
 	 * Holds options for "toArray" customizations when used by json_encode.
@@ -313,16 +299,6 @@ abstract class TypedClass implements TypedInterface, Persistable
 		return $this->_count;
 	}
 
-	public function getArrayOptions(): int
-	{
-		return $this->_arrayOptions->get();
-	}
-
-	public function setArrayOptions(int $opts)
-	{
-		$this->_arrayOptions->set($opts);
-	}
-
 	/**
 	 * Required by the IteratorAggregate interface.
 	 * Every value is checked for change during iteration.
@@ -333,7 +309,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 	{
 		return (function &() {
 			foreach ($this->_defaultVars as $k => &$vDefault) {
-				if ($vDefault instanceof ScalarAbstract) {
+				if ($vDefault instanceof AtomicInterface) {
 					$v     = $this->{$k}->get();
 					$vOrig = $v;
 
@@ -641,12 +617,12 @@ abstract class TypedClass implements TypedInterface, Persistable
 		$propertyDefaultValue = $this->_defaultVars[$propName];
 
 		//	Handle our two special object types.
-		if ($propertyDefaultValue instanceof ScalarAbstract) {
+		if ($propertyDefaultValue instanceof AtomicInterface) {
 			$this->{$propName}->set($in);
 			return;
 		}
 
-		if ($propertyDefaultValue instanceof TypedInterface) {
+		if ($propertyDefaultValue instanceof TypedAbstract) {
 			$this->{$propName}->assign($in);
 			return;
 		}
@@ -741,7 +717,7 @@ abstract class TypedClass implements TypedInterface, Persistable
 			return $this->{$getter}($v);
 		}
 
-		if ($this->{$k} instanceof ScalarAbstract) {
+		if ($this->{$k} instanceof AtomicInterface) {
 			return $this->{$k}->get();
 		}
 

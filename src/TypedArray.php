@@ -2,7 +2,7 @@
 /**
  * Create an array where members must be the same type.
  *
- * @name        TypedArray
+ * @name        \Diskerror\Typed\TypedArray
  * @copyright   Copyright (c) 2012 Reid Woodbury Jr
  * @license     http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -19,7 +19,7 @@ use UnexpectedValueException;
  * If type is defined as null then any element can have any type but
  *      deep copying of objects is always available.
  */
-class TypedArray implements TypedInterface, ArrayAccess
+class TypedArray extends TypedAbstract implements ArrayAccess
 {
 	/**
 	 * A string that specifies the type of values in the container.
@@ -28,20 +28,6 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 * @var string|null
 	 */
 	protected $_type;
-
-	/**
-	 * Holds options for "toArray" customizations.
-	 *
-	 * @var ArrayOptions
-	 */
-	private $_arrayOptions;
-
-	/**
-	 * Holds default options for "toArray" customizations.
-	 *
-	 * @var int
-	 */
-	protected $_arrayOptionDefaults = 0;
 
 	/**
 	 * An array that contains the items of interest.
@@ -194,7 +180,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 */
 	public function getIterator(): \Traversable
 	{
-		if (is_a($this->_type, ScalarAbstract::class, true)) {
+		if (is_a($this->_type, AtomicInterface::class, true)) {
 			return (function &() {
 				foreach ($this->_container as $k => $v) {
 					$v     = $v->get();
@@ -279,7 +265,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 		$output = [];
 
 		//	At this point all items are some type of object.
-		if (is_a($this->_type, ScalarAbstract::class, true)) {
+		if (is_a($this->_type, AtomicInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
 				$v = $v->get();
 				if (($v !== '' && $v !== null) || !$omitEmpty || ($k === '_id' && !$omitID)) {
@@ -381,7 +367,7 @@ class TypedArray implements TypedInterface, ArrayAccess
 	 * There are 5 basic conditions for $this->_type:
 	 * # $this->_type is null (accept any type and value, like a standard array);
 	 * # $this->_type is a scalar [bool, int, float, string];
-	 * # $this->_type is an array (check if value has toArray);
+	 * # $this->_type is an array (check if input value is an object and has toArray);
 	 * # $this->_type is an object of type TypedAbstract (call assign);
 	 * # $this->_type is any other object.
 	 *
@@ -407,10 +393,10 @@ class TypedArray implements TypedInterface, ArrayAccess
 		elseif (!isset($this->_container[$k])) {
 			$this->_container[$k] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
 		}
-		elseif (is_a($this->_type, ScalarAbstract::class, true)) {
+		elseif (is_a($this->_type, AtomicInterface::class, true)) {
 			$this->_container[$k]->set($v);
 		}
-		elseif (is_a($this->_type, TypedInterface::class, true)) {
+		elseif (is_a($this->_type, TypedAbstract::class, true)) {
 			$this->_container[$k]->assign($v);
 		}
 		else {

@@ -30,25 +30,36 @@ class SqlStatement
 	/**
 	 * Returns a string formatted for an SQL insert or update.
 	 *
-	 * Accepts an associative array and
+	 * Accepts an associative array or Traversable object and
 	 * an array where the values are the names of the desired keys.
 	 * An empty "include" array means to use all.
 	 *
-	 * @param array $input
-	 * @param array $include
+	 * @param array|\stdClass $input
+	 * @param array              $include
 	 *
 	 * @return string
 	 */
-	public static function toInsert(array $input, array $include = [])
+	public static function toInsert($input, array $include = [])
 	{
-		if (array_values($input) === $input) {
-			throw new InvalidArgumentException('input must be an associative array');
+		if (is_object($input)) {
+			if (method_exists($input, 'toArray')) {
+				$input = $input->toArray();
+			}
+			elseif ($input instanceof \Traversable) {
+				$input = iterator_to_array($input);
+			}
+			else {
+				$input = (array)$input;
+			}
+		}
+		elseif (!is_array($input)) {
+			throw new InvalidArgumentException('input must be an associative array or traversable object');
 		}
 
 		if (count($include)) {
 			$arr = [];
 			foreach ($include as $i) {
-				if (array_key_exists($i, $input)) {
+				if (isset($input[$i])) {
 					$arr[$i] &= $input[$i];
 				}
 			}
@@ -117,19 +128,19 @@ class SqlStatement
 	 * Returns a string formatted for an SQL
 	 * "ON DUPLICATE KEY UPDATE" statement.
 	 *
-	 * Accepts an associative array and
+	 * Accepts an associative array or Traversable object and
 	 * an array where the values are the names of the desired keys.
 	 * An empty "include" array means to use all.
 	 *
-	 * @param array $input
-	 * @param array $include
+	 * @param array|\stdClass $input
+	 * @param array           $include
 	 *
 	 * @return string
 	 */
-	public static function toValues(array $input, array $include = [])
+	public static function toValues($input, array $include = [])
 	{
-		if (array_values($input) === $input) {
-			throw new InvalidArgumentException('input must be an associative array');
+		if (!is_array($input) && !is_object($input)) {
+			throw new InvalidArgumentException('input must be an associative array or traversable object');
 		}
 
 		$sqlStrs = [];
