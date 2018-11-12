@@ -1,7 +1,7 @@
 # Typed
 PHP classes to strictly define member structure, to control their data types, and to add convenience methods. The master branch is considered to be in constant development. Once stability is achieved it is then tagged.
 
-## TypedInterface
+## TypedAbstract
 This declares the convenience methods that are to be implemented in the classes below.
 
 ### assign
