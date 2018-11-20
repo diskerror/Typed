@@ -53,13 +53,34 @@ class DateTime extends \DateTime
 
 			case 'string':
 				if ($time === '') {
-					$time = 'now';
+					parent::__construct('now', $timezone);
 				}
 				//	remove AD extra data
-				if (substr($time, -3) === '.0Z') {
-					$time = substr($time, 0, 14);
+				elseif (substr($time, -3) === '.0Z') {
+					parent::__construct(substr($time, 0, -3), $timezone);
 				}
-				parent::__construct($time, $timezone);
+				elseif ($time[0] === '@' && strpos($time, '.')) {
+					//	if this contains fractional seconds
+					$float = (float)substr($time, 1);
+					$int   = (int)$float;
+					parent::__construct('@' . $int, $timezone);
+					$this->setTime(['fra' => $float - (float)$int]);
+				}
+				else {
+					parent::__construct($time, $timezone);
+				}
+			break;
+
+			case 'int':
+			case 'integer':
+				parent::__construct('@' . $time, $timezone);
+			break;
+
+			case 'float':
+			case 'double':
+				$int = (int)$time;
+				parent::__construct('@' . $int, $timezone);
+				$this->setTime(['fra' => $time - (float)$int]);
 			break;
 
 			case 'null':
@@ -151,6 +172,7 @@ class DateTime extends \DateTime
 	/**
 	 * Adds the ability to pass in an array with key names of variable
 	 *      length but a minimum of 3 characters, upper or lower case.
+	 *        Only the matched value is updated when using an array or object.
 	 * Requires one object, one associative array, or 4 integer parameters.
 	 *
 	 * @param object|array|int $hour
@@ -162,13 +184,8 @@ class DateTime extends \DateTime
 	{
 		switch (gettype($hour)) {
 			case 'object':
-				$hour = (array)$hour;
-
 			case 'array':
-				//	change all keys to lower case
-				$arrIn = array_change_key_case($hour);
-
-				//	get current values as input can be incomplete
+				//	get current values as input is allowed to be incomplete
 				$hour   = $this->format('G');
 				$minute = $this->format('i');
 				$second = $this->format('s');
