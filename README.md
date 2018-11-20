@@ -71,9 +71,6 @@ These two classes have been moved from [Utilities](https://github.com/diskerror/
 # Classes for autoload
 These next two classes are best thought of as namespaces of functions. Class design is used to activate the autoload feature of PHP.
 
-## Cast
-*Cast* contains static methods to return the input cast to the basic scalars or an array.
-
 ## SqlStatement
 Utility class that outputs properly formatted partial SQL strings based on the input data. Both accept an input array, and an array where the values are the names of members to include from the first array. An empty array means to use all members.
 ### toInsert
