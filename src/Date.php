@@ -27,36 +27,13 @@ class Date extends \Diskerror\Typed\DateTime
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
-		$timezone = (null === $timezone ? new \DateTimeZone(date_default_timezone_get()) : $timezone);
-
-		switch (gettype($time)) {
-			case 'object':
-				if (is_a($time, 'DateTime')) {
-					parent::__construct($time->format('Y-m-d 12:00:00'), $time->getTimezone());
-
-					return;
-				}
-			case 'null':
-			case 'NULL':
-			case 'array':
-				parent::__construct('now', $timezone);
-				parent::setDate($time);
-			break;
-
-			case 'string':
-				parent::__construct($time, $timezone);
-			break;
-
-			default:
-				throw new \InvalidArgumentException('first argument is the wrong type');
-		}
-
+		parent::__construct($time, $timezone);
 		parent::setTime(12, 0, 0);
 	}
 
 	/**
 	 * Adds DateInterval to stored date and
-	 *       sets time to 6am to avoid possible Daylight Savings transition issues.
+	 *       sets time to noon to avoid possible Daylight Savings transition issues.
 	 *
 	 * @param \DateInterval $interval
 	 *
@@ -72,7 +49,7 @@ class Date extends \Diskerror\Typed\DateTime
 
 	/**
 	 * Subtracts DateInterval from stored date and
-	 *       sets time to 6am to avoid possible Daylight Savings transition issues.
+	 *       sets time to noon to avoid possible Daylight Savings transition issues.
 	 *
 	 * @param \DateInterval $interval
 	 *

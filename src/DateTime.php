@@ -40,11 +40,15 @@ class DateTime extends \DateTime
 
 		switch (gettype($time)) {
 			case 'object':
-				if (is_a($time, 'DateTime')) {
-					parent::__construct($time->format(self::STRING_IO_FORMAT_MICRO), $time->getTimezone());
+				if (is_a($time, 'MongoDB\BSON\UTCDateTimeInterface')) {
+					$time = $time->toDateTime();
+				}
+				if (is_a($time, 'DateTimeInterface')) {
+					$tz = $timezone ?: $time->getTimezone();
+					parent::__construct($time->format(self::STRING_IO_FORMAT_MICRO), $tz);
 					break;
 				}
-				$time = (array)$time;
+			//	no break, fall through
 			case 'array':
 				parent::__construct('now', $timezone);
 				$this->setDate($time);
@@ -61,10 +65,9 @@ class DateTime extends \DateTime
 				}
 				elseif ($time[0] === '@' && strpos($time, '.')) {
 					//	if this contains fractional seconds
-					$float = (float)substr($time, 1);
-					$int   = (int)$float;
-					parent::__construct('@' . $int, $timezone);
-					$this->setTime(['fra' => $float - (float)$int]);
+					//	$tmp is a PHP \DateTime
+					$tmp = \DateTime::createFromFormat('U.u', (float)substr($time, 1), $timezone);
+					parent::__construct($tmp->format(self::STRING_IO_FORMAT_MICRO), $timezone);
 				}
 				else {
 					parent::__construct($time, $timezone);
@@ -78,9 +81,8 @@ class DateTime extends \DateTime
 
 			case 'float':
 			case 'double':
-				$int = (int)$time;
-				parent::__construct('@' . $int, $timezone);
-				$this->setTime(['fra' => $time - (float)$int]);
+				$tmp = \DateTime::createFromFormat('U.u', $time, $timezone);
+				parent::__construct($tmp->format(self::STRING_IO_FORMAT_MICRO), $timezone);
 			break;
 
 			case 'null':
@@ -103,21 +105,21 @@ class DateTime extends \DateTime
 	 *
 	 * @return DateTime
 	 */
-	public static function createFromFormat($formatOrTime, $time = '', $timezone = null): self
-	{
-		$parsed = ($time === '') ? date_parse($formatOrTime) : date_parse_from_format($formatOrTime, $time);
-
-		$d = new self();
-
-		if ($timezone !== null) {
-			$d->setTimezone($timezone);
-		}
-
-		$d->setDate($parsed);
-		$d->setTime($parsed);
-
-		return $d;
-	}
+//	public static function createFromFormat($formatOrTime, $time = '', $timezone = null): self
+//	{
+//		$parsed = ($time === '') ? date_parse($formatOrTime) : date_parse_from_format($formatOrTime, $time);
+//
+//		$d = new self();
+//
+//		if ($timezone !== null) {
+//			$d->setTimezone($timezone);
+//		}
+//
+//		$d->setDate($parsed);
+//		$d->setTime($parsed);
+//
+//		return $d;
+//	}
 
 	/**
 	 * Adds the ability to pass in an arrayor object with key names of variable
@@ -135,11 +137,8 @@ class DateTime extends \DateTime
 	{
 		switch (gettype($year)) {
 			case 'object':
-				$year = (array)$year;
-
 			case 'array':
-				//	change all keys to lower case
-				$arrIn = array_change_key_case($year);
+				$arrIn = $year;
 
 				//	get current values as input can be incomplete
 				$year  = $this->format('Y');
@@ -147,7 +146,7 @@ class DateTime extends \DateTime
 				$day   = $this->format('j');
 
 				foreach ($arrIn as $k => $v) {
-					switch (substr($k, 0, 3)) {
+					switch (substr(strtolower($k), 0, 3)) {
 						case 'yea':
 							$year = $v;
 						break;
@@ -210,7 +209,7 @@ class DateTime extends \DateTime
 							$mcs = $v;
 						break;
 
-						case 'fra': //	"fraction" which is a float
+						case 'fra': //	Convert "fraction", a float, to microseconds as an integer
 							$mcs = $v * 1000000;
 						break;
 					}
@@ -244,7 +243,7 @@ class DateTime extends \DateTime
 	 */
 	public function getTimestampMilli(): int
 	{
-		return ($this->getTimestamp() * 1000) + $this->format('v');
+		return (int)($this->format('U.v') * 1000);
 	}
 
 	/**
@@ -254,7 +253,7 @@ class DateTime extends \DateTime
 	 */
 	public function getTimestampMicro(): float
 	{
-		return (float)$this->getTimestamp() + ($this->format('u') / 1000000.0);
+		return (float)$this->format('U.u');
 	}
 
 }
