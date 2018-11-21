@@ -185,6 +185,7 @@ class DateTime extends \DateTime
 		switch (gettype($hour)) {
 			case 'object':
 			case 'array':
+				$arrIn = $hour;
 				//	get current values as input is allowed to be incomplete
 				$hour   = $this->format('G');
 				$minute = $this->format('i');
