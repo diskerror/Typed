@@ -78,7 +78,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			break;
 
 			case 'string':
-				$this->_type = SABinary::class;
+				$this->_type = SAString::class;
 			break;
 
 			case 'array':

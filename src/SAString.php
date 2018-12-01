@@ -11,28 +11,45 @@ namespace Diskerror\Typed;
 
 use UnexpectedValueException;
 
-/**
- * Class SAString
- *
- * In PHP, a string variable can hold any set of bytes, so we call that a binary, short for "binary string".
- *
- * We don't want certain bytes in a text string.
- *
- * Is removing "\x7F" safe for UTF8 strings?
- *
- * @package Diskerror\Typed
- */
-class SAString extends SABinary
+class SAString extends ScalarAbstract
 {
-	/**
-	 * @param $in
-	 */
 	public function set($in)
 	{
-		parent::set($in);
-		if (null !== $this->_value) {
-			//	This does not remove \a, \b, \t, \n, \v, \f, \r, nor ESC.
-			$this->_value = preg_replace('/[\x00-\x06\x0E-\x1A\x1C-\x1F\x7F]/u', '', $this->_value);
+		switch (gettype($in)) {
+			case 'object':
+				if ($in instanceof ScalarAbstract) {
+					$this->_value = (string)$in->get();
+					break;
+				}
+				if (method_exists($in, '__toString')) {
+					$this->_value = $in->__toString();
+					break;
+				}
+				if (method_exists($in, 'format')) {
+					$this->_value = $in->format('c');
+					break;
+				}
+
+				if (method_exists($in, 'toArray')) {
+					$in = $in->toArray();
+				}
+			//	other objects fall through, object to array falls through
+			case 'array':
+				$jsonStr     = json_encode($in);
+				$jsonLastErr = json_last_error();
+				if ($jsonLastErr !== JSON_ERROR_NONE) {
+					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
+				}
+				$this->_value = $jsonStr;
+			break;
+
+			case 'null':
+			case 'NULL':
+				$this->_setNullOrDefault();
+			break;
+
+			default:
+				$this->_value = (string)$in;
 		}
 	}
 }

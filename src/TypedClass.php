@@ -187,7 +187,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 				break;
 
 				case 'string':
-					$v = new SABinary($v);
+					$v = new SAString($v);
 				break;
 
 				case 'array':
