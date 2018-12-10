@@ -86,8 +86,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			break;
 		}
 
-		$this->_container = [];
-
 		$this->assign($values);
 	}
 
@@ -105,6 +103,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function assign($in = null)
 	{
+		$this->_container = [];    //	initialize array or remove all current values
+
 		$inputType = gettype($in);
 		switch ($inputType) {
 			case 'object':
@@ -118,21 +118,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 				}
 				if ($in === null) {
-					$this->_container = [];    //	remove all current values
 					return;
 				}
 			break;
 
 			case 'null':
 			case 'NULL':
-				$this->_container = [];    //	remove all current values
 				return;
 
 			default:
 				throw new InvalidArgumentException('bad input type ' . $inputType . ', value: "' . $in . '"');
 		}
-
-		$this->_container = [];
 
 		foreach ($in as $k => $v) {
 			$this->offsetSet($k, $v);
@@ -225,9 +221,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function serialize(): string
 	{
 		return serialize([
-			'_type' => $this->_type,
+			'_type'         => $this->_type,
 			'_arrayOptions' => $this->_arrayOptions,
-			'_container' => $this->_container
+			'_container'    => $this->_container
 		]);
 	}
 
@@ -388,12 +384,25 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function offsetSet($k, $v)
 	{
 		if (null === $k) {
-			$this->_container[] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+			if (is_object($v) && get_class($v) === $this->_type){
+				$this->_container[] = $v;
+				return;
+			}
+
+			$this->_container[] = new $this->_type();
+			end($this->_container[]);
+			$k = key($this->_container[]);
 		}
 		elseif (!isset($this->_container[$k])) {
-			$this->_container[$k] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+			if (is_object($v) && get_class($v) === $this->_type) {
+				$this->_container[$k] = $v;
+				return;
+			}
+
+			$this->_container[$k] = new $this->_type();
 		}
-		elseif (is_a($this->_type, AtomicInterface::class, true)) {
+
+		if (is_a($this->_type, AtomicInterface::class, true)) {
 			$this->_container[$k]->set($v);
 		}
 		elseif (is_a($this->_type, TypedAbstract::class, true)) {

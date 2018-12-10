@@ -1,0 +1,62 @@
+{
+	"host": "mongodb:\/\/127.0.0.1:27017",
+	"database": "master_db",
+	"collections": {
+		"tweet": [
+			{
+				"keys": {
+					"created_at": 1
+				},
+				"options": {
+					"expireAfterSeconds": 1800
+				}
+			}
+		],
+		"invoice_item": [
+			{
+				"keys": {
+					"invoice_number": 1,
+					"company_number": 1,
+					"item_id": 1
+				},
+				"options": {
+					"unique": true
+				}
+			},
+			{
+				"keys": {
+					"received_on": 1
+				},
+				"options": []
+			},
+			{
+				"keys": {
+					"errors": 1
+				},
+				"options": []
+			}
+		],
+		"error_message": [
+			{
+				"keys": {
+					"occured_on": 1
+				},
+				"options": {
+					"expireAfterSeconds": 604800
+				}
+			},
+			{
+				"keys": {
+					"message": 1
+				},
+				"options": []
+			},
+			{
+				"keys": {
+					"code": 1
+				},
+				"options": []
+			}
+		]
+	}
+}
