@@ -33,6 +33,14 @@ class MongoTest extends PHPUnit\Framework\TestCase
 
 	public function testConfig()
 	{
+		$empty = new MongoConfig();
+
+//		jsonPrint($empty);exit;
+		$this->assertJsonStringEqualsJsonFile(
+			__DIR__ . '/results/mongo_empty_config.json',
+			json_encode($empty)
+		);
+
 		$config = new MongoConfig([
 			'host'        => 'mongodb://127.0.0.1:27017',
 			'database'    => 'master_db',

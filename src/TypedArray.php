@@ -389,9 +389,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				return;
 			}
 
-			$this->_container[] = new $this->_type();
-			end($this->_container[]);
-			$k = key($this->_container[]);
+			$this->_container[] = new $this->_type;
+			end($this->_container);
+			$k = key($this->_container);
 		}
 		elseif (!isset($this->_container[$k])) {
 			if (is_object($v) && get_class($v) === $this->_type) {
@@ -399,7 +399,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				return;
 			}
 
-			$this->_container[$k] = new $this->_type();
+			$this->_container[$k] = new $this->_type;
 		}
 
 		if (is_a($this->_type, AtomicInterface::class, true)) {
