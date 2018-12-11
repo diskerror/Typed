@@ -41,9 +41,9 @@ class MongoTest extends PHPUnit\Framework\TestCase
 					['keys' => ['created_at' => 1], 'options' => ['expireAfterSeconds' => 60 * 30]]
 				],
 				'invoice_item'  => [
-					['keys' => ['invoice_number' => 1, 'company_number' => 1, 'item_id' => 1], 'options' => ['unique' => true]],
-					['keys' => ['received_on' => 1]],
-					['keys' => ['errors' => 1]],
+					[['invoice_number' => 1, 'company_number' => 1, 'item_id' => 1], ['unique' => true]],
+					[['received_on' => 1]],
+					[['errors' => 1]],
 				],
 				'error_message'      => [
 					['keys' => ['occured_on' => 1], 'options' => ['expireAfterSeconds' => 60 * 60 * 24 * 7]],
