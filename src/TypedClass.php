@@ -409,7 +409,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
-			$v = $this->_getByName($k);    //	ScalarAbstract objects are returned as scalars.
+			$v = $this->_getByName($k);    //	AtomicInterface objects are returned as scalars.
 
 			if ($k === '_id') {
 				if ($this->_arrayOptions->has(ArrayOptions::OMIT_ID)) {
@@ -499,9 +499,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	 */
 	public function __unset($k)
 	{
-		$this->{$k} = is_object($this->_defaultVars[$k]) ?
-			clone $this->_defaultVars[$k] :
-			$this->_defaultVars[$k];
+		$this->{$k} = clone $this->_defaultVars[$k];
 	}
 
 	/**

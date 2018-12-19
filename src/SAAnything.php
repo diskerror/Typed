@@ -21,8 +21,8 @@ class SAAnything extends ScalarAbstract
 {
 	public function set($in)
 	{
-		if (is_null($in)) {
-			$this->_setNullOrDefault();
+		if (null === $in) {
+			$this->unset();
 		}
 		else {
 			$this->_value = $in;

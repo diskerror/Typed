@@ -21,7 +21,7 @@ class SABoolean extends ScalarAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->_setNullOrDefault();
+				$this->unset();
 			break;
 
 			default:

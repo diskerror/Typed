@@ -15,25 +15,11 @@ class SAString extends ScalarAbstract
 {
 	public function set($in)
 	{
-		switch (gettype($in)) {
-			case 'object':
-				if ($in instanceof ScalarAbstract) {
-					$this->_value = (string)$in->get();
-					break;
-				}
-				if (method_exists($in, '__toString')) {
-					$this->_value = $in->__toString();
-					break;
-				}
-				if (method_exists($in, 'format')) {
-					$this->_value = $in->format('c');
-					break;
-				}
+		if (is_object($in)) {
+			$in = self::_castObject($in);
+		}
 
-				if (method_exists($in, 'toArray')) {
-					$in = $in->toArray();
-				}
-			//	other objects fall through, object to array falls through
+		switch (gettype($in)) {
 			case 'array':
 				$jsonStr     = json_encode($in);
 				$jsonLastErr = json_last_error();
@@ -45,7 +31,7 @@ class SAString extends ScalarAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->_setNullOrDefault();
+				$this->unset();
 			break;
 
 			default:

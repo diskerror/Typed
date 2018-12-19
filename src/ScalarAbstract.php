@@ -47,32 +47,16 @@ abstract class ScalarAbstract implements AtomicInterface
 	public function __construct($in = '', bool $allowNull = false)
 	{
 		$this->_allowNull = $allowNull;
-		if ($in instanceof ScalarAbstract) {
-			$this->set($in->get());
+
+		if ($allowNull && null === $in) {
+			$this->_value        = null;
+			$this->_defaultValue = null;
 		}
 		else {
-			$this->set($in);
+			$this->set(null === $in ? '' : $in);
+			$this->_defaultValue = $this->_value;
 		}
-		$this->_defaultValue = $this->_value;
 	}
-
-	/**
-	 * @param stdClass $in
-	 *
-	 * @return array
-	 */
-	protected static function _castObject(stdClass $in): array
-	{
-		if (method_exists($in, 'toArray')) {
-			return $in->toArray();
-		}
-		return (array)$in;
-	}
-
-	/**
-	 * Filters the value before saving.
-	 */
-	abstract public function set($in);
 
 	/**
 	 * Returns the scalar value.
@@ -83,12 +67,49 @@ abstract class ScalarAbstract implements AtomicInterface
 	}
 
 	/**
-	 * Returns a null or the default preset value.
+	 * Filters the value before saving.
+	 */
+	abstract public function set($in);
+
+	/**
+	 * Returns true if value is not null.
+	 */
+	public function isset(): bool
+	{
+		return isset($this->_value);
+	}
+
+	/**
+	 * Sets a null or the default value.
+	 */
+	public function unset()
+	{
+		$this->_value = $this->_allowNull ? null : $this->_defaultValue;
+	}
+
+	/**
+	 * @param stdClass $in
 	 *
 	 * @return mixed
 	 */
-	protected function _setNullOrDefault()
+	protected static function _castObject(stdClass $in)
 	{
-		$this->_value = $this->_allowNull ? null : $this->_defaultValue;
+		if ($in instanceof AtomicInterface) {
+			return $in->get();
+		}
+
+		if (method_exists($in, '__toString')) {
+			return $in->__toString();
+		}
+
+		if (method_exists($in, 'format')) {
+			return $in->format('c');
+		}
+
+		if (method_exists($in, 'toArray')) {
+			return $in->toArray();
+		}
+
+		return (array)$in;
 	}
 }

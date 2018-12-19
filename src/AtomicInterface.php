@@ -16,4 +16,8 @@ interface AtomicInterface
 	public function get();
 
 	public function set($in);
+
+	public function isset();
+
+	public function unset();
 }

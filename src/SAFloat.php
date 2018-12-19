@@ -14,11 +14,15 @@ class SAFloat extends ScalarAbstract
 {
 	public function set($in)
 	{
+		if (is_object($in)) {
+			$in = self::_castObject($in);
+		}
+
 		switch (gettype($in)) {
 			case 'string':
-				$this->_value = trim(strtolower($in), "\x00..\x20\x7F");
+				$in = trim(strtolower($in), "\x00..\x20\x7F");
 				if ($in === '' || $in === 'null' || $in === 'nan') {
-					$this->_setNullOrDefault();
+					$this->unset();
 					break;
 				}
 
@@ -41,16 +45,12 @@ class SAFloat extends ScalarAbstract
 				}
 
 				$this->_value = (float)$in;
-			break;
-
-			case 'object':
-				$this->_value = (float)self::_castObject($in);
-			break;
+				break;
 
 			case 'null':
 			case 'NULL':
-				$this->_setNullOrDefault();
-			break;
+				$this->unset();
+				break;
 
 			default:
 				$this->_value = (float)$in;
