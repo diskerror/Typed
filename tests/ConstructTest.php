@@ -8,7 +8,7 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 
 		$this->assertTrue(is_bool($simp->myBool));
 		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_float($simp->myFloat));
 		$this->assertTrue(is_string($simp->myString));
 		$this->assertTrue(is_object($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
@@ -27,7 +27,7 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 
 		$this->assertTrue(is_bool($simp->myBool));
 		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_float($simp->myFloat));
 		$this->assertTrue(is_string($simp->myString));
 		$this->assertTrue(is_object($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
@@ -46,7 +46,7 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 
 		$this->assertTrue(is_bool($simp->myBool));
 		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_float($simp->myFloat));
 		$this->assertTrue(is_string($simp->myString));
 		$this->assertTrue(is_object($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
@@ -65,7 +65,7 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 
 		$this->assertTrue(is_bool($simp->myBool));
 		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_float($simp->myFloat));
 		$this->assertTrue(is_string($simp->myString));
 		$this->assertTrue(is_object($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
@@ -92,7 +92,7 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 
 		$this->assertTrue(is_bool($simp->myBool));
 		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_double($simp->myFloat));
+		$this->assertTrue(is_float($simp->myFloat));
 		$this->assertTrue(is_string($simp->myString));
 		$this->assertTrue(is_object($simp->myArray));
 		$this->assertTrue(is_object($simp->myObj));
