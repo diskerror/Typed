@@ -37,18 +37,32 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	protected $_arrayOptionDefaults = 0;
 
 	/**
-	 * Copies all matching member names while maintaining original types and
-	 *     doing a deep copy where appropriate.
-	 * This method silently ignores extra properties in $in,
-	 *     leaves unmatched properties in this class untouched, and
-	 *     skips names starting with an underscore.
+	 * Assign.
 	 *
-	 * Input can be an object, or an indexed or associative array.
-	 * Indexed arrays are copied by position.
+	 * Assign values from input object. Missing keys are set to their
+	 * default values.
 	 *
-	 * @param mixed $in -OPTIONAL
+	 * @param mixed $in
 	 */
-	abstract function assign($in = null);
+	abstract function assign($in);
+
+	/**
+	 * Replace.
+	 *
+	 * Assign values from input object. Missing keys are left untouched.
+	 *
+	 * @param mixed $in
+	 */
+	abstract function replace($in);
+
+	/**
+	 * Merge $this struct with $in struct into new structure. Input values
+	 * will replace cloned values where they match.
+	 *
+	 * @param mixed $in
+	 * @return self
+	 */
+	abstract function merge($in);
 
 	/**
 	 * Returns an array of this object with only the appropriate members.

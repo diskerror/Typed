@@ -62,6 +62,8 @@ class ClassTest extends PHPUnit\Framework\TestCase
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 class TypedDate extends \Diskerror\Typed\TypedClass
 {
 	protected $date = [DateTime::class];

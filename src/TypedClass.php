@@ -10,9 +10,12 @@
 namespace Diskerror\Typed;
 
 use DateTimeInterface;
-use MongoDB\BSON\{UTCDateTime, UTCDateTimeInterface, Persistable};
-use Traversable;
+use function in_array;
 use InvalidArgumentException;
+use MongoDB\BSON\{
+	Persistable, UTCDateTime, UTCDateTimeInterface
+};
+use Traversable;
 
 /**
  * Create a child of this class with your named properties with a visibility of
@@ -124,8 +127,8 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 			case 'string':
 			case 'array':
 			case 'object':
-				$this->assign($in);
-			break;
+				$this->replace($in);
+				break;
 
 			//	Don't waste time with assign if input is one of these.
 			//		Just return leaving the default values.
@@ -155,7 +158,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	{
 		$this->_calledClass = get_called_class();
 
-		//	Build array of default values.
+		//	Build array of default values with converted types.
 		//	First get all class properties then remove elements with names starting with underscore, except "_id".
 		$this->_defaultVars = get_class_vars($this->_calledClass);
 		foreach ($this->_defaultVars as $k => &$v) {
@@ -168,27 +171,27 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 				case 'null':
 				case 'NULL':
 					$v = new SAAnything($v);
-				break;
+					break;
 
 				case 'bool':
 				case 'boolean':
 					$v = new SABoolean($v);
-				break;
+					break;
 
 				case 'int':
 				case 'integer':
 					$v = new SAInteger($v);
-				break;
+					break;
 
 				case 'float':
 				case 'double':
 				case 'real':
 					$v = new SAFloat($v);
-				break;
+					break;
 
 				case 'string':
 					$v = new SAString($v);
-				break;
+					break;
 
 				case 'array':
 					if (count($v) > 0 && array_values($v) === $v && is_string($v[0]) && class_exists($v[0])) {
@@ -198,16 +201,17 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 					else {
 						$v = new TypedArray('', $v);
 					}
-				break;
+					break;
 
 				default:
 					//	Do nothing. Don't try to cast.
 			}
 
-			//	everything is an object now
-			$this->{$k} = clone $v;    //	clone so the original default value doesn't change
-
-			//	else the original value is already in $this->{$k}
+			/**
+			 * Everything is now an object.
+			 * Clone the default/original value back to the original property.
+			 */
+			$this->{$k} = clone $v;
 		}
 
 		$this->_publicNames = array_keys($this->_defaultVars);
@@ -215,74 +219,45 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	}
 
 	/**
+	 * Assign matching values to local keys resetting unmatched local keys.
+	 *
 	 * Copies all matching property names while maintaining original types and
 	 *     doing a deep copy where appropriate.
 	 * This method silently ignores extra properties in $input,
-	 *     leaves unmatched properties in this class untouched, and
+	 *     resets unmatched local properties, and
 	 *     skips names starting with an underscore.
-	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
-	 *    property (property names not starting with an underscore). Extra values
-	 *    are ignored. Unused properties are unchanged.
 	 *
 	 * Input can be an object, or an indexed or associative array.
 	 *
 	 * @param object|array|string|bool|null $in -OPTIONAL
 	 */
-	public function assign($in = null)
+	public function assign($in)
 	{
-		//	First check if the input data is good or needs to be massaged.
-		switch (gettype($in)) {
-			case 'object':
-			break;
+		$this->_massageBlockInput($in);
 
-			case 'array':
-				//	Test to see if it's an indexed or an associative array.
-				//	Leave associative array as is.
-				//	Copy indexed array by position to a named array
-				if (array_values($in) === $in) {
-					$newArr   = [];
-					$minCount = min(count($in), $this->_count);
-					for ($i = 0; $i < $minCount; ++$i) {
-						$newArr[$this->_publicNames[$i]] = $in[$i];
-					}
-
-					$in = &$newArr;
-				}
-			break;
-
-			case 'string':
-				$in          = json_decode($in);
-				$jsonLastErr = json_last_error();
-				if ($jsonLastErr !== JSON_ERROR_NONE) {
-					throw new \UnexpectedValueException(
-						'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
-						$jsonLastErr
-					);
-				}
-			break;
-
-			case 'null':
-			case 'NULL':
-			case 'bool':
-			case 'boolean': //	a 'false' is returned by MySQL:PDO for "no results"
-				//	So, return default values;
-				if ($in !== true) {    //	do only if false or null. True does nothing.
-					foreach ($this->_defaultVars as $k => &$v) {
-						$this->__unset($k);
-					}
-
-					return;
-				}
-			//	A boolean 'true' falls through.
-
-			default:
-				throw new InvalidArgumentException('invalid input type');
+		if (count($in) === 0) {
+			foreach ($this->_publicNames as $publicName) {
+				$this->__unset($publicName);
+			}
 		}
-
-		//	Then copy each field to the appropriate place.
-		foreach ($in as $k => $v) {
-			if ($this->_keyExists($k)) {
-				$this->_setByName($k, $v);
+		elseif (is_object($in)) {
+			foreach ($this->_publicNames as $publicName) {
+				if (isset($in->{$publicName})) {
+					$this->_setByName($publicName, $in->{$publicName});
+				}
+				else {
+					$this->__unset($publicName);
+				}
+			}
+		}
+		else {
+			foreach ($this->_publicNames as $publicName) {
+				if (isset($in[$publicName])) {
+					$this->_setByName($publicName, $in[$publicName]);
+				}
+				else {
+					$this->__unset($publicName);
+				}
 			}
 		}
 
@@ -358,9 +333,9 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	public function serialize(): string
 	{
 		$toSerialize = [
-			'_arrayOptions' => $this->_arrayOptions,
+			'_arrayOptions'  => $this->_arrayOptions,
 			'_toJsonOptions' => $this->_toJsonOptions,
-			'_toBsonOptions' => $this->_toBsonOptions
+			'_toBsonOptions' => $this->_toBsonOptions,
 		];
 		foreach ($this->_publicNames as $k) {
 			$toSerialize[$k] = $this->{$k};
@@ -430,13 +405,13 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 					if (!$omitEmpty || !empty($v)) {
 						$arr[$k] = $v;
 					}
-				break;
+					break;
 
 				case 'resource':
 					if (!$this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE)) {
 						$arr[$k] = $v;
 					}
-				break;
+					break;
 
 				case 'object':
 					if (($this->{$k} instanceof $ZJE_STRING) && $keepJsonExpr) {
@@ -478,9 +453,9 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 							if ($omitEmpty && empty($arr[$k])) {
 								unset($arr[$k]);
 							}
-						break;
+							break;
 					}
-				break;
+					break;
 
 				//	ints and floats
 				default:
@@ -490,6 +465,121 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 		}
 
 		return $arr;
+	}
+
+	/**
+	 * Deep replace local values with matches from input.
+	 *
+	 * Copies all matching property names while maintaining original types and
+	 *     doing a deep copy where appropriate.
+	 * This method silently ignores extra properties in $input,
+	 *     leaves unmatched properties in this class untouched, and
+	 *     skips names starting with an underscore.
+	 *
+	 * Input can be an object, or an indexed or associative array.
+	 *
+	 * @param object|array|string|bool|null $in
+	 */
+	public function replace($in)
+	{
+		$this->_massageBlockInput($in);
+
+		if (count($in) === 0) {
+			return;
+		}
+
+		foreach ($in as $k => $v) {
+			if ($this->_keyExists($k)) {
+				if ($this->{$k} instanceof TypedAbstract) {
+					$this->{$k}->replace($v);
+				}
+				else {
+					$this->_setByName($k, $v);
+				}
+			}
+		}
+
+		$this->_checkRelatedProperties();
+	}
+
+	/**
+	 * Clone local values and replace matching values with input.
+	 *
+	 * This method clones $this then replaces matching keys from $in
+	 *     and returns the new object.
+	 *
+	 * @param object|array|string|bool|null $in
+	 * @return TypedClass
+	 */
+	public function merge($in)
+	{
+		$ret = clone $this;
+		$ret->replace($in);
+
+		return $ret;
+	}
+
+	/**
+	 * Check if the input data is good or needs to be massaged.
+	 *
+	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
+	 * property (property names not starting with an underscore). Extra values
+	 * are ignored. Unused properties are unchanged.
+	 *
+	 * @param $in
+	 *
+	 * @return object|array
+	 * @throws InvalidArgumentException
+	 */
+	private function _massageBlockInput(&$in)
+	{
+		if (is_string($in)) {
+			$in          = json_decode($in);
+			$jsonLastErr = json_last_error();
+			if ($jsonLastErr !== JSON_ERROR_NONE) {
+				throw new InvalidArgumentException(
+					'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
+					$jsonLastErr
+				);
+			}
+		}
+
+		switch (gettype($in)) {
+			case 'object':
+				break;
+
+			case 'array':
+				//	Test to see if it's an indexed or an associative array.
+				//	Leave associative array as is.
+				//	Copy indexed array by position to a named array
+				if (array_values($in) === $in) {
+					$newArr   = [];
+					$minCount = min(count($in), $this->_count);
+					for ($i = 0; $i < $minCount; ++$i) {
+						$newArr[$this->_publicNames[$i]] = $in[$i];
+					}
+
+					$in = $newArr;
+				}
+				break;
+
+			case 'null':
+			case 'NULL':
+				$in = [];
+				break;
+
+			case 'bool':
+			case 'boolean':
+				/** A 'false' is returned by MySQL:PDO for "no results" */
+				if (true !== $in) {
+					/** Change false to empty array. */
+					$in = [];
+				}
+			//	A boolean 'true' falls through.
+
+			default:
+				throw new InvalidArgumentException('invalid input type: ' . gettype($in));
+		}
 	}
 
 	/**

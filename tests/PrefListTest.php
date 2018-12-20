@@ -21,7 +21,7 @@ class PrefListTest extends PHPUnit\Framework\TestCase
 		);
 
 
-		$prefListList['Option ZIP']->merge(['state' => ['included' => 1], 'name' => ['compare' => '!=']]);
+		$prefListList['Option ZIP']->replace(['state' => ['included' => 1], 'name' => ['compare' => '!=']]);
 //		jsonPrint($prefListList); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/preftwo.json',

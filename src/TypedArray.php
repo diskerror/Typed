@@ -10,9 +10,9 @@
 namespace Diskerror\Typed;
 
 use ArrayAccess;
+use function is_string;
 use LogicException;
 use InvalidArgumentException;
-use UnexpectedValueException;
 
 /**
  * Provides support for an array's elements to all have the same type.
@@ -39,11 +39,20 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	/**
 	 * Constructor.
 	 *
-	 * @param string                   $type   OPTIONAL ''
+	 * This allows for initial values to be passed in the first parameter.
+	 * This is useful for children of this class where the type has already
+	 * been set.
+	 *
+	 * @param mixed                    $type   OPTIONAL ''
 	 * @param array|object|string|null $values OPTIONAL null
 	 */
-	public function __construct(string $type = '', $values = null)
+	public function __construct($type = '', $values = null)
 	{
+		if (!is_string($type) && null === $values) {
+			$values = $type;
+			$type   = '';
+		}
+
 		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
 
 		if (!isset($this->_type)) {
@@ -59,76 +68,114 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			case 'anything':
 			case 'scalar':
 				$this->_type = SAAnything::class;
-			break;
+				break;
 
 			case 'bool':
 			case 'boolean':
 				$this->_type = SABoolean::class;
-			break;
+				break;
 
 			case 'int':
 			case 'integer':
 				$this->_type = SAInteger::class;
-			break;
+				break;
 
 			case 'float':
 			case 'double':
 			case 'real':
 				$this->_type = SAFloat::class;
-			break;
+				break;
 
 			case 'string':
 				$this->_type = SAString::class;
-			break;
+				break;
 
 			case 'array':
 				$this->_type = TypedArray::class;
-			break;
+				break;
 		}
 
 		$this->assign($values);
 	}
 
 	/**
-	 * Copies all members into this class.
-	 * This method attempts to coerce all members of the input to the required type.
+	 * Check if the input data is good or needs to be massaged.
 	 *
-	 * Input can be an object, or an indexed or associative array.
+	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
+	 * property (property names not starting with an underscore). Extra values
+	 * are ignored. Unused properties are unchanged.
 	 *
-	 * Null clears the entire contents of the typed array but not it's type.
+	 * @param $in
 	 *
-	 * @param object|array|string|null $in OPTIONAL null
-	 *
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
-	public function assign($in = null)
+	private static function _massageBlockInput(&$in)
 	{
-		$this->_container = [];    //	initialize array or remove all current values
+		if (is_string($in)) {
+			$in          = json_decode($in);
+			$jsonLastErr = json_last_error();
+			if ($jsonLastErr !== JSON_ERROR_NONE) {
+				throw new InvalidArgumentException(
+					'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
+					$jsonLastErr
+				);
+			}
+		}
 
-		$inputType = gettype($in);
-		switch ($inputType) {
+		switch (gettype($in)) {
 			case 'object':
 			case 'array':
-			break;
-
-			case 'string':
-				$in          = json_decode($in);
-				$jsonLastErr = json_last_error();
-				if ($jsonLastErr !== JSON_ERROR_NONE) {
-					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
-				}
-				if ($in === null) {
-					return;
-				}
-			break;
+				break;
 
 			case 'null':
 			case 'NULL':
-				return;
+				$in = [];
+				break;
+
+			case 'bool':
+			case 'boolean':
+				/** A 'false' is returned by MySQL:PDO for "no results" */
+				if (true !== $in) {
+					/** Change false to empty array. */
+					$in = [];
+				}
+			//	A boolean 'true' falls through.
 
 			default:
-				throw new InvalidArgumentException('bad input type ' . $inputType . ', value: "' . $in . '"');
+				throw new InvalidArgumentException('bad input type ' . gettype($in) . ', value: "' . $in . '"');
 		}
+	}
+
+	/**
+	 * Copies all members into this class, removing all existing values.
+	 *
+	 * Null clears the entire contents of the typed array but not it's type.
+	 *
+	 * @param object|array|string|null $in
+	 *
+	 * @throws \InvalidArgumentException
+	 */
+	public function assign($in)
+	{
+		self::_massageBlockInput($in);
+
+		$this->_container = [];    //	initialize array or remove all current values
+
+		foreach ($in as $k => $v) {
+			$this->offsetSet($k, $v);
+		}
+	}
+
+	/**
+	 * Copies all members into this class. Indexed keys will be re-indexed.
+	 *
+	 * @param object|array|string|null $in
+	 *
+	 * @throws \InvalidArgumentException
+	 */
+	public function replace($in)
+	{
+		self::_massageBlockInput($in);
 
 		foreach ($in as $k => $v) {
 			$this->offsetSet($k, $v);
@@ -223,7 +270,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		return serialize([
 			'_type'         => $this->_type,
 			'_arrayOptions' => $this->_arrayOptions,
-			'_container'    => $this->_container
+			'_container'    => $this->_container,
 		]);
 	}
 
@@ -384,29 +431,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function offsetSet($k, $v)
 	{
 		if (null === $k) {
-			if (is_object($v) && get_class($v) === $this->_type){
-				$this->_container[] = $v;
-				return;
-			}
-
-			$this->_container[] = new $this->_type;
-			end($this->_container);
-			$k = key($this->_container);
+			$this->_container[] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
 		}
-		elseif (!isset($this->_container[$k])) {
-			if (is_object($v) && get_class($v) === $this->_type) {
-				$this->_container[$k] = $v;
-				return;
-			}
-
-			$this->_container[$k] = new $this->_type;
-		}
-
-		if (is_a($this->_type, AtomicInterface::class, true)) {
+		elseif (array_key_exists($k, $this->_container) && is_a($this->_type, AtomicInterface::class, true)) {
 			$this->_container[$k]->set($v);
 		}
-		elseif (is_a($this->_type, TypedAbstract::class, true)) {
-			$this->_container[$k]->assign($v);
+		elseif (array_key_exists($k, $this->_container) && is_a($this->_type, TypedAbstract::class, true)) {
+			$this->_container[$k]->replace($v);
 		}
 		else {
 			$this->_container[$k] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
@@ -483,19 +514,29 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	}
 
 	/**
+	 * Merge input with clone of this and return new TypedArray.
+	 *
+	 * Similar to the function array_merge().
+	 *
 	 * @param \Traversable|array $ta
+	 *
+	 * @return \Diskerror\Typed\TypedArray
 	 */
-	public function merge($ta)
+	public function merge($ta): self
 	{
-		if (is_array($ta) && $ta === array_values($ta)) {
-			foreach ($ta as $v) {
-				$this->offsetSet(null, $v);
+		self::_massageBlockInput($in);
+
+		$ret = clone $this;
+
+		foreach ($ta as $k => $v) {
+			if (is_int($k)) {
+				$ret[] = $v;
+			}
+			else {
+				$ret[$k] = $v;
 			}
 		}
-		else {
-			foreach ($ta as $k => $v) {
-				$this->offsetSet($k, $v);
-			}
-		}
+
+		return $ret;
 	}
 }
