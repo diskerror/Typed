@@ -5,9 +5,15 @@ PHP classes to strictly define member structure, to control their data types, an
 This declares the convenience methods that are to be implemented in the classes below.
 
 ### assign
-Copies all matching member names while maintaining original types and doing a deep copy where appropriate. This method silently ignores extra properties in the input object, leaves unmatched properties in the current class untouched, and skips names starting with an underscore (per Zend Framework coding style). EXCEPT: the property name "_id" is allowed for use with MongoDB.
+Copies all matching member names while maintaining original types and doing a deep copy where appropriate. This method silently ignores extra properties in the input object, returns unmatched properties in the current TypedClass child to their default values or removes the previous values from TypedArray children, and skips names starting with an underscore (per Zend Framework coding style). EXCEPT: the property name "_id" is allowed for use with MongoDB.
 
 Input can be an object or an array. A NULL or FALSE will set the *Typed* object to it's default values.
+
+### replace
+This method is simalar to the "assign" method except that unmatched keys from the input are left untouched.
+
+### merge
+This method is similar to "replace" above except that it clones the current object and then replaces matching values with the input values and returns the new Typed object.
 
 ### toArray
 Returns an associative array of this object with only the appropriate members. A deep copy/conversion to an associative array from objects is also performed. Options can be set for the returned array and are stored in the *ArrayOptions* class. The top level setting will override each nested object of type *Typed*, though nested objects will retain their original settings.
