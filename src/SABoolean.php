@@ -26,9 +26,6 @@ class SABoolean extends ScalarAbstract
 				$this->unset();
 			break;
 
-			case 'resource':
-				throw new UnexpectedValueException('Value cannot be a resource.');
-
 			default:
 				$this->_value = (bool)$in;
 		}
