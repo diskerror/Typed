@@ -4,7 +4,8 @@
 	"description": "PHP classes to strictly define member structure, to control their data types, and to add convenience methods.",
 	"keywords": [
 		"type",
-		"structure"
+		"structure",
+		"struct"
 	],
 	"homepage": "https://github.com/diskerror/typed",
 	"license": "Apache-2.0",
