@@ -10,26 +10,33 @@
 namespace Diskerror\Typed;
 
 
-class SAInteger extends SAScalar
+class SAInteger extends ScalarAbstract
 {
 	public function set($in)
 	{
-		parent::set($in);
+		if (is_object($in)) {
+			$in = self::_castObject($in);
+		}
 
-		switch (gettype($this->_value)) {
+		switch (gettype($in)) {
 			case 'string':
-				$str = trim(strtolower($this->_value), "\x00..\x20\x7F");
+				$in = trim(strtolower($in), "\x00..\x20\x7F");
 				/**   If empty string or string with text "null" or "nan" */
-				if ($str === '' || $str === 'null' || $str === 'nan') {
+				if ($in === '' || $in === 'null' || $in === 'nan') {
 					$this->unset();
 				}
 				else {
-					$this->_value = intval($str, 0);
+					$this->_value = intval($in, 0);
 				}
 			break;
 
+			case 'null':
+			case 'NULL':
+				$this->unset();
+			break;
+
 			default:
-				$this->_value = (int)$this->_value;
+				$this->_value = (int)$in;
 		}
 	}
 }
