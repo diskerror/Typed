@@ -45,15 +45,16 @@ class MongoTest extends PHPUnit\Framework\TestCase
 			'host'        => 'mongodb://127.0.0.1:27017',
 			'database'    => 'master_db',
 			'collections' => [
-				'tweet' => [
-					['keys' => ['created_at' => 1], 'options' => ['expireAfterSeconds' => 60 * 30]]
+				'tweet'         => [
+					['keys' => ['created_at' => 1], 'options' => ['expireAfterSeconds' => 60 * 30]],
 				],
 				'invoice_item'  => [
+					/* These should set by position. */
 					[['invoice_number' => 1, 'company_number' => 1, 'item_id' => 1], ['unique' => true]],
 					[['received_on' => 1]],
 					[['errors' => 1]],
 				],
-				'error_message'      => [
+				'error_message' => [
 					['keys' => ['occured_on' => 1], 'options' => ['expireAfterSeconds' => 60 * 60 * 24 * 7]],
 					['keys' => ['message' => 1]],
 					['keys' => ['code' => 1]],
@@ -61,7 +62,7 @@ class MongoTest extends PHPUnit\Framework\TestCase
 			],
 		]);
 
-//		jsonPrint($tweet);exit;
+//		jsonPrint($config);exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/mongo_config.json',
 			json_encode($config)
