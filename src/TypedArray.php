@@ -10,9 +10,8 @@
 namespace Diskerror\Typed;
 
 use ArrayAccess;
-use function is_string;
-use LogicException;
 use InvalidArgumentException;
+use Traversable;
 
 /**
  * Provides support for an array's elements to all have the same type.
@@ -40,34 +39,41 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Constructor.
 	 *
 	 * This allows for initial values to be passed in the first parameter.
-	 * This is useful for children of this class where the type has already
+	 * This is only works for children of this class where the type has already
 	 * been set.
 	 *
-	 * @param mixed                    $type   OPTIONAL ''
-	 * @param array|object|string|null $values OPTIONAL null
+	 * @param mixed             $type   OPTIONAL ''
+	 * @param array|object|null $values OPTIONAL null
 	 */
 	public function __construct($type = '', $values = null)
 	{
-		if (!is_string($type) && null === $values) {
+		if (get_called_class() !== self::class) {
+			if (!isset($this->_type)) {
+				throw new InvalidArgumentException('$this->_type must be set in child class.');
+			}
+
+			if (null !== $values) {
+				throw new InvalidArgumentException('Only the first parameter can be set when using an inherited class.');
+			}
+
+			// Assume the first parameter holds the values and the second is unset.
 			$values = $type;
-			$type   = '';
+		}
+		else {
+			$this->_type = $type;
 		}
 
 		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
-
-		if (!isset($this->_type)) {
-			$this->_type = $type;
-		}
-		elseif (isset($this->_type) && $type !== '') {
-			throw new LogicException('Can\'t set type in constructor when type is set in child class.');
-		}
 
 		switch (strtolower($this->_type)) {
 			case '':
 			case 'null':
 			case 'anything':
-			case 'scalar':
 				$this->_type = SAAnything::class;
+				break;
+
+			case 'scalar':
+				$this->_type = SAScalar::class;
 				break;
 
 			case 'bool':
@@ -134,7 +140,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 
 			case 'bool':
 			case 'boolean':
-				/** A 'false' is returned by MySQL:PDO for "no results" */
+				// A 'false' is returned by MySQL:PDO for "no results".
 				if (true !== $in) {
 					/** Change false to empty array. */
 					$in = [];
@@ -219,9 +225,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * The _type or gettype() can return different names for the same type,
 	 * ie. "bool" or "boolean", so we're only going to check the first 3 characters.
 	 *
-	 * @return \Traversable
+	 * @return Traversable
 	 */
-	public function getIterator(): \Traversable
+	public function getIterator(): Traversable
 	{
 		if (is_a($this->_type, AtomicInterface::class, true)) {
 			return (function &() {
@@ -363,6 +369,33 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Merge input with clone of this and return new TypedArray.
+	 *
+	 * Similar to the function array_merge().
+	 *
+	 * @param Traversable|array $ta
+	 *
+	 * @return \Diskerror\Typed\TypedArray
+	 */
+	public function merge($ta): self
+	{
+		self::_massageBlockInput($in);
+
+		$ret = clone $this;
+
+		foreach ($ta as $k => $v) {
+			if (is_int($k)) {
+				$ret[] = $v;
+			}
+			else {
+				$ret[$k] = $v;
+			}
+		}
+
+		return $ret;
 	}
 
 	/**
@@ -511,32 +544,5 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function getValues()
 	{
 		return array_values($this->_container);
-	}
-
-	/**
-	 * Merge input with clone of this and return new TypedArray.
-	 *
-	 * Similar to the function array_merge().
-	 *
-	 * @param \Traversable|array $ta
-	 *
-	 * @return \Diskerror\Typed\TypedArray
-	 */
-	public function merge($ta): self
-	{
-		self::_massageBlockInput($in);
-
-		$ret = clone $this;
-
-		foreach ($ta as $k => $v) {
-			if (is_int($k)) {
-				$ret[] = $v;
-			}
-			else {
-				$ret[$k] = $v;
-			}
-		}
-
-		return $ret;
 	}
 }
