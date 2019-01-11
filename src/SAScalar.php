@@ -2,8 +2,8 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\SAString
- * @copyright      Copyright (c) 2018 Reid Woodbury Jr
+ * @name        \Diskerror\Typed\SAScalar
+ * @copyright      Copyright (c) 2019 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
@@ -11,11 +11,12 @@ namespace Diskerror\Typed;
 
 use UnexpectedValueException;
 
-class SAString extends ScalarAbstract
+class SAScalar extends ScalarAbstract
 {
 	public function set($in)
 	{
 		if (is_object($in)) {
+			// Every object is converted to an array or a string.
 			$in = self::_castObject($in);
 		}
 
@@ -33,6 +34,9 @@ class SAString extends ScalarAbstract
 			case 'NULL':
 				$this->unset();
 			break;
+
+			case 'resource':
+				throw new UnexpectedValueException('Value cannot be a resource.');
 
 			default:
 				$this->_value = $in;

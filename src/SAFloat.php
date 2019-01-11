@@ -10,50 +10,43 @@
 namespace Diskerror\Typed;
 
 
-class SAFloat extends ScalarAbstract
+class SAFloat extends SAScalar
 {
 	public function set($in)
 	{
-		if (is_object($in)) {
-			$in = self::_castObject($in);
-		}
+		parent::set($in);
 
-		switch (gettype($in)) {
+		switch (gettype($this->_value)) {
 			case 'string':
-				$in = trim(strtolower($in), "\x00..\x20\x7F");
-				if ($in === '' || $in === 'null' || $in === 'nan') {
+				$str = trim(strtolower($this->_value), "\x00..\x20\x7F");
+				if ($str === '' || $str === 'null' || $str === 'nan') {
 					$this->unset();
 					break;
 				}
 
-				$in = str_replace(['\'', '"', '“', '”', '‘', '’', ' '], '', $in);
-				$in = preg_replace('/^([-+0-9.,]*).*?$/', '$1', $in);
+				$str = str_replace(['\'', '"', '“', '”', '‘', '’', ' '], '', $str);
+				$str = preg_replace('/^([-+0-9.,]*).*?$/', '$1', $str);
 
-				$comaPos = strpos($in, ',');
-				$dotPos  = strpos($in, '.');
+				$comaPos = strpos($str, ',');
+				$dotPos  = strpos($str, '.');
 
 				if ($comaPos !== false && $dotPos !== false) {
 					if ($comaPos > $dotPos) {
-						$in = str_replace(['.', ','], ['', '.'], $in);
+						$str = str_replace(['.', ','], ['', '.'], $str);
 					}
 					else {
-						$in = str_replace(',', '', $in);
+						$str = str_replace(',', '', $str);
 					}
 				}
 				elseif ($comaPos !== false) {
-					$in = str_replace(',', '.', $in);
+					$str = str_replace(',', '.', $str);
 				}
 
-				$this->_value = (float)$in;
-				break;
-
-			case 'null':
-			case 'NULL':
-				$this->unset();
+				$this->_value = (float)$str;
 				break;
 
 			default:
-				$this->_value = (float)$in;
+				$this->_value = (float)$this->_value;
 		}
 	}
 }

@@ -10,6 +10,8 @@
 namespace Diskerror\Typed;
 
 
+use UnexpectedValueException;
+
 class SABoolean extends ScalarAbstract
 {
 	public function set($in)
@@ -23,6 +25,9 @@ class SABoolean extends ScalarAbstract
 			case 'NULL':
 				$this->unset();
 			break;
+
+			case 'resource':
+				throw new UnexpectedValueException('Value cannot be a resource.');
 
 			default:
 				$this->_value = (bool)$in;
