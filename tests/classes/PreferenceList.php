@@ -11,7 +11,7 @@ class PreferenceList extends Diskerror\Typed\TypedArray
 	 */
 	public static function getDefault(): PreferenceList
 	{
-		return new self('', [
+		return new self([
 			'name'    => [],
 			'address' => [],
 			'city'    => [],

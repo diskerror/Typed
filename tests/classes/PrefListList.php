@@ -6,7 +6,7 @@ class PrefListList extends Diskerror\Typed\TypedArray
 
 	public static function getDefault()
 	{
-		$d = new self('', [
+		$d = new self([
 			'Option Name'    => PreferenceList::getDefault(),
 			'Option Address' => PreferenceList::getDefault(),
 			'Option ZIP'     => PreferenceList::getDefault(),
