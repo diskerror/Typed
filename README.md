@@ -20,10 +20,10 @@ Returns an associative array of this object with only the appropriate members. A
 
 * OMIT\_EMPTY: null or empty members are omitted to shrink storage or transmission needs.
 * OMIT\_RESOURCE: resource IDs are meaningless for transmitted data.
-* OMIT\_ID: a top level member with the name "\_id" is assumed to be intended to be a Mongo primary key and this option tells us to omit it from the saved object forcing MongoDB to automatically create a BSON ObjectId.
+* OMIT\_ID: a top level member with the name "\_id" is assumed to be intended as a Mongo primary key and this option tells us to omit it from the saved object forcing MongoDB to automatically create a BSON ObjectId.
 * KEEP\_JSON\_EXPR: objects of type *Zend\Json\Expr* remain untouched.
 * TO\_BSON\_DATE: conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC. *MongoDB\BSON\UTCDateTime* objects will remain untouched.
-* NO\_CAST\_BSON\_ID: pass the data in "\_id" as is.
+* NO\_CAST\_BSON\_ID: pass the data in "\_id" as is and not cast to *ObjectId*.
 
 ### getArrayOptions & setArrayOptions
 These manage the usage of the options for how these classes are converted to an array.
@@ -43,26 +43,29 @@ The derivitives of *TypedClass* are contracted to do these things:
 * Silently cast data assigned to properties in the most obvious way when input is of a different type.
 * Use setter methods based on property name to further handle input data, like filtering.
 * Use getter methods based on property name to handle output, like formatting.
-* Impliment “toArray” to return a deeply transformed standard associative array.
+* Recognize classes inhearited from *ScalarAbstract* to manage their values internally.
 * Handle special cases of members/properties that are objects with an option for handling NULL assignments.
+* Impliment “toArray” to return a deeply transformed standard associative array.
 * Accept another object, associative or indexed array, and assign the input values to the appropriate members.
   * Copy each field or property item by item.
   * Copy indexed array by position.
   * Map alternate names to proper names.
   * Reset single property or entire object's members to their default values.
 
-The users class properties must be declared as *protected* or *private*. The names for the properties must follow the naming convention that the intended *public* members must NOT start with an underscore. This borrows from the Zend Framework property naming convention of protected and private property names starting with an underscore.
+The users' class properties must be declared as *protected* or *private*. The names for the properties must follow the naming convention that the intended *public* members must not start with an underscore. This borrows from the Zend Framework property naming convention of protected and private property names starting with an underscore.
 
-These properties must also be initialized with a value. The values' initial type is stored within the object and used to cast new values to the same type.
+These properties must also be initialized with a value. Each value's' initial type is stored within the object and used to cast new values to the same type.
 
 More complex types can be set with array notation as such:
 ```
 class MyClass extends Diskerror\Typed\TypedClass
 {
-    protected $myDate = ['__type__' => 'DateTime', 'now'];
+    protected $myDate = [DateTime::class, 'now'];
+    protected $myDateOpt = ['DateTime', 'now'];  // Optional form.
     protected $myString = 'default value';
 }
 ```
+The first member of the array is the name of the class and the remaining members become the parameters passed to the class constructor.
 
 ## TypedArray
 The instances or derivatives of *TypedArray* are contracted to do these things:
