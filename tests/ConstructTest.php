@@ -1,17 +1,19 @@
 <?php
 
+use Diskerror\Typed\TypedArray;
+
 class ConstructTest extends PHPUnit\Framework\TestCase
 {
 	public function testEmptyConstructor()
 	{
 		$simp = new SimpleTyped();
 
-		$this->assertTrue(is_bool($simp->myBool));
-		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_float($simp->myFloat));
-		$this->assertTrue(is_string($simp->myString));
-		$this->assertTrue(is_object($simp->myArray));
-		$this->assertTrue(is_object($simp->myObj));
+		$this->assertIsBool($simp->myBool);
+		$this->assertIsInt($simp->myInt);
+		$this->assertIsFloat($simp->myFloat);
+		$this->assertIsString($simp->myString);
+		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
+		$this->assertInstanceOf('stdClass', $simp->myObj);
 
 // 		echo json_encode($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
@@ -25,12 +27,12 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		$simp->myObj->nv = 'new variable';
 		$simp->myArray   = null;
 
-		$this->assertTrue(is_bool($simp->myBool));
-		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_float($simp->myFloat));
-		$this->assertTrue(is_string($simp->myString));
-		$this->assertTrue(is_object($simp->myArray));
-		$this->assertTrue(is_object($simp->myObj));
+		$this->assertIsBool($simp->myBool);
+		$this->assertIsInt($simp->myInt);
+		$this->assertIsFloat($simp->myFloat);
+		$this->assertIsString($simp->myString);
+		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
+		$this->assertInstanceOf('stdClass', $simp->myObj);
 
 		// echo jsonEncode($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
@@ -44,12 +46,12 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		$input = [false, 77, .5, 'simpppp2'];
 		$simp  = new SimpleTyped($input);
 
-		$this->assertTrue(is_bool($simp->myBool));
-		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_float($simp->myFloat));
-		$this->assertTrue(is_string($simp->myString));
-		$this->assertTrue(is_object($simp->myArray));
-		$this->assertTrue(is_object($simp->myObj));
+		$this->assertIsBool($simp->myBool);
+		$this->assertIsInt($simp->myInt);
+		$this->assertIsFloat($simp->myFloat);
+		$this->assertIsString($simp->myString);
+		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
+		$this->assertInstanceOf('stdClass', $simp->myObj);
 
 		// echo jsonEncode($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
@@ -63,12 +65,12 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 		$arr  = ['myString' => 234445, 'myInt' => 3.14, 'myNotExist' => 'to be ignored'];
 		$simp = new SimpleTyped($arr);
 
-		$this->assertTrue(is_bool($simp->myBool));
-		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_float($simp->myFloat));
-		$this->assertTrue(is_string($simp->myString));
-		$this->assertTrue(is_object($simp->myArray));
-		$this->assertTrue(is_object($simp->myObj));
+		$this->assertIsBool($simp->myBool);
+		$this->assertIsInt($simp->myInt);
+		$this->assertIsFloat($simp->myFloat);
+		$this->assertIsString($simp->myString);
+		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
+		$this->assertInstanceOf('stdClass', $simp->myObj);
 
 		// echo jsonEncode($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
@@ -90,12 +92,12 @@ class ConstructTest extends PHPUnit\Framework\TestCase
 
 		$simp = new SimpleTyped($obj);
 
-		$this->assertTrue(is_bool($simp->myBool));
-		$this->assertTrue(is_int($simp->myInt));
-		$this->assertTrue(is_float($simp->myFloat));
-		$this->assertTrue(is_string($simp->myString));
-		$this->assertTrue(is_object($simp->myArray));
-		$this->assertTrue(is_object($simp->myObj));
+		$this->assertIsBool($simp->myBool);
+		$this->assertIsInt($simp->myInt);
+		$this->assertIsFloat($simp->myFloat);
+		$this->assertIsString($simp->myString);
+		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
+		$this->assertInstanceOf('stdClass', $simp->myObj);
 
 		$simp->myDouble = 3.14;
 		$simp->myInt    = null;
