@@ -2,7 +2,8 @@
 
 namespace Tweet;
 
-use Diskerror\Typed\{TypedClass, DateTime};
+use Diskerror\Typed\DateTime;
+use Diskerror\Typed\TypedClass;
 
 class User extends TypedClass
 {

@@ -1,26 +1,44 @@
 {
+	"_id": 0,
 	"retweeted_status": {
-		"_id": 0,
-		"created_at": {
-			"$date": {
-				"$numberLong": "1531933828000"
-			}
+		"id": 0,
+		"created_at": "2018-07-18 17:10:28",
+		"contributors": "",
+		"entities": {
+			"hashtags": [],
+			"urls": [],
+			"user_mentions": []
 		},
+		"extended_entities": [],
 		"favorite_count": 0,
 		"filter_level": "low",
+		"in_reply_to_screen_name": "",
+		"in_reply_to_status_id_str": "",
+		"in_reply_to_user_id_str": "",
 		"is_quote_status": false,
 		"lang": "en",
+		"place": {
+			"id": 0,
+			"url": "",
+			"place_type": "",
+			"name": "",
+			"full_name": "",
+			"country_code": "",
+			"country": ""
+		},
 		"possibly_sensitive": false,
 		"retweet_count": 0,
+		"source": "",
+		"text": "",
 		"truncated": false,
 		"user": {
 			"id": 0,
+			"name": "",
+			"screen_name": "",
+			"location": "",
 			"contributors_enabled": false,
-			"created_at": {
-				"$date": {
-					"$numberLong": "1531933828000"
-				}
-			},
+			"created_at": "2018-07-18 17:10:28",
+			"description": "",
 			"favourites_count": 0,
 			"followers_count": 0,
 			"friends_count": 0,
@@ -30,30 +48,48 @@
 			"listed_count": 0,
 			"protected": false,
 			"statuses_count": 0,
+			"time_zone": "",
+			"url": "",
 			"verified": false
 		}
 	},
-	"_id": 0,
-	"created_at": {
-		"$date": {
-			"$numberLong": "1531933828000"
-		}
+	"created_at": "2018-07-18 17:10:28",
+	"contributors": "",
+	"entities": {
+		"hashtags": [],
+		"urls": [],
+		"user_mentions": []
 	},
+	"extended_entities": [],
 	"favorite_count": 0,
 	"filter_level": "low",
+	"in_reply_to_screen_name": "",
+	"in_reply_to_status_id_str": "",
+	"in_reply_to_user_id_str": "",
 	"is_quote_status": false,
 	"lang": "en",
+	"place": {
+		"id": 0,
+		"url": "",
+		"place_type": "",
+		"name": "",
+		"full_name": "",
+		"country_code": "",
+		"country": ""
+	},
 	"possibly_sensitive": false,
 	"retweet_count": 0,
+	"source": "",
+	"text": "",
 	"truncated": false,
 	"user": {
 		"id": 0,
+		"name": "",
+		"screen_name": "",
+		"location": "",
 		"contributors_enabled": false,
-		"created_at": {
-			"$date": {
-				"$numberLong": "1531933828000"
-			}
-		},
+		"created_at": "2018-07-18 17:10:28",
+		"description": "",
 		"favourites_count": 0,
 		"followers_count": 0,
 		"friends_count": 0,
@@ -63,6 +99,8 @@
 		"listed_count": 0,
 		"protected": false,
 		"statuses_count": 0,
+		"time_zone": "",
+		"url": "",
 		"verified": false
 	}
 }

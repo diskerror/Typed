@@ -2,9 +2,10 @@
 
 namespace Tweet;
 
-use Diskerror\Typed\{TypedClass, DateTime};
+use Diskerror\Typed\DateTime;
 
-trait TweetBase {
+trait TweetTrait {
+
 	protected $created_at                = [DateTime::class, '2018-07-18 17:10:28'];
 
 	protected $contributors              = null;

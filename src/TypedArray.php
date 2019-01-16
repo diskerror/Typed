@@ -9,8 +9,10 @@
 
 namespace Diskerror\Typed;
 
+use function array_diff;
 use ArrayAccess;
 use InvalidArgumentException;
+use LengthException;
 use Traversable;
 
 /**
@@ -63,7 +65,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			$this->_type = $type;
 		}
 
-		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
+		$this->_initArrayOptions();
 
 		switch (strtolower($this->_type)) {
 			case '':
@@ -256,16 +258,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	}
 
 	/**
-	 * Be sure json_encode gets our prepared array.
-	 *
-	 * @return array
-	 */
-	public function jsonSerialize()
-	{
-		return $this->toArray();
-	}
-
-	/**
 	 * String representation of object.
 	 *
 	 * @link  https://php.net/manual/en/serializable.serialize.php
@@ -276,6 +268,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		return serialize([
 			'_type'         => $this->_type,
 			'_arrayOptions' => $this->_arrayOptions,
+			'_jsonOptions'  => $this->_jsonOptions,
+			'_bsonOptions'  => $this->_bsonOptions,
 			'_container'    => $this->_container,
 		]);
 	}
@@ -295,7 +289,20 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 
 		$this->_type         = $data['_type'];
 		$this->_arrayOptions = $data['_arrayOptions'];
+		$this->_jsonOptions  = $data['_jsonOptions'];
+		$this->_bsonOptions  = $data['_bsonOptions'];
 		$this->_container    = $data['_container'];
+	}
+
+	/**
+	 * Called automatically by MongoDB when a document has a field namaed "__pclass".
+	 *
+	 * @param array $data
+	 */
+	public function bsonUnserialize(array $data)
+	{
+		$this->_initArrayOptions();
+		$this->assign($data);
 	}
 
 	/**
@@ -305,66 +312,75 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return array
 	 */
-	public function toArray(): array
+	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
-		$omitEmpty = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$omitID    = $this->_arrayOptions->has(ArrayOptions::OMIT_ID);
-		$bsonDate  = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
-
 		$output = [];
 
 		//	At this point all items are some type of object.
 		if (is_a($this->_type, AtomicInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
-				$v = $v->get();
-				if (($v !== '' && $v !== null) || !$omitEmpty || ($k === '_id' && !$omitID)) {
-					$output[$k] = $v;
+				$output[$k] = $v->get();
+			}
+		}
+		elseif (is_a($this->_type, TypedAbstract::class, true)) {
+			if ($arrayOptions->has(ArrayOptions::USE_JSON_SERIALIZE)) {
+				foreach ($this->_container as $k => $v) {
+					$output[$k] = $v->jsonSerialize();
+				}
+			}
+			elseif ($arrayOptions->has(ArrayOptions::USE_BSON_SERIALIZE)) {
+				foreach ($this->_container as $k => $v) {
+					$output[$k] = $v->bsonSerialize();
+				}
+			}
+			else {
+				foreach ($this->_container as $k => $v) {
+					$output[$k] = $v->toArray();
 				}
 			}
 		}
-		elseif (is_a($this->_type, \DateTime::class, true) && $bsonDate) {
+		elseif (is_a($this->_type, \DateTime::class, true) &&
+				$arrayOptions->has(ArrayOptions::TO_BSON_DATE)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = new \MongoDB\BSON\UTCDateTime($v->getTimestamp() * 1000);
 			}
 		}
-		elseif (is_a($this->_type, '\\MongoDB\\BSON\\UTCDateTime', true) && $bsonDate) {
+		elseif (is_a($this->_type, '\\MongoDB\\BSON\\UTCDateTime', true) &&
+				$arrayOptions->has(ArrayOptions::TO_BSON_DATE)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}
 		}
 		elseif (method_exists($this->_type, 'toArray')) {
 			foreach ($this->_container as $k => $v) {
-				if (method_exists($v, 'getArrayOptions')) {
-					$vOrigOpts = $v->getArrayOptions();
-					$v->setArrayOptions($this->_arrayOptions->get());
-				}
-
 				$output[$k] = $v->toArray();
-
-				if (isset($vOrigOpts)) {
-					$v->setArrayOptions($vOrigOpts);
-					unset($vOrigOpts);
-				}
-
-				if (count($output[$k]) === 0 && $omitEmpty) {
-					unset($output[$k]);
-				}
 			}
 		}
 		elseif (method_exists($this->_type, '__toString')) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->__toString();
-				if ($output[$k] === '' && $omitEmpty) {
-					unset($output[$k]);
-				}
 			}
 		}
 		else {
 			//	else this is some generic object then copy non-null/non-empty members or properties
+			$omitEmpty = !$arrayOptions->has(ArrayOptions::OMIT_EMPTY);
+			//	for each generic object in the container...
 			foreach ($this->_container as $k => $v) {
-				if (($v !== '' && $v !== null) || !$omitEmpty || ($k === '_id' && !$omitID)) {
-					$output[$k] = $v;
-				}
+				//////////////////	If omitEmpty then remove empty members from this generic object.
+				$output[$k] = $omitEmpty ? array_diff((array)$v, ['', 0, 0.0, '0', null, false, []]) : (array)$v;
+			}
+		}
+
+		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
+			//	Is this an indexed array (not associative)?
+			$isIndexed = (array_values($output) === $output);
+
+			//	Remove empty items.
+			$output = array_diff($output, ['', 0, 0.0, '0', null, false, []]);
+
+			//	If it's an indexed array then fix the indexes.
+			if ($isIndexed) {
+				$output = array_values($output);
 			}
 		}
 
@@ -515,12 +531,12 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * @param array $keys
 	 *
 	 * @return TypedArray
-	 * @throws \LengthException
+	 * @throws LengthException
 	 */
 	public function combine(array $keys): self
 	{
 		if (count($keys) !== count($this->_container)) {
-			throw new \LengthException('array counts do not match');
+			throw new LengthException('array counts do not match');
 		}
 
 		$this->_container = array_combine($keys, $this->_container);

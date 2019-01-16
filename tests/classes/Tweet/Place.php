@@ -4,7 +4,7 @@ namespace Tweet;
 
 class Place extends \Diskerror\Typed\TypedClass
 {
-	protected $id           = '';
+	protected $id           = 0;
 
 	protected $url          = '';
 

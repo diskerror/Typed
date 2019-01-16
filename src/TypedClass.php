@@ -9,12 +9,17 @@
 
 namespace Diskerror\Typed;
 
+use function array_key_exists;
 use DateTimeInterface;
+use function gettype;
 use function in_array;
 use InvalidArgumentException;
-use MongoDB\BSON\{
-	Persistable, UTCDateTime, UTCDateTimeInterface
-};
+use function is_object;
+use function is_resource;
+use MongoDB\BSON\ObjectId;
+use MongoDB\BSON\UTCDateTime;
+use MongoDB\BSON\UTCDateTimeInterface;
+use function PHPSTORM_META\type;
 use Traversable;
 
 /**
@@ -46,7 +51,7 @@ use Traversable;
  *      object. It will help with filtering and insuring the existence of default
  *      values for missing input parameters.
  */
-abstract class TypedClass extends TypedAbstract implements Persistable
+abstract class TypedClass extends TypedAbstract
 {
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
@@ -54,34 +59,6 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	 * @var array
 	 */
 	protected $_map = [];
-
-	/**
-	 * Holds options for "toArray" customizations when used by json_encode.
-	 *
-	 * @var \Diskerror\Typed\ArrayOptions
-	 */
-	private $_toJsonOptions;
-
-	/**
-	 * Holds default options for "toArray" customizations when used by json_encode.
-	 *
-	 * @var int
-	 */
-	protected $_toJsonOptionDefaults = ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR;
-
-	/**
-	 * Holds options for "toArray" customizations when used by MongoDB.
-	 *
-	 * @var \Diskerror\Typed\ArrayOptions
-	 */
-	private $_toBsonOptions;
-
-	/**
-	 * Holds default options for "toArray" customizations when used by MongoDB.
-	 *
-	 * @var int
-	 */
-	protected $_toBsonOptionDefaults = ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::OMIT_ID | ArrayOptions::TO_BSON_DATE | ArrayOptions::NO_CAST_BSON_ID;
 
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
@@ -95,7 +72,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	 *
 	 * @var array
 	 */
-	private $_defaultVars;
+	private $_defaultValues;
 
 	/**
 	 * Holds the names of the called class' to-be-public properties in an indexed array.
@@ -120,24 +97,20 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	 */
 	public function __construct($in = null)
 	{
-		$this->_initArrayOptions();
-		$this->_initProperties();
-
 		switch (gettype($in)) {
 			case 'string':
 			case 'array':
 			case 'object':
-				$this->replace($in);
 				break;
 
-			//	Don't waste time with assign if input is one of these.
-			//		Just return leaving the default values.
 			case 'NULL':
 			case 'null':
+				break;
+
 			case 'bool':
 			case 'boolean':
 				if (!$in) {
-					return;
+					break;
 				}
 			//	"True" falls through and triggers exception.
 			//	We allow "false" because some DB frameworks return "false" for empty result sets.
@@ -145,25 +118,23 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 			default:
 				throw new InvalidArgumentException('bad value to constructor');
 		}
+
+		$this->_initArrayOptions();
+		$this->_initMetaData();
+		$this->_initProperties();
+		$this->replace($in);
 	}
 
-	private function _initArrayOptions()
-	{
-		$this->_arrayOptions  = new ArrayOptions($this->_arrayOptionDefaults);
-		$this->_toJsonOptions = new ArrayOptions($this->_toJsonOptionDefaults);
-		$this->_toBsonOptions = new ArrayOptions($this->_toBsonOptionDefaults);
-	}
-
-	private function _initProperties()
+	private function _initMetaData()
 	{
 		$this->_calledClass = get_called_class();
 
 		//	Build array of default values with converted types.
 		//	First get all class properties then remove elements with names starting with underscore, except "_id".
-		$this->_defaultVars = get_class_vars($this->_calledClass);
-		foreach ($this->_defaultVars as $k => &$v) {
+		$this->_defaultValues = get_class_vars($this->_calledClass);
+		foreach ($this->_defaultValues as $k => &$v) {
 			if ($k[0] === '_' && $k !== '_id') {
-				unset($this->_defaultVars[$k]);
+				unset($this->_defaultValues[$k]);
 				continue;
 			}
 
@@ -194,9 +165,9 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 					break;
 
 				case 'array':
-					if (count($v) > 0 && array_values($v) === $v && is_string($v[0]) && class_exists($v[0])) {
-						$className = array_shift($v);
-						$v         = new $className(...$v);
+					if (!empty($v) && array_values($v) === $v && is_string($v[0]) && class_exists($v[0])) {
+						$class = array_shift($v);
+						$v     = new $class(...$v);
 					}
 					else {
 						$v = new TypedArray('', $v);
@@ -206,16 +177,26 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 				default:
 					//	Do nothing. Don't try to cast.
 			}
-
-			/**
-			 * Everything is now an object.
-			 * Clone the default/original value back to the original property.
-			 */
-			$this->{$k} = clone $v;
 		}
 
-		$this->_publicNames = array_keys($this->_defaultVars);
-		$this->_count       = count($this->_defaultVars);
+		$this->_publicNames = array_keys($this->_defaultValues);
+		$this->_count       = count($this->_defaultValues);
+	}
+
+	/**
+	 * Should be called after _initMetaData().
+	 */
+	private function _initProperties()
+	{
+		foreach ($this->_defaultValues as $k => &$v) {
+			/**
+			 * All properties, except resources, are now objects.
+			 * Clone the default/original value back to the original property.
+			 */
+			if (is_object($v)) {
+				$this->{$k} = clone $v;
+			}
+		}
 	}
 
 	/**
@@ -235,7 +216,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	{
 		$this->_massageBlockInput($in);
 
-		if (count($in) === 0) {
+		if (empty($in)) {
 			foreach ($this->_publicNames as $publicName) {
 				$this->__unset($publicName);
 			}
@@ -283,7 +264,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	public function getIterator(): Traversable
 	{
 		return (function &() {
-			foreach ($this->_defaultVars as $k => &$vDefault) {
+			foreach ($this->_defaultValues as $k => &$vDefault) {
 				if ($vDefault instanceof AtomicInterface) {
 					$v     = $this->{$k}->get();
 					$vOrig = $v;
@@ -308,24 +289,11 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	}
 
 	/**
-	 * Be sure json_encode get's our prepared array.
+	 * String representation of PHP object.
 	 *
-	 * @return array
-	 */
-	public function jsonSerialize()
-	{
-		$origOptions         = $this->_arrayOptions;
-		$this->_arrayOptions = $this->_toJsonOptions;
-
-		$arr = $this->toArray();
-
-		$this->_arrayOptions = $origOptions;
-
-		return $arr;
-	}
-
-	/**
-	 * String representation of object
+	 * This serialization, as opposed to JSON or BSON, does not unwrap the
+	 * structured data. It does not store data that is part of the class
+	 * definition.
 	 *
 	 * @link  https://php.net/manual/en/serializable.serialize.php
 	 * @return string the string representation of the object or null
@@ -333,9 +301,9 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	public function serialize(): string
 	{
 		$toSerialize = [
-			'_arrayOptions'  => $this->_arrayOptions,
-			'_toJsonOptions' => $this->_toJsonOptions,
-			'_toBsonOptions' => $this->_toBsonOptions,
+			'_arrayOptions' => $this->_arrayOptions,
+			'_jsonOptions'  => $this->_jsonOptions,
+			'_bsonOptions'  => $this->_bsonOptions,
 		];
 		foreach ($this->_publicNames as $k) {
 			$toSerialize[$k] = $this->{$k};
@@ -345,7 +313,13 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	}
 
 	/**
-	 * Constructs the object
+	 * Constructs the object.
+	 *
+	 * This uses a faster but unsafe restore technique. It assumes that the
+	 * serialized data was created by the local serialize method and was
+	 * safely stored locally. No type checking is performed on restore. All
+	 * data structure members have been serialized so no initialization of
+	 * empty need be done.
 	 *
 	 * @link  https://php.net/manual/en/serializable.unserialize.php
 	 *
@@ -353,10 +327,9 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	 *
 	 * @return void
 	 */
-	public function unserialize($serialized)
+	public function unserialize($serialized): void
 	{
-		//	Array options have been serialized and do not need initialization.
-		$this->_initProperties();
+		$this->_initMetaData();
 
 		$data = unserialize($serialized);
 
@@ -365,107 +338,6 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 		}
 	}
 
-	/**
-	 * Returns an array with all public, protected, and private properties in
-	 * object that DO NOT begin with an underscore. This allows protected or
-	 * private properties to be treated as if they were public. This supports the
-	 * convention that protected and private property names begin with an
-	 * underscore (_).
-	 *
-	 * @return array
-	 */
-	final public function toArray(): array
-	{
-		$omitEmpty    = $this->_arrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$keepJsonExpr = $this->_arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$bsonDate     = $this->_arrayOptions->has(ArrayOptions::TO_BSON_DATE);
-
-		$ZJE_STRING = '\\Zend\\Json\\Expr';
-
-		$arr = [];
-		foreach ($this->_publicNames as $k) {
-			$v = $this->_getByName($k);    //	AtomicInterface objects are returned as scalars.
-
-			if ($k === '_id') {
-				if ($this->_arrayOptions->has(ArrayOptions::OMIT_ID)) {
-					continue;
-				}
-
-				if ($this->_arrayOptions->has(ArrayOptions::NO_CAST_BSON_ID)) {
-					$arr['_id'] = $v;
-					continue;
-				}
-			}
-
-			switch (gettype($v)) {
-				case 'null':
-				case 'NULL':
-				case 'string':
-				case 'array':
-					if (!$omitEmpty || !empty($v)) {
-						$arr[$k] = $v;
-					}
-					break;
-
-				case 'resource':
-					if (!$this->_arrayOptions->has(ArrayOptions::OMIT_RESOURCE)) {
-						$arr[$k] = $v;
-					}
-					break;
-
-				case 'object':
-					if (($this->{$k} instanceof $ZJE_STRING) && $keepJsonExpr) {
-						$arr[$k] = $this->{$k};    // maintain the type
-					}
-					elseif ($this->{$k} instanceof UTCDateTime && $bsonDate) {
-						$arr[$k] = $this->{$k};    // maintain the type
-					}
-					elseif ($this->{$k} instanceof DateTimeInterface && $bsonDate) {
-						$dtMilliSeconds = ($this->{$k}->getTimestamp() * 1000) + (int)$this->{$k}->format('v');
-						$arr[$k]        = new UTCDateTime($dtMilliSeconds);
-					}
-					elseif (method_exists($v, 'toArray')) {
-						if (method_exists($v, 'getArrayOptions')) {
-							$vOrigOpts = $v->getArrayOptions();
-							$v->setArrayOptions($this->_arrayOptions->get());
-						}
-
-						$arr[$k] = $v->toArray();
-
-						if (isset($vOrigOpts)) {
-							$v->setArrayOptions($vOrigOpts);
-							unset($vOrigOpts);
-						}
-					}
-					elseif (method_exists($v, '__toString')) {
-						$arr[$k] = $v->__toString();
-					}
-					else {
-						$arr[$k] = $v;
-					}
-
-					/** For anything that might have been converted to one of the following types: */
-					switch (gettype($arr[$k])) {
-						case 'null':
-						case 'NULL':
-						case 'string':
-						case 'array':
-							if ($omitEmpty && empty($arr[$k])) {
-								unset($arr[$k]);
-							}
-							break;
-					}
-					break;
-
-				//	ints and floats
-				default:
-					$arr[$k] = $v;
-			}
-
-		}
-
-		return $arr;
-	}
 
 	/**
 	 * Deep replace local values with matches from input.
@@ -479,12 +351,14 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	 * Input can be an object, or an indexed or associative array.
 	 *
 	 * @param object|array|string|bool|null $in
+	 *
+	 * @return void
 	 */
-	public function replace($in)
+	public function replace($in): void
 	{
 		$this->_massageBlockInput($in);
 
-		if (count($in) === 0) {
+		if (empty($in)) {
 			return;
 		}
 
@@ -509,6 +383,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	 *     and returns the new object.
 	 *
 	 * @param object|array|string|bool|null $in
+	 *
 	 * @return TypedClass
 	 */
 	public function merge($in)
@@ -518,6 +393,106 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 
 		return $ret;
 	}
+
+	/**
+	 * @return array
+	 */
+	final protected function _toArray(ArrayOptions $arrayOptions): array
+	{
+		$keepJsonExpr     = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+		$toBsonDate       = $arrayOptions->has(ArrayOptions::TO_BSON_DATE);
+		$useJsonSerialize = $arrayOptions->has(ArrayOptions::USE_JSON_SERIALIZE);
+		$useBsonSerialize = $arrayOptions->has(ArrayOptions::USE_BSON_SERIALIZE);
+
+		$ZJE_STRING = '\\Zend\\Json\\Expr';
+
+		$arr = [];
+		foreach ($this->_publicNames as $k) {
+			$v = $this->_getByName($k);    //	AtomicInterface objects are returned as scalars.
+
+			if ($k === '_id' && $v instanceof ObjectId && $arrayOptions->has(ArrayOptions::NO_CAST_BSON_ID)) {
+				//	Bson\ObjectId will become a string if we don't handle it here.
+				$arr['_id'] = $v;
+				continue;
+			}
+
+			switch (gettype($v)) {
+				case 'resource':
+					if (!$arrayOptions->has(ArrayOptions::OMIT_RESOURCE)) {
+						$arr[$k] = $v;
+					}
+					break;
+
+				case 'object':
+					if ($this->{$k} instanceof TypedAbstract) {
+						if ($useJsonSerialize) {
+							$arr[$k] = $v->jsonSerialize();
+						}
+						elseif ($useBsonSerialize) {
+							$arr[$k] = $v->bsonSerialize();
+						}
+						else {
+							$arr[$k] = $v->toArray();
+						}
+					}
+					elseif (($this->{$k} instanceof $ZJE_STRING) && $keepJsonExpr) {
+						$arr[$k] = $this->{$k};    // maintain the type
+					}
+					elseif ($this->{$k} instanceof UTCDateTime && $toBsonDate) {
+						$arr[$k] = $this->{$k};    // maintain the type
+					}
+					elseif ($this->{$k} instanceof DateTimeInterface && $toBsonDate) {
+						$dtMilliSeconds = ($this->{$k}->getTimestamp() * 1000) + (int)$this->{$k}->format('v');
+						$arr[$k]        = new UTCDateTime($dtMilliSeconds);
+					}
+					elseif (method_exists($v, 'toArray')) {
+						$arr[$k] = $v->toArray();
+					}
+					elseif (method_exists($v, '__toString')) {
+						$arr[$k] = $v->__toString();
+					}
+					else {
+						$arr[$k] = $v;
+					}
+					break;
+
+				//	nulls, bools, ints, floats, strings, and arrays
+				default:
+					$arr[$k] = $v;
+			}
+		}
+
+		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
+			foreach ($arr as $k => &$v) {
+				if (empty($v)) {
+					unset($arr[$k]);
+				}
+			}
+		}
+
+		return $arr;
+	}
+
+	/**
+	 * Called automatically by MongoDB when a document has a field named
+	 * "__pclass".
+	 *
+	 * Since zero, null, false, or empty strings can be omitted from the
+	 * serialized data stored in Mongo this method prevents non-empty defaults
+	 * from being written to the restored members.
+	 *
+	 * @param array $data
+	 */
+	public function bsonUnserialize(array $data): void
+	{
+		$this->_initArrayOptions();
+		$this->_initMetaData();
+		$this->_initProperties();
+		foreach ($this->_publicNames as $publicName) {
+			$this->_setByName($publicName, array_key_exists($publicName, $data) ? $data[$publicName] : '');
+		}
+	}
+
 
 	/**
 	 * Check if the input data is good or needs to be massaged.
@@ -552,7 +527,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 				//	Test to see if it's an indexed or an associative array.
 				//	Leave associative array as is.
 				//	Copy indexed array by position to a named array
-				if (array_values($in) === $in) {
+				if (!empty($in) && array_values($in) === $in) {
 					$newArr   = [];
 					$minCount = min(count($in), $this->_count);
 					for ($i = 0; $i < $minCount; ++$i) {
@@ -571,9 +546,10 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 			case 'bool':
 			case 'boolean':
 				/** A 'false' is returned by MySQL:PDO for "no results" */
-				if (true !== $in) {
+				if (false === $in) {
 					/** Change false to empty array. */
 					$in = [];
+					break;
 				}
 			//	A boolean 'true' falls through.
 
@@ -589,7 +565,7 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	 */
 	public function __unset($k)
 	{
-		$this->{$k} = clone $this->_defaultVars[$k];
+		$this->{$k} = clone $this->_defaultValues[$k];
 	}
 
 	/**
@@ -646,35 +622,6 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	}
 
 	/**
-	 * Called automatically by MongoDB.
-	 *
-	 * @return array
-	 */
-	public function bsonSerialize(): array
-	{
-		$origOptions         = $this->_arrayOptions;
-		$this->_arrayOptions = $this->_toBsonOptions;
-
-		$arr = $this->toArray();
-
-		$this->_arrayOptions = $origOptions;
-
-		return $arr;
-	}
-
-	/**
-	 * Called automatically by MongoDB when a document has a field namaed "__pclass".
-	 *
-	 * @param array $data
-	 */
-	public function bsonUnserialize(array $data)
-	{
-		$this->_initArrayOptions();
-		$this->_initProperties();
-		$this->assign($data);
-	}
-
-	/**
 	 * Set data to named variable.
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
@@ -695,14 +642,8 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 			return;
 		}
 
-		/** If the default value is a null then we allow anything. */
-		if (null === $this->_defaultVars[$propName]) {
-			$this->{$propName} = $in;
-			return;
-		}
-
 		/** All properties are now handled as objects. */
-		$propertyDefaultValue = $this->_defaultVars[$propName];
+		$propertyDefaultValue = $this->_defaultValues[$propName];
 
 		//	Handle our two special object types.
 		if ($propertyDefaultValue instanceof AtomicInterface) {
@@ -715,52 +656,57 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 			return;
 		}
 
-		//	Handle for other types of objects.
+		//	Handler for other types of objects.
 		$propertyClassType = get_class($propertyDefaultValue);
 
-		if (is_object($in)) {
-			//	if identical types then reference the original object
-			if ($propertyClassType === get_class($in)) {
-				$this->{$propName} = $in;
-			}
+		switch (gettype($in)) {
+			case 'object':
+				//	if identical types then reference the original object
+				if ($propertyClassType === get_class($in)) {
+					$this->{$propName} = $in;
+				}
 
-			//	Treat DateTime related objects as atomic in these next cases.
-			elseif (
-				($propertyDefaultValue instanceof DateTimeInterface) && ($in instanceof UTCDateTimeInterface)
-			) {
-				$this->{$propName} = new $propertyClassType($in->toDateTime());
-			}
-			elseif (
-				($propertyDefaultValue instanceof UTCDateTimeInterface) && ($in instanceof DateTimeInterface)
-			) {
-				$this->{$propName} = new $propertyClassType($in->getTimestamp() * 1000);
-			}
+				//	Treat DateTime related objects as atomic in these next cases.
+				elseif (
+					($propertyDefaultValue instanceof DateTimeInterface) && ($in instanceof UTCDateTimeInterface)
+				) {
+					$this->{$propName} = new $propertyClassType($in->toDateTime());
+				}
+				elseif (
+					($propertyDefaultValue instanceof UTCDateTimeInterface) && ($in instanceof DateTimeInterface)
+				) {
+					$this->{$propName} = new $propertyClassType($in->getTimestamp() * 1000);
+				}
 
-			//	if this->k is a DateTime object and v is any other type
-			//		then absorb v or v's properties into this->k's properties
-			//		But only if $v object has __toString.
-			elseif ($propertyDefaultValue instanceof DateTimeInterface && method_exists($in, '__toString')) {
-				$this->{$propName} = new $propertyClassType($in->__toString());
-			}
+				//	if this->k is a DateTime object and v is any other type
+				//		then absorb v or v's properties into this->k's properties
+				//		But only if $v object has __toString.
+				elseif ($propertyDefaultValue instanceof DateTimeInterface && method_exists($in, '__toString')) {
+					$this->{$propName} = new $propertyClassType($in->__toString());
+				}
 
-			//	Else give up.
-			else {
-				throw new InvalidArgumentException('cannot coerce object types');
-			}
-		}
-		else {
-			//	Then $v is not an object.
-			if ($in === null) {
+				//	Else give up.
+				else {
+					throw new InvalidArgumentException('cannot coerce object types');
+				}
+				break;
+
+			case 'null':
+			case 'NULL':
 				$this->{$propName} = clone $propertyDefaultValue;
-			}
-			elseif ($propertyClassType === 'stdClass' && is_array($in)) {
-				$this->{$propName} = (object)$in;
-			}
-			else {
+				break;
+
+			case 'array':
+				if ($propertyClassType === 'stdClass') {
+					$this->{$propName} = (object)$in;
+					break;
+				}
+			//	fall through
+
+			default:
 				//	Other classes might be able to absorb/convert other input,
 				//		like «DateTime::__construct("now")» accepts a string.
 				$this->{$propName} = new $propertyClassType($in);
-			}
 		}
 	}
 
@@ -788,45 +734,46 @@ abstract class TypedClass extends TypedAbstract implements Persistable
 	}
 
 	/**
-	 * Get variable.
+	 * Get variable by name.
 	 *
-	 * @param string $k
+	 * @param string $propName
 	 *
 	 * @return mixed
 	 */
-	protected function _getByName($k)
+	protected function _getByName($propName)
 	{
-		if (array_key_exists($k, $this->_map)) {
-			$k = $this->_map[$k];
+		if (array_key_exists($propName, $this->_map)) {
+			$propName = $this->_map[$propName];
 		}
 
-		$getter = '_get_' . $k;
+		if ($this->{$propName} instanceof AtomicInterface) {
+			return $this->{$propName}->get();
+		}
+
+		$getter = '_get_' . $propName;
 		if (method_exists($this->_calledClass, $getter)) {
-			return $this->{$getter}($v);
+			return $this->{$getter}();
 		}
 
-		if ($this->{$k} instanceof AtomicInterface) {
-			return $this->{$k}->get();
-		}
-
-		return $this->{$k};
+		return $this->{$propName};
 	}
 
 	/**
 	 * Returns true if key/prop name exists or is mappable.
-	 * Checks for entry to exist in _map but is mapped to nothing.
 	 *
-	 * @param string $k
+	 * @param string $propName
 	 *
 	 * @return bool
 	 */
-	private function _keyExists($k): bool
+	private function _keyExists($propName): bool
 	{
-		if (array_key_exists($k, $this->_map)) {
-			$k = $this->_map[$k];
+		if (array_key_exists($propName, $this->_map)) {
+			$propName = $this->_map[$propName];
 		}
 
-		return in_array($k, $this->_publicNames);
+		return in_array($propName, $this->_publicNames);
 	}
 
 }
+
+function emptyCompare($a, $b) { return $a === $b ? 0 : 1; }

@@ -1,15 +1,21 @@
 <?php
 
-use Diskerror\Typed\ArrayOptions as AO;
+require 'Tweet/TweetTrait.php';
 
-class Tweet extends Tweet\TweetBase
+use Diskerror\Typed\TypedClass;
+use Tweet\ReTweet;
+use Tweet\TweetTrait;
+
+class Tweet extends TypedClass
 {
-	//	This is only here as an example.
-	protected $_toBsonOptionDefaults = AO::OMIT_RESOURCE | AO::TO_BSON_DATE | AO::NO_CAST_BSON_ID;
+	protected $_map = [
+		'id' => '_id',    //	from Twitter
+	];
 
-	//	We can only test JSON option here.
-	protected $_toJsonOptionDefaults = AO::OMIT_EMPTY | AO::OMIT_RESOURCE | AO::TO_BSON_DATE;
+	protected $_id  = 0;
 
-	protected $retweeted_status      = [\Tweet\TweetBase::class];
+	use TweetTrait;
+
+	protected $retweeted_status = [ReTweet::class];
 
 }

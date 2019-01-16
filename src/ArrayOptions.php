@@ -17,7 +17,7 @@ namespace Diskerror\Typed;
 final class ArrayOptions
 {
 	/**
-	 * Omit null variables and empty strings from the array that is output.
+	 * Omit empty properties from the array that is output.
 	 */
 	const OMIT_EMPTY = 1;
 
@@ -27,27 +27,30 @@ final class ArrayOptions
 	const OMIT_RESOURCE = 2;
 
 	/**
-	 * Sometimes we want MongoDB to generate an "_id" that we will want the Persist
-	 * mechanism to return on find. This only omits the top level _id on saving.
-	 * Don't use this when you want to create and save your own _id.
-	 */
-	const OMIT_ID = 4;
-
-	/**
 	 * For Zend JSON encoding to JSON, these objects contain strings that should not be quoted.
 	 */
-	const KEEP_JSON_EXPR = 8;
+	const KEEP_JSON_EXPR = 4;
 
 	/**
 	 * All objects with a lineage of DateTime are converted to MongoDB\BSON\UTCDateTime or
 	 * this will preserve BSON date objects.
 	 */
-	const TO_BSON_DATE = 16;
+	const TO_BSON_DATE = 8;
 
 	/**
 	 * Setting this will instruct the conversion to an array to leave "_id" alone, don't convert to string.
 	 */
-	const NO_CAST_BSON_ID = 32;
+	const NO_CAST_BSON_ID = 16;
+
+	/**
+	 * Use jsonSerialize to translate to an array.
+	 */
+	const USE_JSON_SERIALIZE = 32;
+
+	/**
+	 * Use bsonSerialize to translate to an array.
+	 */
+	const USE_BSON_SERIALIZE = 64;
 
 	/**
 	 * @var int
