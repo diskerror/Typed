@@ -228,8 +228,8 @@ class AssignTest extends PHPUnit\Framework\TestCase
 
 		$c          = new stdClass();
 		$c->aMember = 'string data';
-		$t->myObj   = $c;    //	$c is cloned into myObj so don't use ===
-		$this->assertTrue($t->myObj == $c);
+		$t->myObj   = $c;
+		$this->assertTrue($t->myObj === $c);
 
 		unset($t->myObj);
 		$this->assertEquals(new stdClass(), $t->myObj);

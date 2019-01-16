@@ -4,16 +4,7 @@ namespace Tweet;
 
 use Diskerror\Typed\{TypedClass, DateTime};
 
-class TweetBase extends TypedClass
-{
-	protected $_map                     = [
-		'id'  => '_id',    //	from Twitter
-	];
-
-	protected $_nullCreatesNullInstance = true;
-
-	protected $_id                       = 0;
-
+trait TweetBase {
 	protected $created_at                = [DateTime::class, '2018-07-18 17:10:28'];
 
 	protected $contributors              = null;
