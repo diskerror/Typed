@@ -9,17 +9,8 @@
 
 namespace Diskerror\Typed;
 
-use function array_key_exists;
-use DateTimeInterface;
-use function gettype;
-use function in_array;
 use InvalidArgumentException;
-use function is_object;
-use function is_resource;
 use MongoDB\BSON\ObjectId;
-use MongoDB\BSON\UTCDateTime;
-use MongoDB\BSON\UTCDateTimeInterface;
-use function PHPSTORM_META\type;
 use Traversable;
 
 /**
@@ -303,7 +294,6 @@ abstract class TypedClass extends TypedAbstract
 		$toSerialize = [
 			'_arrayOptions' => $this->_arrayOptions,
 			'_jsonOptions'  => $this->_jsonOptions,
-			'_bsonOptions'  => $this->_bsonOptions,
 		];
 		foreach ($this->_publicNames as $k) {
 			$toSerialize[$k] = $this->{$k};
@@ -399,12 +389,8 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	final protected function _toArray(ArrayOptions $arrayOptions): array
 	{
-		$keepJsonExpr     = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$toBsonDate       = $arrayOptions->has(ArrayOptions::TO_BSON_DATE);
-		$useJsonSerialize = $arrayOptions->has(ArrayOptions::USE_JSON_SERIALIZE);
-		$useBsonSerialize = $arrayOptions->has(ArrayOptions::USE_BSON_SERIALIZE);
-
-		$ZJE_STRING = '\\Zend\\Json\\Expr';
+		$keepJsonExpr = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+		$ZJE_STRING   = '\\Zend\\Json\\Expr';
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
@@ -425,25 +411,13 @@ abstract class TypedClass extends TypedAbstract
 
 				case 'object':
 					if ($this->{$k} instanceof TypedAbstract) {
-						if ($useJsonSerialize) {
-							$arr[$k] = $v->jsonSerialize();
-						}
-						elseif ($useBsonSerialize) {
-							$arr[$k] = $v->bsonSerialize();
-						}
-						else {
-							$arr[$k] = $v->toArray();
-						}
+						$arr[$k] = $v->_toArray($arrayOptions);
+					}
+					elseif ($this->{$k} instanceof DateTime) {
+						$arr[$k] = $v;    // maintain the type
 					}
 					elseif (($this->{$k} instanceof $ZJE_STRING) && $keepJsonExpr) {
-						$arr[$k] = $this->{$k};    // maintain the type
-					}
-					elseif ($this->{$k} instanceof UTCDateTime && $toBsonDate) {
-						$arr[$k] = $this->{$k};    // maintain the type
-					}
-					elseif ($this->{$k} instanceof DateTimeInterface && $toBsonDate) {
-						$dtMilliSeconds = ($this->{$k}->getTimestamp() * 1000) + (int)$this->{$k}->format('v');
-						$arr[$k]        = new UTCDateTime($dtMilliSeconds);
+						$arr[$k] = $v;    // maintain the type
 					}
 					elseif (method_exists($v, 'toArray')) {
 						$arr[$k] = $v->toArray();
@@ -474,27 +448,6 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
-	 * Called automatically by MongoDB when a document has a field named
-	 * "__pclass".
-	 *
-	 * Since zero, null, false, or empty strings can be omitted from the
-	 * serialized data stored in Mongo this method prevents non-empty defaults
-	 * from being written to the restored members.
-	 *
-	 * @param array $data
-	 */
-	public function bsonUnserialize(array $data): void
-	{
-		$this->_initArrayOptions();
-		$this->_initMetaData();
-		$this->_initProperties();
-		foreach ($this->_publicNames as $publicName) {
-			$this->_setByName($publicName, array_key_exists($publicName, $data) ? $data[$publicName] : '');
-		}
-	}
-
-
-	/**
 	 * Check if the input data is good or needs to be massaged.
 	 *
 	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
@@ -506,7 +459,7 @@ abstract class TypedClass extends TypedAbstract
 	 * @return object|array
 	 * @throws InvalidArgumentException
 	 */
-	private function _massageBlockInput(&$in)
+	protected function _massageBlockInput(&$in)
 	{
 		if (is_string($in)) {
 			$in          = json_decode($in);
@@ -645,12 +598,13 @@ abstract class TypedClass extends TypedAbstract
 		/** All properties are now handled as objects. */
 		$propertyDefaultValue = $this->_defaultValues[$propName];
 
-		//	Handle our two special object types.
+		//	Handle our atomic types.
 		if ($propertyDefaultValue instanceof AtomicInterface) {
 			$this->{$propName}->set($in);
 			return;
 		}
 
+		//	Handle our two special object types.
 		if ($propertyDefaultValue instanceof TypedAbstract) {
 			$this->{$propName}->assign($in);
 			return;
@@ -659,30 +613,17 @@ abstract class TypedClass extends TypedAbstract
 		//	Handler for other types of objects.
 		$propertyClassType = get_class($propertyDefaultValue);
 
+		//	Treat DateTime related objects as atomic.
+		if ($propertyDefaultValue instanceof DateTime) {
+			$this->{$propName} = new $propertyClassType($in);
+			return;
+		}
+
 		switch (gettype($in)) {
 			case 'object':
 				//	if identical types then reference the original object
 				if ($propertyClassType === get_class($in)) {
 					$this->{$propName} = $in;
-				}
-
-				//	Treat DateTime related objects as atomic in these next cases.
-				elseif (
-					($propertyDefaultValue instanceof DateTimeInterface) && ($in instanceof UTCDateTimeInterface)
-				) {
-					$this->{$propName} = new $propertyClassType($in->toDateTime());
-				}
-				elseif (
-					($propertyDefaultValue instanceof UTCDateTimeInterface) && ($in instanceof DateTimeInterface)
-				) {
-					$this->{$propName} = new $propertyClassType($in->getTimestamp() * 1000);
-				}
-
-				//	if this->k is a DateTime object and v is any other type
-				//		then absorb v or v's properties into this->k's properties
-				//		But only if $v object has __toString.
-				elseif ($propertyDefaultValue instanceof DateTimeInterface && method_exists($in, '__toString')) {
-					$this->{$propName} = new $propertyClassType($in->__toString());
 				}
 
 				//	Else give up.
@@ -773,7 +714,4 @@ abstract class TypedClass extends TypedAbstract
 
 		return in_array($propName, $this->_publicNames);
 	}
-
 }
-
-function emptyCompare($a, $b) { return $a === $b ? 0 : 1; }

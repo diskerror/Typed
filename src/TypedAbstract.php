@@ -11,7 +11,6 @@ namespace Diskerror\Typed;
 
 use Countable;
 use IteratorAggregate;
-use MongoDB\BSON\Persistable;
 use Serializable;
 use JsonSerializable;
 
@@ -21,7 +20,7 @@ use JsonSerializable;
  *
  * @package Diskerror\Typed
  */
-abstract class TypedAbstract implements Countable, IteratorAggregate, Serializable, JsonSerializable, Persistable
+abstract class TypedAbstract implements Countable, IteratorAggregate, Serializable, JsonSerializable
 {
 	/**
 	 * Holds options for "toArray" customizations.
@@ -50,22 +49,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 * @var int
 	 */
 	protected $_jsonOptionDefaults =
-		ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR | ArrayOptions::USE_JSON_SERIALIZE;
-
-	/**
-	 * Holds options for "toArray" customizations when used by MongoDB.
-	 *
-	 * @var ArrayOptions
-	 */
-	protected $_bsonOptions;
-
-	/**
-	 * Holds default options for "toArray" customizations when used by MongoDB/bsonSerialize.
-	 *
-	 * @var int
-	 */
-	protected $_bsonOptionDefaults =
-		ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::TO_BSON_DATE | ArrayOptions::NO_CAST_BSON_ID | ArrayOptions::USE_BSON_SERIALIZE;
+		ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR;
 
 	/**
 	 * Assign.
@@ -96,11 +80,19 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 */
 	abstract public function merge($in);
 
+	/**
+	 * Check if the input data is good or needs to be massaged.
+	 *
+	 * @param $in
+	 *
+	 * @return object|array
+	 */
+	abstract protected function _massageBlockInput(&$in);
+
 	protected function _initArrayOptions()
 	{
 		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
 		$this->_jsonOptions  = new ArrayOptions($this->_jsonOptionDefaults);
-		$this->_bsonOptions  = new ArrayOptions($this->_bsonOptionDefaults);
 	}
 
 	/**
@@ -140,16 +132,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	public function setArrayOptions(int $opts)
 	{
 		$this->_arrayOptions->set($opts);
-	}
-
-	/**
-	 * Called automatically by MongoDB.
-	 *
-	 * @return array
-	 */
-	public function bsonSerialize(): array
-	{
-		return $this->_toArray($this->_bsonOptions);
 	}
 
 	/**

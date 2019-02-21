@@ -10,7 +10,7 @@ Copies all matching member names while maintaining original types and doing a de
 Input can be an object or an array. A NULL or FALSE will set the *Typed* object to it's default values.
 
 ### replace
-This method is simalar to the "assign" method except that unmatched keys from the input are left untouched.
+This method is similar to the "assign" method except that unmatched keys from the input are left untouched.
 
 ### merge
 This method is similar to "replace" above except that it clones the current object and then replaces matching values with the input values and returns the new Typed object.
@@ -35,6 +35,8 @@ These manage the usage of the options for how these classes are converted to an 
 The *Serializable* classes are coded to store the minimum data required to fully rebuild the data classes, and make use of extensive self-checking in the *Typed* classes. Many of the housekeeping properties are not serialized.
 
 The implementations of *JsonSerializable* and *Persistable* only return the user defined members. A *Typed* class or array can be reconstituted by passing the JSON string to the appropriate constructor. The options for converting these classes to an array will then be the default values.
+
+**NOTE:** Usage of *Persistable* and BSON data conversion have been split off to a new project so that *Typed* can be used without being forced to install the MongoDB extensions and frameworks when they are not being used.
 
 ## TypedClass
 The derivitives of *TypedClass* are contracted to do these things:

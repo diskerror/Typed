@@ -39,7 +39,7 @@
 		"error_message": [
 			{
 				"keys": {
-					"occured_on": 1
+					"occurred_on": 1
 				},
 				"options": {
 					"expireAfterSeconds": 604800

@@ -1,7 +1,5 @@
 <?php
 
-use Diskerror\Typed\ArrayOptions as AO;
-
 class MongoTest extends PHPUnit\Framework\TestCase
 {
 	public function testTweet()
@@ -21,12 +19,6 @@ class MongoTest extends PHPUnit\Framework\TestCase
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/mongo2.json',
 			json_encode($tweet->jsonSerialize())
-		);
-
-//		jsonPrint($tweet->bsonSerialize());exit;
-		$this->assertJsonStringEqualsJsonFile(
-			__DIR__ . '/results/mongo3.json',
-			json_encode($tweet->bsonSerialize())
 		);
 	}
 
@@ -54,7 +46,7 @@ class MongoTest extends PHPUnit\Framework\TestCase
 //					[['errors' => 1]],
 //				],
 //				'error_message' => [
-//					['keys' => ['occured_on' => 1], 'options' => ['expireAfterSeconds' => 60 * 60 * 24 * 7]],
+//					['keys' => ['occurred_on' => 1], 'options' => ['expireAfterSeconds' => 60 * 60 * 24 * 7]],
 //					['keys' => ['message' => 1]],
 //					['keys' => ['code' => 1]],
 //				],

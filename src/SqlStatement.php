@@ -35,7 +35,7 @@ class SqlStatement
 	 * An empty "include" array means to use all.
 	 *
 	 * @param array|\stdClass $input
-	 * @param array              $include
+	 * @param array           $include
 	 *
 	 * @return string
 	 */
@@ -75,14 +75,14 @@ class SqlStatement
 				case 'bool':
 				case 'boolean':
 					$sqlStrs[] = $kEq . ($v ? '1' : '0');
-				break;
+					break;
 
 				case 'int':
 				case 'integer':
 				case 'float':
 				case 'double':
 					$sqlStrs[] = $kEq . $v;
-				break;
+					break;
 
 				case 'string':
 					//	if $v is a string that contains the text 'NULL' then
@@ -97,27 +97,32 @@ class SqlStatement
 						$sqlStrs[] = $kEq . '"' . addslashes($v) . '"';
 //						$sqlStrs[] = $kEq . '0x' . bin2hex($v);
 					}
-				break;
+					break;
 
 				case 'null':
 				case 'NULL':
 					//	if $v is a NULL
 					$sqlStrs[] = $kEq . 'NULL';
-				break;
+					break;
 
-				case 'array':
 				case 'object':
+					if ($v instanceof DateTime) {
+						$sqlStrs[] = $kEq . '"' . $v . '"';
+						break;
+					}
+					//	other objects fall through
+				case 'array':
 					$sqlStrs[] = $kEq . '"' . addslashes(json_encode($v)) . '"';
 //					$sqlStrs[] = $kEq . '0x' . bin2hex(json_encode($v));
 					$jsonLastErr = json_last_error();
 					if ($jsonLastErr !== JSON_ERROR_NONE) {
 						throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 					}
-				break;
+					break;
 
 				//	resource, just ignore these
 				default:
-				break;
+					break;
 			}
 		}
 

@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection ALL */
 
 class ClassTest extends PHPUnit\Framework\TestCase
 {

@@ -2,8 +2,10 @@
 
 namespace Diskerror\Typed;
 
+use LogicException;
+
 /**
- * This class adds convienence methods for date-only to Diskerror\DateTime.
+ * This class adds convenience methods for date-only to Diskerror\DateTime.
  *
  * Date and time can be passed in with objects or associative arrays.
  *
@@ -12,7 +14,7 @@ namespace Diskerror\Typed;
  * @copyright     Copyright (c) 2011 Reid Woodbury Jr.
  * @license       http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
  */
-class Date extends \Diskerror\Typed\DateTime
+class Date extends DateTime
 {
 	/**
 	 * Adds date-only handling to DateTime object.
@@ -81,10 +83,18 @@ class Date extends \Diskerror\Typed\DateTime
 	 * @param int       $sec
 	 * @param int       $mic
 	 *
-	 * @throws \LogicException
+	 * @throws LogicException
 	 */
 	public function setTime($hou, $min = 0, $sec = 0, $mic = 0)
 	{
-		throw new \LogicException('method not available in Date class');
+		throw new LogicException('method not available in Date class');
+	}
+
+	/**
+	 * @return string
+	 */
+	public function jsonSerialize(): string
+	{
+		return $this->format('Y-m-d');
 	}
 }

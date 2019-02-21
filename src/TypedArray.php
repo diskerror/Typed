@@ -9,7 +9,6 @@
 
 namespace Diskerror\Typed;
 
-use function array_diff;
 use ArrayAccess;
 use InvalidArgumentException;
 use LengthException;
@@ -35,7 +34,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @var array
 	 */
-	private $_container;
+	protected $_container;
 
 	/**
 	 * Constructor.
@@ -101,6 +100,14 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			case 'array':
 				$this->_type = TypedArray::class;
 				break;
+
+			case 'date':
+				$this->_type = Date::class;
+				break;
+
+			case 'datetime':
+				$this->_type = DateTime::class;
+				break;
 		}
 
 		$this->assign($values);
@@ -117,7 +124,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	private static function _massageBlockInput(&$in)
+	protected function _massageBlockInput(&$in)
 	{
 		if (is_string($in)) {
 			$in          = json_decode($in);
@@ -165,7 +172,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function assign($in)
 	{
-		self::_massageBlockInput($in);
+		$this->_massageBlockInput($in);
 
 		$this->_container = [];    //	initialize array or remove all current values
 
@@ -183,7 +190,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function replace($in)
 	{
-		self::_massageBlockInput($in);
+		$this->_massageBlockInput($in);
 
 		foreach ($in as $k => $v) {
 			$this->offsetSet($k, $v);
@@ -269,7 +276,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			'_type'         => $this->_type,
 			'_arrayOptions' => $this->_arrayOptions,
 			'_jsonOptions'  => $this->_jsonOptions,
-			'_bsonOptions'  => $this->_bsonOptions,
 			'_container'    => $this->_container,
 		]);
 	}
@@ -290,19 +296,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		$this->_type         = $data['_type'];
 		$this->_arrayOptions = $data['_arrayOptions'];
 		$this->_jsonOptions  = $data['_jsonOptions'];
-		$this->_bsonOptions  = $data['_bsonOptions'];
 		$this->_container    = $data['_container'];
-	}
-
-	/**
-	 * Called automatically by MongoDB when a document has a field namaed "__pclass".
-	 *
-	 * @param array $data
-	 */
-	public function bsonUnserialize(array $data)
-	{
-		$this->_initArrayOptions();
-		$this->assign($data);
 	}
 
 	/**
@@ -323,30 +317,11 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 		elseif (is_a($this->_type, TypedAbstract::class, true)) {
-			if ($arrayOptions->has(ArrayOptions::USE_JSON_SERIALIZE)) {
-				foreach ($this->_container as $k => $v) {
-					$output[$k] = $v->jsonSerialize();
-				}
-			}
-			elseif ($arrayOptions->has(ArrayOptions::USE_BSON_SERIALIZE)) {
-				foreach ($this->_container as $k => $v) {
-					$output[$k] = $v->bsonSerialize();
-				}
-			}
-			else {
-				foreach ($this->_container as $k => $v) {
-					$output[$k] = $v->toArray();
-				}
-			}
-		}
-		elseif (is_a($this->_type, \DateTime::class, true) &&
-				$arrayOptions->has(ArrayOptions::TO_BSON_DATE)) {
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = new \MongoDB\BSON\UTCDateTime($v->getTimestamp() * 1000);
+				$output[$k] = $v->toArray();
 			}
 		}
-		elseif (is_a($this->_type, '\\MongoDB\\BSON\\UTCDateTime', true) &&
-				$arrayOptions->has(ArrayOptions::TO_BSON_DATE)) {
+		elseif (is_a($this->_type, DateTime::class, true)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}
@@ -398,7 +373,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function merge($ta): self
 	{
-		self::_massageBlockInput($in);
+		$this->_massageBlockInput($in);
 
 		$ret = clone $this;
 
@@ -460,13 +435,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * # $this->_type is null (accept any type and value, like a standard array);
 	 * # $this->_type is a scalar [bool, int, float, string];
 	 * # $this->_type is an array (check if input value is an object and has toArray);
-	 * # $this->_type is an object of type TypedAbstract (call assign);
+	 * # $this->_type is an object of type TypedAbstract (call replace());
 	 * # $this->_type is any other object.
 	 *
 	 * There are 3 conditions involving $offset:
 	 * # $offset is null;
-	 * # $offset is set and exists;
 	 * # $offset is set and does not exist (null);
+	 * # $offset is set and exists;
 	 *
 	 * There are 4 conditions for handling $value:
 	 * # $value is null (replace current scalar values with null, reset non-scalars);
@@ -479,18 +454,30 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function offsetSet($k, $v)
 	{
-		if (null === $k) {
-			$this->_container[] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+		if (null === $k || !array_key_exists($k, $this->_container)) {
+			$v = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+
+			if (null === $k) {
+				$this->_container[] = $v;
+			}
+			else {
+				$this->_container[$k] = $v;
+			}
+
+			return;
 		}
-		elseif (array_key_exists($k, $this->_container) && is_a($this->_type, AtomicInterface::class, true)) {
+
+		if (is_a($this->_type, AtomicInterface::class, true)) {
 			$this->_container[$k]->set($v);
+			return;
 		}
-		elseif (array_key_exists($k, $this->_container) && is_a($this->_type, TypedAbstract::class, true)) {
+
+		if (is_a($this->_type, TypedAbstract::class, true)) {
 			$this->_container[$k]->replace($v);
+			return;
 		}
-		else {
-			$this->_container[$k] = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
-		}
+
+		$this->_container[$k] = new $this->_type($v);
 	}
 
 	/**

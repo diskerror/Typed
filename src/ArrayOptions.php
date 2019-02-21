@@ -32,25 +32,9 @@ final class ArrayOptions
 	const KEEP_JSON_EXPR = 4;
 
 	/**
-	 * All objects with a lineage of DateTime are converted to MongoDB\BSON\UTCDateTime or
-	 * this will preserve BSON date objects.
-	 */
-	const TO_BSON_DATE = 8;
-
-	/**
 	 * Setting this will instruct the conversion to an array to leave "_id" alone, don't convert to string.
 	 */
 	const NO_CAST_BSON_ID = 16;
-
-	/**
-	 * Use jsonSerialize to translate to an array.
-	 */
-	const USE_JSON_SERIALIZE = 32;
-
-	/**
-	 * Use bsonSerialize to translate to an array.
-	 */
-	const USE_BSON_SERIALIZE = 64;
 
 	/**
 	 * @var int

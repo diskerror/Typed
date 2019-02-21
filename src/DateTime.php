@@ -2,24 +2,27 @@
 
 namespace Diskerror\Typed;
 
+use DateTime as DT;
 use DateTimeZone;
 use InvalidArgumentException;
+use JsonSerializable;
 
 /**
- * This class adds convienence methods to the built-in DateTime.
+ * This class adds convenience methods to the built-in DateTime.
  *
  * Date and time can be passed in with objects or associative arrays.
  *
  * @copyright     Copyright (c) 2011 Reid Woodbury Jr.
  * @license       http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
  */
-class DateTime extends \DateTime
+class DateTime extends DT implements JsonSerializable
 {
 	/**
 	 * Default MySQL datetime format.
 	 */
 	const STRING_IO_FORMAT       = 'Y-m-d H:i:s';
 	const STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
+	const STRING_IO_FORMAT_JSON  = 'Y-m-d\TH:i:s.vP';
 
 	/**
 	 * Accepts a DateTime object or;
@@ -28,24 +31,23 @@ class DateTime extends \DateTime
 	 * See setTime and setDate for more information.
 	 *
 	 * @param object|array|string $time     -OPTIONAL
-	 * @param \DateTimeZone       $timezone -OPTIONAL
+	 * @param DateTimeZone        $timezone -OPTIONAL
 	 *
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
-		if (!is_a($timezone, 'DateTimeZone')) {
+		if (!($timezone instanceof DateTimeZone)) {
 			$timezone = new DateTimeZone(date_default_timezone_get());
 		}
 
 		switch (gettype($time)) {
 			case 'object':
-				if (is_a($time, 'MongoDB\BSON\UTCDateTimeInterface')) {
-					$time = $time->toDateTime();
-				}
-				if (is_a($time, 'DateTimeInterface')) {
-					$tz = $timezone ?: $time->getTimezone();
-					parent::__construct($time->format(self::STRING_IO_FORMAT_MICRO), $tz);
+				if ($time instanceof DateTimeInterface) {
+					parent::__construct(
+						$time->format(self::RFC3339_EXTENDED),
+						$time->getTimezone()
+					);
 					break;
 				}
 			//	no break, fall through
@@ -53,7 +55,7 @@ class DateTime extends \DateTime
 				parent::__construct('now', $timezone);
 				$this->setDate($time);
 				$this->setTime($time);
-			break;
+				break;
 
 			case 'string':
 				if ($time === '') {
@@ -67,28 +69,28 @@ class DateTime extends \DateTime
 					//	if this contains fractional seconds
 					//	$tmp is a PHP \DateTime
 					$tmp = \DateTime::createFromFormat('U.u', (float)substr($time, 1), $timezone);
-					parent::__construct($tmp->format(self::STRING_IO_FORMAT_MICRO), $timezone);
+					parent::__construct($tmp->format(self::RFC3339_EXTENDED), $timezone);
 				}
 				else {
 					parent::__construct($time, $timezone);
 				}
-			break;
+				break;
 
 			case 'int':
 			case 'integer':
 				parent::__construct('@' . $time, $timezone);
-			break;
+				break;
 
 			case 'float':
 			case 'double':
 				$tmp = \DateTime::createFromFormat('U.u', $time, $timezone);
-				parent::__construct($tmp->format(self::STRING_IO_FORMAT_MICRO), $timezone);
-			break;
+				parent::__construct($tmp->format(self::RFC3339_EXTENDED), $timezone);
+				break;
 
 			case 'null':
 			case 'NULL':
 				parent::__construct('now', $timezone);
-			break;
+				break;
 
 			default:
 				throw new InvalidArgumentException('first argument is the wrong type: ' . gettype($time));
@@ -96,33 +98,7 @@ class DateTime extends \DateTime
 	}
 
 	/**
-	 * Create DateTime object defaults to something that will accept
-	 * the default MySQL datetime format of "Y-m-d H:i:s.u".
-	 *
-	 * @param string        $formatOrTime
-	 * @param string        $time     -OPTIONAL
-	 * @param \DateTimeZone $timezone -OPTIONAL
-	 *
-	 * @return DateTime
-	 */
-//	public static function createFromFormat($formatOrTime, $time = '', $timezone = null): self
-//	{
-//		$parsed = ($time === '') ? date_parse($formatOrTime) : date_parse_from_format($formatOrTime, $time);
-//
-//		$d = new self();
-//
-//		if ($timezone !== null) {
-//			$d->setTimezone($timezone);
-//		}
-//
-//		$d->setDate($parsed);
-//		$d->setTime($parsed);
-//
-//		return $d;
-//	}
-
-	/**
-	 * Adds the ability to pass in an arrayor object with key names of variable
+	 * Adds the ability to pass in an array or object with key names of variable
 	 *      length but a minimum of 3 characters, upper or lower case.
 	 * Requires one object, one associative array, or 3 integer parameters.
 	 *
@@ -149,18 +125,18 @@ class DateTime extends \DateTime
 					switch (substr(strtolower($k), 0, 3)) {
 						case 'yea':
 							$year = $v;
-						break;
+							break;
 
 						case 'mon':
 							$month = $v;
-						break;
+							break;
 
 						case 'day':
 							$day = $v;
-						break;
+							break;
 					}
 				}
-			break;
+				break;
 		}
 
 		parent::setDate((int)$year, (int)$month, (int)$day);
@@ -195,23 +171,23 @@ class DateTime extends \DateTime
 					switch (substr(strtolower($k), 0, 3)) {
 						case 'hou':
 							$hour = $v;
-						break;
+							break;
 
 						case 'min':
 							$minute = $v;
-						break;
+							break;
 
 						case 'sec':
 							$second = $v;
-						break;
+							break;
 
 						case 'mcs':
 							$mcs = $v;
-						break;
+							break;
 
 						case 'fra': //	Convert "fraction", a float, to microseconds as an integer
 							$mcs = $v * 1000000;
-						break;
+							break;
 					}
 				}
 		}
@@ -230,7 +206,7 @@ class DateTime extends \DateTime
 	public function __toString()
 	{
 		if ($this->format('u') > 0) {
-			return $this->format(self::STRING_IO_FORMAT_MICRO);
+			return rtrim($this->format(self::STRING_IO_FORMAT_MICRO), '0');    //	also remove trailing zeros
 		}
 
 		return $this->format(self::STRING_IO_FORMAT);
@@ -243,7 +219,7 @@ class DateTime extends \DateTime
 	 */
 	public function getTimestampMilli(): int
 	{
-		return (int)($this->format('U.v') * 1000);
+		return ($this->format('U.v') * 1000);
 	}
 
 	/**
@@ -256,4 +232,11 @@ class DateTime extends \DateTime
 		return (float)$this->format('U.u');
 	}
 
+	/**
+	 * @return string
+	 */
+	public function jsonSerialize(): string
+	{
+		return $this->format(self::RFC3339_EXTENDED);
+	}
 }
