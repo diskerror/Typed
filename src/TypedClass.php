@@ -387,7 +387,7 @@ abstract class TypedClass extends TypedAbstract
 	/**
 	 * @return array
 	 */
-	final protected function _toArray(ArrayOptions $arrayOptions): array
+	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
 		$keepJsonExpr = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
 		$ZJE_STRING   = '\\Zend\\Json\\Expr';
@@ -395,12 +395,6 @@ abstract class TypedClass extends TypedAbstract
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);    //	AtomicInterface objects are returned as scalars.
-
-			if ($k === '_id' && $v instanceof ObjectId && $arrayOptions->has(ArrayOptions::NO_CAST_BSON_ID)) {
-				//	Bson\ObjectId will become a string if we don't handle it here.
-				$arr['_id'] = $v;
-				continue;
-			}
 
 			switch (gettype($v)) {
 				case 'resource':
