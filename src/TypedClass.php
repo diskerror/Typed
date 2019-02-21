@@ -10,7 +10,6 @@
 namespace Diskerror\Typed;
 
 use InvalidArgumentException;
-use MongoDB\BSON\ObjectId;
 use Traversable;
 
 /**
@@ -188,6 +187,16 @@ abstract class TypedClass extends TypedAbstract
 				$this->{$k} = clone $v;
 			}
 		}
+	}
+
+	/**
+	 * Return array of sudo public property names.
+	 *
+	 * @return array
+	 */
+	protected function _getPublicNames()
+	{
+		return $this->_publicNames;
 	}
 
 	/**
