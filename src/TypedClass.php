@@ -283,8 +283,7 @@ abstract class TypedClass extends TypedAbstract
 	 * String representation of PHP object.
 	 *
 	 * This serialization, as opposed to JSON or BSON, does not unwrap the
-	 * structured data. It does not store data that is part of the class
-	 * definition.
+	 * structured data. It only omits data that is part of the class definition.
 	 *
 	 * @link  https://php.net/manual/en/serializable.serialize.php
 	 * @return string the string representation of the object or null

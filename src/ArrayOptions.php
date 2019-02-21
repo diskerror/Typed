@@ -32,9 +32,10 @@ final class ArrayOptions
 	const KEEP_JSON_EXPR = 4;
 
 	/**
-	 * Setting this will instruct the conversion to an array to leave "_id" alone, don't convert to string.
+	 * Setting this will instruct the conversion to an array to leave MongoDB\BSON instances alone,
+	 * don't convert to string. (Used in Diskerror\TypedBSON.)
 	 */
-	const NO_CAST_BSON_ID = 16;
+	const NO_CAST_BSON = 8;
 
 	/**
 	 * @var int
