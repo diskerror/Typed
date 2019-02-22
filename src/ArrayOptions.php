@@ -87,6 +87,6 @@ final class ArrayOptions
 	 */
 	public function has(int $opt): bool
 	{
-		return ($this->_options & $opt) > 0;
+		return ($this->_options & $opt);
 	}
 }
