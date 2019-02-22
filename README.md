@@ -20,23 +20,26 @@ Returns an associative array of this object with only the appropriate members. A
 
 * OMIT\_EMPTY: null or empty members are omitted to shrink storage or transmission needs.
 * OMIT\_RESOURCE: resource IDs are meaningless for transmitted data.
-* OMIT\_ID: a top level member with the name "\_id" is assumed to be intended as a Mongo primary key and this option tells us to omit it from the saved object forcing MongoDB to automatically create a BSON ObjectId.
 * KEEP\_JSON\_EXPR: objects of type *Zend\Json\Expr* remain untouched.
-* TO\_BSON\_DATE: conversion of all objects with a *DateTime* lineage to *MongoDB\BSON\UTCDateTime* with all times assumed to be UTC. *MongoDB\BSON\UTCDateTime* objects will remain untouched.
-* NO\_CAST\_BSON\_ID: pass the data in "\_id" as is and not cast to *ObjectId*.
+
+The following are defined here but are only used in the [project defining the MongoDB\BSON](https://github.com/diskerror/TypedBSON) support.
+
+* NO\_CAST\_BSON: Setting this will instruct the conversion to an array to leave *MongoDB\BSON* instances alone.
+* CAST\_DATETIME\_TO\_BSON: Cast all *DateTimeInterface* objects to *MongoDB\BSON\UTCDateTime* objects.
+* CAST\_ID\_TO\_OBJECTID: Cast member with the name “_id” into *MongoDB\BSON\ObjectId* when performing “bsonSerialize()”.
 
 ### getArrayOptions & setArrayOptions
 These manage the usage of the options for how these classes are converted to an array.
 
 ### Serialization
 
-*TypedInterface* extends the builtin *Serializable* and *JsonSerializable* classes which *TypedArray* and *TypedClass* both implement. *TypedClass* also implements the interface *MongoDB\BSON\Persistable* from the _MongoDb_ extension.
+*TypedInterface* extends the builtin *Serializable* and *JsonSerializable* classes which *TypedArray* and *TypedClass* both implement.
 
 The *Serializable* classes are coded to store the minimum data required to fully rebuild the data classes, and make use of extensive self-checking in the *Typed* classes. Many of the housekeeping properties are not serialized.
 
 The implementations of *JsonSerializable* and *Persistable* only return the user defined members. A *Typed* class or array can be reconstituted by passing the JSON string to the appropriate constructor. The options for converting these classes to an array will then be the default values.
 
-**NOTE:** Usage of *Persistable* and BSON data conversion have been split off to a new project so that *Typed* can be used without being forced to install the MongoDB extensions and frameworks when they are not being used.
+**NOTE:** Usage of *Persistable* and BSON data conversion have been split off to a new [project](https://github.com/diskerror/TypedBSON) so that *Typed* can be used without being forced to install the MongoDB extensions and frameworks when they are not being used.
 
 ## TypedClass
 The derivitives of *TypedClass* are contracted to do these things:
@@ -56,7 +59,7 @@ The derivitives of *TypedClass* are contracted to do these things:
 
 The users' class properties must be declared as *protected* or *private*. The names for the properties must follow the naming convention that the intended *public* members must not start with an underscore. This borrows from the Zend Framework property naming convention of protected and private property names starting with an underscore.
 
-These properties must also be initialized with a value. Each value's' initial type is stored within the object and used to cast new values to the same type.
+These properties must also be initialized with a value. Each values' initial type is stored within the object and used to cast new values to the same type.
 
 More complex types can be set with array notation as such:
 ```
@@ -69,15 +72,17 @@ class MyClass extends Diskerror\Typed\TypedClass
 ```
 The first member of the array is the name of the class and the remaining members become the parameters passed to the class constructor.
 
+Even more complex examples can be found int the "tests" directory.
+
 ## TypedArray
 The instances or derivatives of *TypedArray* are contracted to do these things:
 * It will otherwise behave like a standard PHP associative array.
 * Every member be the same type.
 * Silently cast assigned data in the most obvious way when input is of a different type.
-* Impliment “toArray” to return a deeply transformed associative array.
+* Impliment “toArray” to return a deeply transformed PHP associative array.
 
 ## DateTime and Date
-These two classes have been moved from [Utilities](https://github.com/diskerror/Utilities) and that repository is now considered obsolete. These classes add convenience methods to the built-in PHP *DateTime* class. This includes the *__toString* method that returns a date-time string formatted for the default MySQL date-time format, and also adds handling of *DateTime* for MongoDB.
+These two classes have been moved from [Utilities](https://github.com/diskerror/Utilities) and that repository is now considered obsolete. These classes add convenience methods to the built-in PHP *DateTime* class. This includes the *__toString* method that returns a date-time string formatted for the default MySQL date-time format.
 
 # Classes for autoload
 This class is best thought of as namespaces of functions. Class design is used to activate the autoload feature of PHP.
