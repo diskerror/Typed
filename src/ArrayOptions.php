@@ -32,10 +32,24 @@ final class ArrayOptions
 	const KEEP_JSON_EXPR = 4;
 
 	/**
+	 * The following options are used with the project TypedBSON.
+	 */
+
+	/**
 	 * Setting this will instruct the conversion to an array to leave MongoDB\BSON instances alone,
-	 * don't convert to string. (Used in Diskerror\TypedBSON.)
+	 * don't convert to string.
 	 */
 	const NO_CAST_BSON = 8;
+
+	/**
+	 * Cast all DateTimeInterface objects to UTCDateTime.
+	 */
+	const CAST_DATETIME_TO_BSON = 16;
+
+	/**
+	 * Cast member with the name "_id" into MongoDB\BSON\ObjectId when doing bsonSerialize().
+	 */
+	const CAST_ID_TO_OBJECTID = 32;
 
 	/**
 	 * @var int
