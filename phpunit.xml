@@ -31,9 +31,6 @@
         <testsuite name="array">
             <file>tests/ArrayTest.php</file>
         </testsuite>
-        <testsuite name="mongo">
-            <file>tests/MongoTest.php</file>
-        </testsuite>
         <testsuite name="serialize">
             <file>tests/SerializeTest.php</file>
         </testsuite>
