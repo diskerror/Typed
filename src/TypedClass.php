@@ -9,6 +9,7 @@
 
 namespace Diskerror\Typed;
 
+use DateTimeInterface;
 use InvalidArgumentException;
 use Traversable;
 
@@ -415,7 +416,7 @@ abstract class TypedClass extends TypedAbstract
 					if ($this->{$k} instanceof TypedAbstract) {
 						$arr[$k] = $v->_toArray($arrayOptions);
 					}
-					elseif ($this->{$k} instanceof DateTime) {
+					elseif ($this->{$k} instanceof DateTimeInterface) {
 						$arr[$k] = $v;    // maintain the type
 					}
 					elseif (($this->{$k} instanceof $ZJE_STRING) && $keepJsonExpr) {
@@ -440,7 +441,7 @@ abstract class TypedClass extends TypedAbstract
 
 		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
 			foreach ($arr as $k => &$v) {
-				if (empty($v)) {
+				if (empty($v) || (is_object($v) && empty((array)$v))) {
 					unset($arr[$k]);
 				}
 			}

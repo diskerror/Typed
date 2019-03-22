@@ -10,6 +10,7 @@
 namespace Diskerror\Typed;
 
 use ArrayAccess;
+use DateTimeInterface;
 use InvalidArgumentException;
 use LengthException;
 use Traversable;
@@ -308,7 +309,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
-		$output = [];
+		$omitEmpty = $arrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$output    = [];
 
 		//	At this point all items are some type of object.
 		if (is_a($this->_type, AtomicInterface::class, true)) {
@@ -318,10 +320,10 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		}
 		elseif (is_a($this->_type, TypedAbstract::class, true)) {
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v->toArray();
+				$output[$k] = $v->_toArray($arrayOptions);
 			}
 		}
-		elseif (is_a($this->_type, DateTime::class, true)) {
+		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}
@@ -337,21 +339,22 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 		else {
-			//	else this is some generic object then copy non-null/non-empty members or properties
-			$omitEmpty = !$arrayOptions->has(ArrayOptions::OMIT_EMPTY);
-			//	for each generic object in the container...
+			//	else this is an array of some generic objects
 			foreach ($this->_container as $k => $v) {
-				//////////////////	If omitEmpty then remove empty members from this generic object.
-				$output[$k] = $omitEmpty ? array_diff((array)$v, ['', 0, 0.0, '0', null, false, []]) : (array)$v;
+				$output[$k] = $v;
 			}
 		}
 
-		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
+		if ($omitEmpty) {
 			//	Is this an indexed array (not associative)?
 			$isIndexed = (array_values($output) === $output);
 
 			//	Remove empty items.
-			$output = array_diff($output, ['', 0, 0.0, '0', null, false, []]);
+			foreach ($output as $k => $v) {
+				if (empty($v) || (is_object($v) && empty((array)$v))) {
+					unset($output[$k]);
+				}
+			}
 
 			//	If it's an indexed array then fix the indexes.
 			if ($isIndexed) {
