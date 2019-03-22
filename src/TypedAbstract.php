@@ -72,7 +72,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 
 	/**
 	 * Merge $this struct with $in struct and return new structure. Input
-	 * values will replace cloned values where they match.
+	 * values will replace cloned values where keys match.
 	 *
 	 * @param mixed $in
 	 *
