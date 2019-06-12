@@ -121,7 +121,7 @@ abstract class TypedClass extends TypedAbstract
 		$this->_calledClass = get_called_class();
 
 		//	Build array of default values with converted types.
-		//	First get all class properties then remove elements with names starting with underscore, except "_id".
+		//	First, get all class properties then remove elements with names starting with underscore, except "_id".
 		$this->_defaultValues = get_class_vars($this->_calledClass);
 		foreach ($this->_defaultValues as $k => &$v) {
 			if ($k[0] === '_' && $k !== '_id') {
@@ -211,7 +211,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * Input can be an object, or an indexed or associative array.
 	 *
-	 * @param object|array|string|bool|null $in -OPTIONAL
+	 * @param object|array|string|bool|null $in
 	 */
 	public function assign($in)
 	{
