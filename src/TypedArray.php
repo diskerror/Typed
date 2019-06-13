@@ -66,7 +66,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		}
 
 		$this->_initArrayOptions();
+		$this->_initMetaData();
 
+		$this->assign($values);
+	}
+
+	protected function _initMetaData()
+	{
 		switch (strtolower($this->_type)) {
 			case '':
 			case 'null':
@@ -110,8 +116,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				$this->_type = DateTime::class;
 				break;
 		}
-
-		$this->assign($values);
 	}
 
 	/**
