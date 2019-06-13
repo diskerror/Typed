@@ -132,11 +132,16 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	protected function _massageBlockInput(&$in)
 	{
 		if (is_string($in)) {
+			if ('' === $in) {
+				$in = [];
+				return;
+			}
+
 			$in          = json_decode($in);
 			$jsonLastErr = json_last_error();
 			if ($jsonLastErr !== JSON_ERROR_NONE) {
 				throw new InvalidArgumentException(
-					'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
+					'invalid input type (string); json_decode message: "' . json_last_error_msg() . '"',
 					$jsonLastErr
 				);
 			}
@@ -294,7 +299,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return void
 	 */
-	public function unserialize($serialized)
+	public function unserialize($serialized): void
 	{
 		$data = unserialize($serialized);
 
