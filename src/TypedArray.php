@@ -62,7 +62,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			$values = $type;
 		}
 		else {
-			$this->_type = $type;
+			$this->_type = (string)$type;
 		}
 
 		$this->_initArrayOptions();
