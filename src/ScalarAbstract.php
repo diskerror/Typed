@@ -17,7 +17,7 @@ use stdClass;
  *
  * @package Diskerror\Typed\Scalar
  */
-abstract class ScalarAbstract implements AtomicInterface
+abstract class ScalarAbstract extends stdClass implements AtomicInterface
 {
 	/**
 	 * Stores the scalar value.
