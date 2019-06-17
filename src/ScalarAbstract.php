@@ -15,7 +15,7 @@ use stdClass;
 /**
  * Class ScalarAbstract
  *
- * @package Diskerror\Typed\Scalar
+ * @package Diskerror\Typed\ScalarAbstract
  */
 abstract class ScalarAbstract extends stdClass implements AtomicInterface
 {
