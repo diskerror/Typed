@@ -5,7 +5,8 @@
 	"keywords": [
 		"type",
 		"structure",
-		"struct"
+		"struct",
+		"cast"
 	],
 	"homepage": "https://github.com/diskerror/typed",
 	"license": "Apache-2.0",
