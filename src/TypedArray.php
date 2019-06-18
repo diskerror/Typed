@@ -121,35 +121,32 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	/**
 	 * Check if the input data is good or needs to be massaged.
 	 *
-	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
-	 * property (property names not starting with an underscore). Extra values
-	 * are ignored. Unused properties are unchanged.
-	 *
 	 * @param $in
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _massageBlockInput(&$in)
+	protected function _massageBlockInput(&$in): void
 	{
-		if (is_string($in)) {
-			if ('' === $in) {
-				$in = [];
-				return;
-			}
-
-			$in          = json_decode($in);
-			$jsonLastErr = json_last_error();
-			if ($jsonLastErr !== JSON_ERROR_NONE) {
-				throw new InvalidArgumentException(
-					'invalid input type (string); json_decode message: "' . json_last_error_msg() . '"',
-					$jsonLastErr
-				);
-			}
-		}
-
 		switch (gettype($in)) {
+			case 'string':
+				if ('' === $in) {
+					$in = [];
+				}
+				else {
+					$in        = json_decode($in);
+					$lastError = json_last_error();
+					if ($lastError !== JSON_ERROR_NONE) {
+						throw new InvalidArgumentException(
+							'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
+							$lastError
+						);
+					}
+				}
+				break;
+
 			case 'object':
 			case 'array':
+				// Leave these as is.
 				break;
 
 			case 'null':
@@ -176,7 +173,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * Null clears the entire contents of the typed array but not it's type.
 	 *
-	 * @param object|array|string|null $in
+	 * @param $in
 	 *
 	 * @throws \InvalidArgumentException
 	 */
@@ -379,17 +376,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * Similar to the function array_merge().
 	 *
-	 * @param Traversable|array $ta
+	 * @param  $it
 	 *
-	 * @return \Diskerror\Typed\TypedArray
+	 * @return self
 	 */
-	public function merge($ta): self
+	public function merge( $it): self
 	{
-		$this->_massageBlockInput($in);
+		$this->_massageBlockInput($it);
 
 		$ret = clone $this;
 
-		foreach ($ta as $k => $v) {
+		foreach ($it as $k => $v) {
 			if (is_int($k)) {
 				$ret[] = $v;
 			}

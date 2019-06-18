@@ -211,9 +211,9 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * Input can be an object, or an indexed or associative array.
 	 *
-	 * @param object|array|string|bool|null $in
+	 * @param $in
 	 */
-	public function assign($in)
+	public function assign($in): void
 	{
 		$this->_massageBlockInput($in);
 
@@ -312,7 +312,7 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
-	 * Constructs the object.
+	 * Constructs the object from serialized PHP.
 	 *
 	 * This uses a faster but unsafe restore technique. It assumes that the
 	 * serialized data was created by the local serialize method and was
@@ -349,7 +349,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * Input can be an object, or an indexed or associative array.
 	 *
-	 * @param object|array|string|bool|null $in
+	 * @param $in
 	 *
 	 * @return void
 	 */
@@ -381,16 +381,16 @@ abstract class TypedClass extends TypedAbstract
 	 * This method clones $this then replaces matching keys from $in
 	 *     and returns the new object.
 	 *
-	 * @param object|array|string|bool|null $in
+	 * @param $in
 	 *
-	 * @return TypedClass
+	 * @return self
 	 */
-	public function merge($in)
+	public function merge($in): self
 	{
-		$ret = clone $this;
-		$ret->replace($in);
+		$clone = clone $this;
+		$clone->replace($in);
 
-		return $ret;
+		return $clone;
 	}
 
 	/**
@@ -459,24 +459,29 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @param $in
 	 *
-	 * @return object|array
 	 * @throws InvalidArgumentException
 	 */
-	protected function _massageBlockInput(&$in)
+	protected function _massageBlockInput(&$in): void
 	{
-		if (is_string($in)) {
-			$in          = json_decode($in);
-			$jsonLastErr = json_last_error();
-			if ($jsonLastErr !== JSON_ERROR_NONE) {
-				throw new InvalidArgumentException(
-					'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
-					$jsonLastErr
-				);
-			}
-		}
-
 		switch (gettype($in)) {
+			case 'string':
+				if ('' === $in) {
+					$in = [];
+				}
+				else {
+					$in        = json_decode($in);
+					$lastError = json_last_error();
+					if ($lastError !== JSON_ERROR_NONE) {
+						throw new InvalidArgumentException(
+							'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
+							$lastError
+						);
+					}
+				}
+				break;
+
 			case 'object':
+				//	Leave object as is.
 				break;
 
 			case 'array':
