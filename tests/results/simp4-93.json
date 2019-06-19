@@ -12,5 +12,6 @@
 		"anything": "ha!",
 		"more": "much!"
 	},
+	"myDate": "2010-01-01T01:01:01.001+00:00",
 	"myTypedArray": []
 }

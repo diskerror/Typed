@@ -4,8 +4,8 @@
         colors="true"
         processIsolation="true"
         convertErrorsToExceptions="true"
-        convertNoticesToExceptions="false"
-        convertWarningsToExceptions="false"
+        convertNoticesToExceptions="true"
+        convertWarningsToExceptions="true"
         bootstrap="tests/bootstrap.php">
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">

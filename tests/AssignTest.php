@@ -1,5 +1,8 @@
 <?php
 
+use Diskerror\Typed\DateTime as MyDateTime;
+use Diskerror\Typed\TypedArray;
+
 class AssignTest extends PHPUnit\Framework\TestCase
 {
 	public function testAssignBool()
@@ -179,31 +182,31 @@ class AssignTest extends PHPUnit\Framework\TestCase
 
 		////////////////////////////////////////////////////////////////////////
 		//	Array.
-		$this->assertEquals(new \Diskerror\Typed\TypedArray(), $t->myArray);
+		$this->assertEquals(new TypedArray(), $t->myArray);
 
 		$t->myArray = [77];
-		$this->assertEquals(new \Diskerror\Typed\TypedArray('', [77]), $t->myArray);
+		$this->assertEquals(new TypedArray('', [77]), $t->myArray);
 
 		$t->myArray = [3.14150];
-		$this->assertEquals(new \Diskerror\Typed\TypedArray('', [3.1415]), $t->myArray);
+		$this->assertEquals(new TypedArray('', [3.1415]), $t->myArray);
 
 		$t->myArray = [true];
-		$this->assertEquals(new \Diskerror\Typed\TypedArray('', [true]), $t->myArray);
+		$this->assertEquals(new TypedArray('', [true]), $t->myArray);
 
 		$t->myArray = null;
-		$this->assertEquals(new \Diskerror\Typed\TypedArray(), $t->myArray);
+		$this->assertEquals(new TypedArray(), $t->myArray);
 		$this->assertTrue(is_object($t->myArray));
 
 		$t->myArray = ['a', 'b'];
-		$this->assertEquals(new \Diskerror\Typed\TypedArray('', ['a', 'b']), $t->myArray);
+		$this->assertEquals(new TypedArray('', ['a', 'b']), $t->myArray);
 
 		$c          = new stdClass();
 		$c->aMember = 'string data';
 		$t->myArray = $c;
-		$this->assertEquals(new \Diskerror\Typed\TypedArray('', ['aMember' => 'string data']), $t->myArray);
+		$this->assertEquals(new TypedArray('', ['aMember' => 'string data']), $t->myArray);
 
 		unset($t->myArray);
-		$this->assertEquals(new \Diskerror\Typed\TypedArray(), $t->myArray);
+		$this->assertEquals(new TypedArray(), $t->myArray);
 	}
 
 	public function testAssignObject()
@@ -233,6 +236,43 @@ class AssignTest extends PHPUnit\Framework\TestCase
 
 		unset($t->myObj);
 		$this->assertEquals(new stdClass(), $t->myObj);
+	}
+
+	public function testAssignDate()
+	{
+		$t = new SimpleTyped();
+
+		////////////////////////////////////////////////////////////////////////
+		//	Generic object.
+		$this->assertInstanceOf(MyDateTime::class, $t->myDate);
+
+		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
+
+		$this->assertEquals(new \DateTime('2010-01-01T01:01:01.001'), $t->myDate);
+
+		$this->assertNotSame(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
+
+		$t->myDate = 77;
+//		print_r($t->toArray()); exit;
+		$this->assertInstanceOf(MyDateTime::class, $t->myDate);
+		$this->assertEquals(new MyDateTime(77), $t->myDate);
+
+		$t->myDate = null;
+		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
+
+//		$t->myDate    = ['first' => 'a', 'second' => 'b'];
+//		$obj         = new stdClass();
+//		$obj->first  = 'a';
+//		$obj->second = 'b';
+//		$this->assertEquals($obj, $t->myObj);
+//
+//		$c          = new stdClass();
+//		$c->aMember = 'string data';
+//		$t->myDate   = $c;
+//		$this->assertTrue($t->myDate === $c);
+
+		unset($t->myDate);
+		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
 	}
 
 }

@@ -2,6 +2,9 @@
 
 class ArrayTest extends PHPUnit\Framework\TestCase
 {
+	/**
+	 * @expectedException	PHPUnit\Framework\Error\Warning
+	 */
 	public function testWalk()
 	{
 		$walk = new Diskerror\Typed\TypedArray('string', ['1', 2, '3', 'z', 5]);

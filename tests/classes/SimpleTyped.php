@@ -1,6 +1,9 @@
 <?php
 
-use Diskerror\Typed\{TypedClass, TypedArray};
+use Diskerror\Typed\DateTime as MyDateTime;
+use Diskerror\Typed\TypedArray;
+use Diskerror\Typed\TypedClass;
+
 
 /**
  * Class SimpleTyped
@@ -21,6 +24,7 @@ class SimpleTyped extends TypedClass
 	protected $myString     = '';
 	protected $myArray      = [];
 	protected $myObj        = ['stdClass'];
+	protected $myDate    	= [MyDateTime::class, "2010-01-01T01:01:01.001+00:00"];
 	protected $myTypedArray = [TypedArray::class, JRandom::class];
 	protected $_map         = ['myDouble' => 'myFloat'];
 
