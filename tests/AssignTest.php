@@ -253,24 +253,13 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$this->assertNotSame(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
 
 		$t->myDate = 77;
-//		print_r($t->toArray()); exit;
 		$this->assertInstanceOf(MyDateTime::class, $t->myDate);
 		$this->assertEquals(new MyDateTime(77), $t->myDate);
 
 		$t->myDate = null;
 		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
 
-//		$t->myDate    = ['first' => 'a', 'second' => 'b'];
-//		$obj         = new stdClass();
-//		$obj->first  = 'a';
-//		$obj->second = 'b';
-//		$this->assertEquals($obj, $t->myObj);
-//
-//		$c          = new stdClass();
-//		$c->aMember = 'string data';
-//		$t->myDate   = $c;
-//		$this->assertTrue($t->myDate === $c);
-
+		$t->myDate = 'now';
 		unset($t->myDate);
 		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
 	}

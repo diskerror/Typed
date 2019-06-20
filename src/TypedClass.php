@@ -620,13 +620,6 @@ abstract class TypedClass extends TypedAbstract
 
 		//	Handler for other types of objects.
 		$propertyClassType = get_class($propertyDefaultValue);
-
-		//	Treat DateTime related objects as atomic.
-		if ($propertyDefaultValue instanceof DateTime) {
-			$this->{$propName} = new $propertyClassType($in);
-			return;
-		}
-
 		switch (gettype($in)) {
 			case 'object':
 				//	if identical types then reference the original object
