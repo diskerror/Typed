@@ -11,7 +11,9 @@ namespace Diskerror\Typed;
 
 use DateTimeInterface;
 use InvalidArgumentException;
+use Throwable;
 use Traversable;
+use TypeError;
 
 /**
  * Create a child of this class with your named properties with a visibility of
@@ -92,8 +94,6 @@ abstract class TypedClass extends TypedAbstract
 			case 'string':
 			case 'array':
 			case 'object':
-				break;
-
 			case 'NULL':
 			case 'null':
 				break;
@@ -399,7 +399,7 @@ abstract class TypedClass extends TypedAbstract
 	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
 		$keepJsonExpr = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$ZJE_STRING   = '\\Zend\\Json\\Expr';	//  A string here so library does not need to be included.
+		$ZJE_STRING   = '\\Zend\\Json\\Expr';    //  A string here so library does not need to be included.
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
@@ -626,10 +626,15 @@ abstract class TypedClass extends TypedAbstract
 				if ($propertyClassType === get_class($in)) {
 					$this->{$propName} = $in;
 				}
-
-				//	Else give up.
 				else {
-					throw new InvalidArgumentException('cannot coerce object types');
+					//	First try to absorb the input in it's entirety,
+					try {
+						$this->{$propName} = new $propertyClassType($in);
+					}
+					//	Then try to copy matching members by name.
+					catch (TypeError $t){
+						$this->replace($in);
+					}
 				}
 				break;
 

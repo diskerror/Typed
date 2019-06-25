@@ -11,7 +11,6 @@ class ClassTest extends PHPUnit\Framework\TestCase
 	}
 
 	/**
-	 * @depends                        testNewTypedDate
 	 * @expectedException            Exception
 	 * @expectedExceptionMessage       DateTime::__construct(): Failed to parse time string (77) at position 0 (7):
 	 *                                Unexpected character
@@ -22,22 +21,18 @@ class ClassTest extends PHPUnit\Framework\TestCase
 		$d->date = 77;
 	}
 
-	/**
-	 * @depends                        testNewTypedDate
-	 * @expectedException            InvalidArgumentException
-	 * @expectedExceptionMessage       cannot coerce object types
-	 */
-	public function testBadDateClass()
-	{
-		$d          = new TypedDate();
-		$c          = new stdClass();
-		$c->aMember = 'string data';
-		$d->date    = $c;
-	}
+//	/**
+//	 * @expectedException            TypeError
+//	 * @expectedExceptionMessage       DateTime::__construct() expects parameter 1 to be string, object given
+//	 */
+//	public function testBadDateClass()
+//	{
+//		$d          = new TypedDate();
+//		$c          = new stdClass();
+//		$c->aMember = 'string data';
+//		$d->date    = $c;
+//	}
 
-	/**
-	 * @depends    testNewTypedDate
-	 */
 	public function testNested()
 	{
 		$n          = new Nested();
@@ -47,9 +42,6 @@ class ClassTest extends PHPUnit\Framework\TestCase
 		$this->assertEquals('20150202', $n->d->date->format('Ymd'));
 	}
 
-	/**
-	 * @depends    testNewTypedDate
-	 */
 	public function testRange()
 	{
 		$dr        = new DateRange();
