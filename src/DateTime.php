@@ -20,9 +20,9 @@ class DateTime extends DT implements JsonSerializable
 	/**
 	 * Default MySQL datetime format.
 	 */
-	const STRING_IO_FORMAT       = 'Y-m-d H:i:s';
-	const STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
-	const STRING_IO_FORMAT_JSON  = 'Y-m-d\TH:i:s.vP';
+	public const STRING_IO_FORMAT       = 'Y-m-d H:i:s';
+	public const STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
+	public const STRING_IO_FORMAT_JSON  = 'Y-m-d\TH:i:s.vP';
 
 	/**
 	 * Accepts a DateTime object or;
@@ -30,8 +30,8 @@ class DateTime extends DT implements JsonSerializable
 	 *       length but a minimum of 3 characters, upper or lower case.
 	 * See setTime and setDate for more information.
 	 *
-	 * @param object|array|string $time     -OPTIONAL
-	 * @param DateTimeZone        $timezone -OPTIONAL
+	 * @param mixed        $time     -OPTIONAL
+	 * @param DateTimeZone $timezone -OPTIONAL
 	 *
 	 * @throws InvalidArgumentException
 	 */
@@ -45,7 +45,7 @@ class DateTime extends DT implements JsonSerializable
 			case 'object':
 				if ($time instanceof DateTimeInterface) {
 					parent::__construct(
-						$time->format(self::RFC3339_EXTENDED),
+						$time->format(self::STRING_IO_FORMAT_MICRO),
 						$time->getTimezone()
 					);
 					break;

@@ -399,11 +399,11 @@ abstract class TypedClass extends TypedAbstract
 	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
 		$keepJsonExpr = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$ZJE_STRING   = '\\Zend\\Json\\Expr';
+		$ZJE_STRING   = '\\Zend\\Json\\Expr';	//  A string here so library does not need to be included.
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
-			$v = $this->_getByName($k);    //	AtomicInterface objects are returned as scalars.
+			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
 
 			switch (gettype($v)) {
 				case 'resource':
