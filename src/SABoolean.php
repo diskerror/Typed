@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\SABoolean
+ * @name        SABoolean
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -10,24 +10,22 @@
 namespace Diskerror\Typed;
 
 
-use UnexpectedValueException;
-
 class SABoolean extends ScalarAbstract
 {
 	public function set($in)
 	{
 		switch (gettype($in)) {
 			case 'object':
-				$this->_value = (bool)self::_castObject($in);
-			break;
+				$this->_value = (bool) self::_castObject($in);
+				break;
 
 			case 'null':
 			case 'NULL':
 				$this->unset();
-			break;
+				break;
 
 			default:
-				$this->_value = (bool)$in;
+				$this->_value = (bool) $in;
 		}
 	}
 }

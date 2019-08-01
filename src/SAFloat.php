@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\SAFloat
+ * @name        SAFloat
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -44,7 +44,7 @@ class SAFloat extends ScalarAbstract
 					$in = str_replace(',', '.', $in);
 				}
 
-				$this->_value = (float)$in;
+				$this->_value = (float) $in;
 				break;
 
 			case 'null':
@@ -53,7 +53,7 @@ class SAFloat extends ScalarAbstract
 				break;
 
 			default:
-				$this->_value = (float)$in;
+				$this->_value = (float) $in;
 		}
 	}
 }

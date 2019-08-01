@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name           \Diskerror\Typed\TypedClass
+ * @name           TypedClass
  * @copyright      Copyright (c) 2012 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -260,7 +260,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Required by the IteratorAggregate interface.
 	 * Every value is checked for change during iteration.
 	 *
-	 * @return \Traversable
+	 * @return Traversable
 	 */
 	public function getIterator(): Traversable
 	{
@@ -441,7 +441,7 @@ abstract class TypedClass extends TypedAbstract
 
 		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
 			foreach ($arr as $k => &$v) {
-				if (empty($v) || (is_object($v) && empty((array)$v))) {
+				if (empty($v) || (is_object($v) && empty((array) $v))) {
 					unset($arr[$k]);
 				}
 			}
@@ -631,8 +631,8 @@ abstract class TypedClass extends TypedAbstract
 					try {
 						$this->{$propName} = new $propertyClassType($in);
 					}
-					//	Then try to copy matching members by name.
-					catch (TypeError $t){
+						//	Then try to copy matching members by name.
+					catch (TypeError $t) {
 						$this->replace($in);
 					}
 				}
@@ -645,7 +645,7 @@ abstract class TypedClass extends TypedAbstract
 
 			case 'array':
 				if ($propertyClassType === 'stdClass') {
-					$this->{$propName} = (object)$in;
+					$this->{$propName} = (object) $in;
 					break;
 				}
 			//	fall through

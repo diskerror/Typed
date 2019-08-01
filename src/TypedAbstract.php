@@ -2,7 +2,7 @@
 /**
  * Methods for maintaining variable type.
  *
- * @name           \Diskerror\Typed\TypedAbstract
+ * @name           TypedAbstract
  * @copyright      Copyright (c) 2012 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */

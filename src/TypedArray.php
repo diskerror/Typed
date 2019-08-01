@@ -2,7 +2,7 @@
 /**
  * Create an array where members must be the same type.
  *
- * @name        \Diskerror\Typed\TypedArray
+ * @name        TypedArray
  * @copyright   Copyright (c) 2012 Reid Woodbury Jr
  * @license     http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -62,7 +62,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			$values = $type;
 		}
 		else {
-			$this->_type = (string)$type;
+			$this->_type = (string) $type;
 		}
 
 		$this->_initArrayOptions();
@@ -175,7 +175,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param $in
 	 *
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
 	public function assign($in)
 	{
@@ -193,7 +193,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param object|array|string|null $in
 	 *
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
 	public function replace($in)
 	{
@@ -357,7 +357,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 
 			//	Remove empty items.
 			foreach ($output as $k => $v) {
-				if (empty($v) || (is_object($v) && empty((array)$v))) {
+				if (empty($v) || (is_object($v) && empty((array) $v))) {
 					unset($output[$k]);
 				}
 			}
@@ -380,7 +380,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return self
 	 */
-	public function merge( $it): self
+	public function merge($it): self
 	{
 		$this->_massageBlockInput($it);
 

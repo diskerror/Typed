@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\SAScalar
+ * @name        SAScalar
  * @copyright      Copyright (c) 2019 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -28,12 +28,12 @@ class SAScalar extends ScalarAbstract
 					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 				}
 				$this->_value = $jsonStr;
-			break;
+				break;
 
 			case 'null':
 			case 'NULL':
 				$this->unset();
-			break;
+				break;
 
 			case 'resource':
 				throw new UnexpectedValueException('Value cannot be a resource.');

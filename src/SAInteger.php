@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\SAInteger
+ * @name        SAInteger
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -28,15 +28,15 @@ class SAInteger extends ScalarAbstract
 				else {
 					$this->_value = intval($in, 0);
 				}
-			break;
+				break;
 
 			case 'null':
 			case 'NULL':
 				$this->unset();
-			break;
+				break;
 
 			default:
-				$this->_value = (int)$in;
+				$this->_value = (int) $in;
 		}
 	}
 }

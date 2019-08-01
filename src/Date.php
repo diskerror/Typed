@@ -2,6 +2,8 @@
 
 namespace Diskerror\Typed;
 
+use DateInterval;
+use InvalidArgumentException;
 use LogicException;
 
 /**
@@ -25,7 +27,7 @@ class Date extends DateTime
 	 * @param object|array|string $time     -OPTIONAL
 	 * @param string              $timezone -OPTIONAL
 	 *
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
@@ -37,7 +39,7 @@ class Date extends DateTime
 	 * Adds DateInterval to stored date and
 	 *       sets time to noon to avoid possible Daylight Savings transition issues.
 	 *
-	 * @param \DateInterval $interval
+	 * @param DateInterval $interval
 	 *
 	 * @return Date
 	 */
@@ -53,7 +55,7 @@ class Date extends DateTime
 	 * Subtracts DateInterval from stored date and
 	 *       sets time to noon to avoid possible Daylight Savings transition issues.
 	 *
-	 * @param \DateInterval $interval
+	 * @param DateInterval $interval
 	 *
 	 * @return Date
 	 */

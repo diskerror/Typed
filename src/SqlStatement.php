@@ -11,6 +11,8 @@
 namespace Diskerror\Typed;
 
 use InvalidArgumentException;
+use stdClass;
+use Traversable;
 use UnexpectedValueException;
 
 /**
@@ -34,8 +36,8 @@ class SqlStatement
 	 * an array where the values are the names of the desired keys.
 	 * An empty "include" array means to use all.
 	 *
-	 * @param array|\stdClass $input
-	 * @param array           $include
+	 * @param array|stdClass $input
+	 * @param array          $include
 	 *
 	 * @return string
 	 */
@@ -45,11 +47,11 @@ class SqlStatement
 			if (method_exists($input, 'toArray')) {
 				$input = $input->toArray();
 			}
-			elseif ($input instanceof \Traversable) {
+			elseif ($input instanceof Traversable) {
 				$input = iterator_to_array($input);
 			}
 			else {
-				$input = (array)$input;
+				$input = (array) $input;
 			}
 		}
 		elseif (!is_array($input)) {
@@ -110,7 +112,7 @@ class SqlStatement
 						$sqlStrs[] = $kEq . '"' . $v . '"';
 						break;
 					}
-					//	other objects fall through
+				//	other objects fall through
 				case 'array':
 					$sqlStrs[] = $kEq . '"' . addslashes(json_encode($v)) . '"';
 //					$sqlStrs[] = $kEq . '0x' . bin2hex(json_encode($v));
@@ -137,8 +139,8 @@ class SqlStatement
 	 * an array where the values are the names of the desired keys.
 	 * An empty "include" array means to use all.
 	 *
-	 * @param array|\stdClass $input
-	 * @param array           $include
+	 * @param array|stdClass $input
+	 * @param array          $include
 	 *
 	 * @return string
 	 */
