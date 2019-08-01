@@ -407,7 +407,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function offsetExists($offset): bool
 	{
-		return isset($this->_container[$offset]);
+		return array_key_exists($offset, $this->_container);
 	}
 
 	/**
