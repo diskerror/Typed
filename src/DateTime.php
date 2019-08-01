@@ -68,7 +68,7 @@ class DateTime extends DT implements JsonSerializable
 				elseif ($time[0] === '@' && strpos($time, '.')) {
 					//	if this contains fractional seconds
 					//	$tmp is a PHP \DateTime
-					$tmp = \DateTime::createFromFormat('U.u', (float)substr($time, 1), $timezone);
+					$tmp = DT::createFromFormat('U.u', sprintf('%f', substr($time, 1)), $timezone);
 					parent::__construct($tmp->format(self::RFC3339_EXTENDED), $timezone);
 				}
 				else {
@@ -83,7 +83,7 @@ class DateTime extends DT implements JsonSerializable
 
 			case 'float':
 			case 'double':
-				$tmp = \DateTime::createFromFormat('U.u', $time, $timezone);
+				$tmp = DT::createFromFormat('U.u', sprintf('%f', $time), $timezone);
 				parent::__construct($tmp->format(self::RFC3339_EXTENDED), $timezone);
 				break;
 
@@ -139,7 +139,7 @@ class DateTime extends DT implements JsonSerializable
 				break;
 		}
 
-		parent::setDate((int)$year, (int)$month, (int)$day);
+		parent::setDate((int) $year, (int) $month, (int) $day);
 
 		return $this;
 	}
@@ -192,7 +192,7 @@ class DateTime extends DT implements JsonSerializable
 				}
 		}
 
-		parent::setTime((int)$hour, (int)$minute, (int)$second, (int)$mcs);
+		parent::setTime((int) $hour, (int) $minute, (int) $second, (int) $mcs);
 
 		return $this;
 	}
@@ -229,7 +229,7 @@ class DateTime extends DT implements JsonSerializable
 	 */
 	public function getTimestampMicro(): float
 	{
-		return (float)$this->format('U.u');
+		return (float) $this->format('U.u');
 	}
 
 	/**
