@@ -433,6 +433,10 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 
+		if ($this->_container[$offset] instanceof AtomicInterface) {
+			return $this->_container[$offset]->get();
+		}
+
 		return $this->_container[$offset];
 	}
 
@@ -463,7 +467,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function offsetSet($k, $v)
 	{
-		if (null === $k || !array_key_exists($k, $this->_container)) {
+		if (null === $k || !$this->offsetExists($k)) {
 			$v = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
 
 			if (null === $k) {
