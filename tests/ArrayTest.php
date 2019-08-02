@@ -22,7 +22,7 @@ class ArrayTest extends PHPUnit\Framework\TestCase
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array2.json',
 			json_encode($walk->toArray()),
-			'Multiple strings by number.'
+			'Multiply strings by number.'
 		);
 
 		foreach ($walk as &$w) {
