@@ -238,8 +238,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Required by the IteratorAggregate interface.
 	 * Every value is checked for change during iteration.
 	 *
-	 * The _type or gettype() can return different names for the same type,
-	 * ie. "bool" or "boolean", so we're only going to check the first 3 characters.
+	 * This will return a reference to a scalar value, even if it has a
+	 * wrapper with the interface AtomicInterface.
 	 *
 	 * @return Traversable
 	 */
@@ -263,6 +263,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 					yield $k => $v;
 
 					//	Compare whole class names.
+					//	TODO: This doesn't test enough conditions.
 					if (get_class($v) !== $this->_type) {
 						$this->offsetSet($k, $v);
 					}
@@ -412,7 +413,12 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 
 	/**
 	 * Required by the ArrayAccess interface.
-	 * Returns reference to offset.
+	 * Returns value at offset.
+	 *
+	 * This method cannot return a reference since a reference might contain a scalar
+	 * wrapper. We want the scalar, not the wrapper. Objects are always passed by reference.
+	 *
+	 * Using a reference is handled in getIterator.
 	 *
 	 * http://stackoverflow.com/questions/20053269/indirect-modification-of-overloaded-element-of-splfixedarray-has-no-effect
 	 *
@@ -420,7 +426,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return mixed
 	 */
-	public function &offsetGet($offset)
+	public function offsetGet($offset)
 	{
 		if (!$this->offsetExists($offset)) {
 			//	Be sure offset exists before accessing it.
@@ -446,7 +452,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * There are 5 basic conditions for $this->_type:
 	 * # $this->_type is null (accept any type and value, like a standard array);
-	 * # $this->_type is a scalar [bool, int, float, string];
+	 * # $this->_type is a scalar wrapper [bool, int, float, string];
 	 * # $this->_type is an array (check if input value is an object and has toArray);
 	 * # $this->_type is an object of type TypedAbstract (call replace());
 	 * # $this->_type is any other object.
