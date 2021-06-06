@@ -1,15 +1,17 @@
 <?php
 
-class PreferenceList extends Diskerror\Typed\TypedArray
+namespace Preferences;
+
+class ItemList extends \Diskerror\Typed\TypedArray
 {
-	protected $_type = 'PreferenceItem';
+	protected $_type = Item::class;
 
 	/**
 	 * Return new default set of fields with each call.
 	 *
-	 * @return PreferenceList
+	 * @return ItemList
 	 */
-	public static function getDefault(): PreferenceList
+	public static function getDefault(): ItemList
 	{
 		return new self([
 			'name'    => [],

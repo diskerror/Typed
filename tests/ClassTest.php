@@ -1,6 +1,9 @@
 <?php /** @noinspection ALL */
+declare(strict_types = 1);
 
-class ClassTest extends PHPUnit\Framework\TestCase
+use PHPUnit\Framework\TestCase;
+
+final class ClassTest extends TestCase
 {
 	public function testNewTypedDate()
 	{
@@ -12,12 +15,14 @@ class ClassTest extends PHPUnit\Framework\TestCase
 
 	/**
 	 * @expectedException            Exception
-	 * @expectedExceptionMessage       DateTime::__construct(): Failed to parse time string (77) at position 0 (7):
-	 *                                Unexpected character
+	 * @expectedExceptionMessage    DateTime::__construct(): Failed to parse time string (77) at position 0 (7):
+	 *                              Unexpected character
 	 */
 	public function testBadDateValue()
 	{
 		$d       = new TypedDate();
+		$this->expectException(Exception::class);
+		$this->expectExceptionMessage("DateTime::__construct(): Failed to parse time string (77) at position 0 (7): Unexpected character");
 		$d->date = 77;
 	}
 

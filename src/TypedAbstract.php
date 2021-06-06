@@ -64,7 +64,8 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	/**
 	 * Replace.
 	 *
-	 * Assign values from input object. Missing keys are left untouched.
+	 * Assign values from input object. Only named input items are copied.
+	 * Missing keys are left untouched.
 	 *
 	 * @param mixed $in
 	 */
@@ -89,6 +90,9 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 */
 	abstract protected function _massageBlockInput(&$in);
 
+	/**
+	 * Initialize options for when this object is converted to an array.
+	 */
 	protected function _initArrayOptions()
 	{
 		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);

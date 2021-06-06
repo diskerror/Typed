@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection Annotator */
 
 use Diskerror\Typed\DateTime as MyDateTime;
 use Diskerror\Typed\TypedArray;

@@ -16,7 +16,7 @@ class ArrayTest extends PHPUnit\Framework\TestCase
 		);
 
 		foreach ($walk as &$w) {
-			$w *= 2;
+			$w = (integer) $w * 2;
 		}
 //		jsonPrint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(

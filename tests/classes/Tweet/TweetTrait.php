@@ -3,6 +3,7 @@
 namespace Tweet;
 
 use Diskerror\Typed\DateTime;
+use Diskerror\Typed\SAStringTrim;
 
 trait TweetTrait {
 
@@ -36,7 +37,7 @@ trait TweetTrait {
 
 	protected $source                    = '';
 
-	protected $text                      = '';
+	protected $text                      = [SAStringTrim::class];
 
 	protected $truncated                 = false;
 

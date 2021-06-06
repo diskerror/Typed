@@ -1,10 +1,12 @@
 <?php
 
+use Preferences\ListList;
+
 class PrefListTest extends PHPUnit\Framework\TestCase
 {
 	public function testComplex()
 	{
-		$prefListList = PrefListList::getDefault();
+		$prefListList = ListList::getDefault();
 //		jsonPrint($prefListList->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/prefone.json',

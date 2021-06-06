@@ -3,8 +3,8 @@
 use Diskerror\Typed\TypedArray;
 use Diskerror\Typed\TypedClass;
 
-class MongoIndexDef extends TypedClass
+class IndexDef extends TypedClass
 {
-	protected $keys    = [TypedArray::class, MongoIndexSort::class];
+	protected $keys    = [TypedArray::class, IndexSort::class];
 	protected $options = [TypedArray::class];
 }

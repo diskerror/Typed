@@ -12,9 +12,9 @@ use Diskerror\Typed\TypedClass;
  * @property $database
  * @property $collections
  */
-class MongoConfig extends TypedClass
+class Config extends TypedClass
 {
 	protected $host        = 'mongodb://localhost';
 	protected $database    = '';
-	protected $collections = [TypedArray::class, MongoConfigCollection::class];
+	protected $collections = [TypedArray::class, ConfigCollection::class];
 }

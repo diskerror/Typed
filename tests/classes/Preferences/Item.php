@@ -1,6 +1,8 @@
 <?php
 
-class PreferenceItem extends Diskerror\Typed\TypedClass
+namespace Preferences;
+
+class Item extends \Diskerror\Typed\TypedClass
 {
 	const BOOLEAN = 'AND|OR';
 	const COMPARE = '|=|!=|<|>|>=|<=|LIKE|NOT LIKE|REGEXP|NOT REGEXP|IN';
