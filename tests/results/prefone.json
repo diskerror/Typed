@@ -10,39 +10,39 @@
 		"address": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"city": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"state": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"zip": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		}
 	},
 	"Option Address": {
 		"name": {
 			"included": true,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"address": {
 			"included": true,
@@ -54,53 +54,53 @@
 		"city": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"state": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"zip": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		}
 	},
 	"Option ZIP": {
 		"name": {
 			"included": true,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"address": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"city": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"state": {
 			"included": false,
 			"boolean": "AND",
-			"compare": "",
+			"compare": "LIKE",
 			"find": "",
-			"sort": ""
+			"sort": "ASC"
 		},
 		"zip": {
 			"included": true,

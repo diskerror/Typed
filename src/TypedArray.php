@@ -40,35 +40,36 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	/**
 	 * Constructor.
 	 *
-	 * This allows for initial values to be passed in the first parameter.
-	 * This is only works for children of this class where the type has already
-	 * been set.
+	 * If this class is instantiated directly, ie. "$a = new TypedArray('integer', [1, 2, 3]);",
+	 * then $param1 must be the data type as a string, and then $param2 can be the initial data.
 	 *
-	 * @param mixed             $type   OPTIONAL ''
-	 * @param array|object|null $values OPTIONAL null
+	 * If a derived class is instantiated then the data type must be contained in
+	 * the class, ie. "protected $_type = 'integer';", and $param1 can be the initial data.
+	 *
+	 * @param mixed             $param1 OPTIONAL ""
+	 * @param array|object|null $param2 OPTIONAL null
 	 */
-	public function __construct($type = '', $values = null)
+	public function __construct($param1 = '', $param2 = null)
 	{
-		if (get_called_class() !== self::class) {
+		$this->_initArrayOptions();
+
+		if (get_called_class() === self::class) {
+			$this->_type = (string) $param1;
+			$this->_initMetaData();
+			$this->assign($param2);
+		}
+		else {
 			if (!isset($this->_type)) {
 				throw new InvalidArgumentException('$this->_type must be set in child class.');
 			}
 
-			if (null !== $values) {
-				throw new InvalidArgumentException('Only the first parameter can be set when using an inherited class.');
+			if (null !== $param2) {
+				throw new InvalidArgumentException('Only the first parameter can be set when using a derived class.');
 			}
 
-			// Assume the first parameter holds the values and the second is unset.
-			$values = $type;
+			$this->_initMetaData();
+			$this->assign($param1);
 		}
-		else {
-			$this->_type = (string) $type;
-		}
-
-		$this->_initArrayOptions();
-		$this->_initMetaData();
-
-		$this->assign($values);
 	}
 
 	protected function _initMetaData()
@@ -78,10 +79,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			case 'null':
 			case 'anything':
 				$this->_type = SAAnything::class;
-				break;
-
-			case 'scalar':
-				$this->_type = SAScalar::class;
 				break;
 
 			case 'bool':
@@ -125,7 +122,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _massageBlockInput(&$in): void
+	protected function _massageInput(&$in): void
 	{
 		switch (gettype($in)) {
 			case 'string':
@@ -179,7 +176,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function assign($in)
 	{
-		$this->_massageBlockInput($in);
+		$this->_massageInput($in);
 
 		$this->_container = [];    //	initialize array or remove all current values
 
@@ -197,7 +194,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function replace($in)
 	{
-		$this->_massageBlockInput($in);
+		$this->_massageInput($in);
 
 		foreach ($in as $k => $v) {
 			$this->offsetSet($k, $v);
@@ -383,7 +380,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function merge($it): self
 	{
-		$this->_massageBlockInput($it);
+		$this->_massageInput($it);
 
 		$ret = clone $this;
 

@@ -1,11 +1,16 @@
 <?php
 
+use Preferences\Item;
 use Preferences\ListList;
+use Preferences\ItemList;
 
 class PrefListTest extends PHPUnit\Framework\TestCase
 {
 	public function testComplex()
 	{
+		$itemVals = new Item(['sort' => 'DESC']);
+		$itemListVals = new ItemList([['find'=>'the name'], ['find'=>'an address']]);
+
 		$prefListList = ListList::getDefault();
 //		jsonPrint($prefListList->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(

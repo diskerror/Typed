@@ -2,30 +2,30 @@
 	"name": {
 		"included": true,
 		"boolean": "AND",
-		"compare": "",
+		"compare": "LIKE",
 		"find": "",
 		"sort": "DESC"
 	},
 	"address": {
 		"included": false,
 		"boolean": "AND",
-		"compare": "",
+		"compare": "LIKE",
 		"find": "",
-		"sort": ""
+		"sort": "ASC"
 	},
 	"city": {
 		"included": false,
 		"boolean": "AND",
-		"compare": "",
+		"compare": "LIKE",
 		"find": "",
-		"sort": ""
+		"sort": "ASC"
 	},
 	"state": {
 		"included": false,
 		"boolean": "AND",
-		"compare": "",
+		"compare": "LIKE",
 		"find": "",
-		"sort": ""
+		"sort": "ASC"
 	},
 	"zip": {
 		"included": true,

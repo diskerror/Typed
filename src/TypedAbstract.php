@@ -88,7 +88,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 *
 	 * @return object|array
 	 */
-	abstract protected function _massageBlockInput(&$in);
+	abstract protected function _massageInput(&$in);
 
 	/**
 	 * Initialize options for when this object is converted to an array.

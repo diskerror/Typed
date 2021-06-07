@@ -20,9 +20,10 @@ final class ClassTest extends TestCase
 	 */
 	public function testBadDateValue()
 	{
-		$d       = new TypedDate();
 		$this->expectException(Exception::class);
 		$this->expectExceptionMessage("DateTime::__construct(): Failed to parse time string (77) at position 0 (7): Unexpected character");
+
+		$d = new TypedDate();
 		$d->date = 77;
 	}
 

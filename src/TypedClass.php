@@ -215,7 +215,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function assign($in): void
 	{
-		$this->_massageBlockInput($in);
+		$this->_massageInput($in);
 
 		if (empty($in)) {
 			foreach ($this->_publicNames as $publicName) {
@@ -355,7 +355,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function replace($in): void
 	{
-		$this->_massageBlockInput($in);
+		$this->_massageInput($in);
 
 		if (empty($in)) {
 			return;
@@ -461,7 +461,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _massageBlockInput(&$in): void
+	protected function _massageInput(&$in): void
 	{
 		switch (gettype($in)) {
 			case 'string':

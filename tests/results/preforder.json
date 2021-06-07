@@ -16,22 +16,22 @@
 	"address": {
 		"included": false,
 		"boolean": "AND",
-		"compare": "",
+		"compare": "LIKE",
 		"find": "",
-		"sort": ""
+		"sort": "ASC"
 	},
 	"city": {
 		"included": false,
 		"boolean": "AND",
-		"compare": "",
+		"compare": "LIKE",
 		"find": "",
-		"sort": ""
+		"sort": "ASC"
 	},
 	"state": {
 		"included": true,
 		"boolean": "AND",
-		"compare": "",
+		"compare": "LIKE",
 		"find": "",
-		"sort": ""
+		"sort": "ASC"
 	}
 }

@@ -10,6 +10,7 @@
 namespace Diskerror\Typed;
 
 use stdClass;
+use function is_object;
 
 
 /**
@@ -94,8 +95,15 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	 */
 	protected static function _castObject(stdClass $in)
 	{
+		//	This could be any type
 		if ($in instanceof AtomicInterface) {
-			return $in->get();
+			$val = $in->get();
+
+			if (is_object($val)) {
+				$val = self::_castObject($val);
+			}
+
+			return $val;
 		}
 
 		if (method_exists($in, '__toString')) {

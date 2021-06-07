@@ -9,13 +9,37 @@
 
 namespace Diskerror\Typed;
 
-class SAString extends SAScalar
+use UnexpectedValueException;
+
+class SAString extends ScalarAbstract
 {
 	public function set($in)
 	{
-		parent::set($in);
-		if (null !== $this->_value) {
-			$this->_value = (string) $this->_value;
+		if (is_object($in)) {
+			// Every object is converted to an array or a string.
+			$in = self::_castObject($in);
+		}
+
+		switch (gettype($in)) {
+			case 'array':
+				$jsonStr     = json_encode($in);
+				$jsonLastErr = json_last_error();
+				if ($jsonLastErr !== JSON_ERROR_NONE) {
+					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
+				}
+				$this->_value = $jsonStr;
+				break;
+
+			case 'null':
+			case 'NULL':
+				$this->unset();
+				break;
+
+			case 'resource':
+				throw new UnexpectedValueException('Value cannot be a resource.');
+
+			default:
+				$this->_value = (string) $in;
 		}
 	}
 }
