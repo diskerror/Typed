@@ -7,6 +7,11 @@
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
+function jsonPrint($in)
+{
+	fwrite(STDERR, json_encode($in, JSON_PRETTY_PRINT) . PHP_EOL);
+}
+
 namespace Diskerror\Typed;
 
 use Countable;
@@ -14,11 +19,6 @@ use IteratorAggregate;
 use Serializable;
 use JsonSerializable;
 use const PHP_EOL;
-
-function jsonPrint($in)
-{
-	fwrite(STDERR, json_encode($in, JSON_PRETTY_PRINT) . PHP_EOL);
-}
 
 /**
  * Class TypedInterface
