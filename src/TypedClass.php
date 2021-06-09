@@ -217,30 +217,12 @@ abstract class TypedClass extends TypedAbstract
 	{
 		$this->_massageInput($in);
 
-		if (empty($in)) {
-			foreach ($this->_publicNames as $publicName) {
-				$this->__unset($publicName);
-			}
+		foreach ($this->_publicNames as $publicName) {
+			$this->__unset($publicName);
 		}
-		elseif (is_object($in)) {
-			foreach ($this->_publicNames as $publicName) {
-				if (isset($in->{$publicName})) {
-					$this->_setByName($publicName, $in->{$publicName});
-				}
-				else {
-					$this->__unset($publicName);
-				}
-			}
-		}
-		else {
-			foreach ($this->_publicNames as $publicName) {
-				if (isset($in[$publicName])) {
-					$this->_setByName($publicName, $in[$publicName]);
-				}
-				else {
-					$this->__unset($publicName);
-				}
-			}
+
+		foreach ($in as $k => $v) {
+			$this->_setByName($k, $v);
 		}
 
 		$this->_checkRelatedProperties();
@@ -356,10 +338,6 @@ abstract class TypedClass extends TypedAbstract
 	public function replace($in): void
 	{
 		$this->_massageInput($in);
-
-		if (empty($in)) {
-			return;
-		}
 
 		foreach ($in as $k => $v) {
 			if ($this->_keyExists($k)) {
