@@ -6,7 +6,7 @@
  * Time: 2:59 PM
  */
 
-class IndexSort extends \Diskerror\Typed\SAInteger
+class IndexSort extends \Diskerror\Typed\Scalar\TInteger
 {
 	/**
 	 * MongoIndexSort constructor.

@@ -2,12 +2,14 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        SAAnything
+ * @name        \Diskerror\Typed\Scalar\TAnything
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
-namespace Diskerror\Typed;
+namespace Diskerror\Typed\Scalar;
+
+use Diskerror\Typed\ScalarAbstract;
 
 /**
  * Class SAAnything
@@ -17,7 +19,7 @@ namespace Diskerror\Typed;
  *
  * @package Diskerror\Typed
  */
-class SAAnything extends ScalarAbstract
+class TAnything extends ScalarAbstract
 {
 	public function set($in)
 	{

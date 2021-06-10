@@ -2,15 +2,17 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        SAFloat
+ * @name        \Diskerror\Typed\Scalar\TFloat
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
-namespace Diskerror\Typed;
+namespace Diskerror\Typed\Scalar;
 
 
-class SAFloat extends ScalarAbstract
+use Diskerror\Typed\ScalarAbstract;
+
+class TFloat extends \Diskerror\Typed\ScalarAbstract
 {
 	public function set($in)
 	{

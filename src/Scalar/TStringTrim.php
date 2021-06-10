@@ -2,23 +2,22 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        SAIntegerUnsigned
+ * @name        \Diskerror\Typed\Scalar\TStringTrim
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
-namespace Diskerror\Typed;
+namespace Diskerror\Typed\Scalar;
 
+use Diskerror\Typed\Scalar\TString;
 
-class SAIntegerUnsigned extends SAInteger
+class TStringTrim extends TString
 {
 	public function set($in)
 	{
 		parent::set($in);
-
-		//	null casts to zero so null stays null
-		if ($this->_value < 0) {
-			$this->_value = 0;
+		if (null !== $this->_value) {
+			$this->_value = trim($this->_value, "\x00..\x20");
 		}
 	}
 }

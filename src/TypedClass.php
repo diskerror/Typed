@@ -10,6 +10,11 @@
 namespace Diskerror\Typed;
 
 use DateTimeInterface;
+use Diskerror\Typed\Scalar\TAnything;
+use Diskerror\Typed\Scalar\TBoolean;
+use Diskerror\Typed\Scalar\TFloat;
+use Diskerror\Typed\Scalar\TInteger;
+use Diskerror\Typed\Scalar\TString;
 use InvalidArgumentException;
 use Throwable;
 use Traversable;
@@ -132,27 +137,27 @@ abstract class TypedClass extends TypedAbstract
 			switch (gettype($v)) {
 				case 'null':
 				case 'NULL':
-					$v = new SAAnything($v);
+					$v = new TAnything($v);
 					break;
 
 				case 'bool':
 				case 'boolean':
-					$v = new SABoolean($v);
+					$v = new TBoolean($v);
 					break;
 
 				case 'int':
 				case 'integer':
-					$v = new SAInteger($v);
+					$v = new TInteger($v);
 					break;
 
 				case 'float':
 				case 'double':
 				case 'real':
-					$v = new SAFloat($v);
+					$v = new TFloat($v);
 					break;
 
 				case 'string':
-					$v = new SAString($v);
+					$v = new TString($v);
 					break;
 
 				case 'array':

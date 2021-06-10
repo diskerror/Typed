@@ -3,6 +3,7 @@
 namespace Tweet;
 
 use Diskerror\Typed\DateTime;
+use Diskerror\Typed\Scalar\TStringNormalize;
 use Diskerror\Typed\TypedClass;
 
 class User extends TypedClass
@@ -19,7 +20,7 @@ class User extends TypedClass
 
 	protected $created_at           = [DateTime::class, '2018-07-18 17:10:28'];
 
-	protected $description          = '';
+	protected $description          = [TStringNormalize::class];
 
 	protected $favourites_count     = 0;
 
@@ -45,9 +46,14 @@ class User extends TypedClass
 
 	protected $verified             = false;
 
-	protected function _set_description($v)
-	{
-		$this->description = preg_replace('/\s+/', ' ', \Normalizer::normalize((string)$v, \Normalizer::FORM_D));
-	}
+
+	/**
+	 * Optional method for filtering description property.
+	 * @param $v
+	 */
+//	protected function _set_description($v)
+//	{
+//		$this->description = preg_replace('/\s+/', ' ', \Normalizer::normalize((string)$v, \Normalizer::FORM_D));
+//	}
 
 }

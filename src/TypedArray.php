@@ -11,6 +11,11 @@ namespace Diskerror\Typed;
 
 use ArrayAccess;
 use DateTimeInterface;
+use Diskerror\Typed\Scalar\TAnything;
+use Diskerror\Typed\Scalar\TBoolean;
+use Diskerror\Typed\Scalar\TFloat;
+use Diskerror\Typed\Scalar\TInteger;
+use Diskerror\Typed\Scalar\TString;
 use InvalidArgumentException;
 use LengthException;
 use Traversable;
@@ -78,27 +83,27 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			case '':
 			case 'null':
 			case 'anything':
-				$this->_type = SAAnything::class;
+				$this->_type = TAnything::class;
 				break;
 
 			case 'bool':
 			case 'boolean':
-				$this->_type = SABoolean::class;
+				$this->_type = TBoolean::class;
 				break;
 
 			case 'int':
 			case 'integer':
-				$this->_type = SAInteger::class;
+				$this->_type = TInteger::class;
 				break;
 
 			case 'float':
 			case 'double':
 			case 'real':
-				$this->_type = SAFloat::class;
+				$this->_type = TFloat::class;
 				break;
 
 			case 'string':
-				$this->_type = SAString::class;
+				$this->_type = TString::class;
 				break;
 
 			case 'array':

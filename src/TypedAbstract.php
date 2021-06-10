@@ -18,10 +18,9 @@ use Countable;
 use IteratorAggregate;
 use Serializable;
 use JsonSerializable;
-use const PHP_EOL;
 
 /**
- * Class TypedInterface
+ * Class TypedAbstract
  * Provides common interface TypedClass and TypedArray.
  *
  * @package Diskerror\Typed

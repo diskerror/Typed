@@ -2,16 +2,17 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        SAString
+ * @name        \Diskerror\Typed\\Diskerror\Typed\Scalar\SAString
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
-namespace Diskerror\Typed;
+namespace Diskerror\Typed\Scalar;
 
+use Diskerror\Typed\ScalarAbstract;
 use UnexpectedValueException;
 
-class SAString extends ScalarAbstract
+class TString extends ScalarAbstract
 {
 	public function set($in)
 	{

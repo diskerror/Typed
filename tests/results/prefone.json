@@ -2,35 +2,35 @@
 	"Option Name": {
 		"name": {
 			"included": true,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "REGEXP",
 			"find": "\\w",
 			"sort": "ASC"
 		},
 		"address": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"city": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"state": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"zip": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
@@ -39,35 +39,35 @@
 	"Option Address": {
 		"name": {
 			"included": true,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"address": {
 			"included": true,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "!=",
 			"find": "",
 			"sort": "ASC"
 		},
 		"city": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"state": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"zip": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
@@ -76,35 +76,35 @@
 	"Option ZIP": {
 		"name": {
 			"included": true,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"address": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"city": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"state": {
 			"included": false,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "LIKE",
 			"find": "",
 			"sort": "ASC"
 		},
 		"zip": {
 			"included": true,
-			"boolean": "AND",
+			"operator": "AND",
 			"compare": "!=",
 			"find": "",
 			"sort": "ASC"
