@@ -49,6 +49,9 @@ class User extends TypedClass
 
 	/**
 	 * Optional method for filtering description property.
+	 *
+	 * protected $description = '';
+	 *
 	 * @param $v
 	 */
 //	protected function _set_description($v)

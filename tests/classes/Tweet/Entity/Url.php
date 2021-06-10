@@ -6,7 +6,7 @@ use Diskerror\Typed\{TypedArray, TypedClass};
 
 class Url extends TypedClass
 {
-	protected $url          = '';
+	protected $url          = '';	//	We could do some fancy filtering for this.
 
 	protected $expanded_url = '';
 

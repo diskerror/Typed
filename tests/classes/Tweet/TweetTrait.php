@@ -3,7 +3,7 @@
 namespace Tweet;
 
 use Diskerror\Typed\DateTime;
-use Diskerror\Typed\Scalar\TStringTrim;
+use Diskerror\Typed\Scalar\TStringNormalize;
 
 trait TweetTrait {
 
@@ -11,7 +11,7 @@ trait TweetTrait {
 
 	protected $contributors              = null;
 
-	protected $entities                  = [Entity\Entity::class];
+	protected $entities                  = [\Tweet\Entity::class];
 
 	protected $extended_entities         = [ExtendedEntities::class];
 
@@ -35,9 +35,9 @@ trait TweetTrait {
 
 	protected $retweet_count             = 0;
 
-	protected $source                    = '';
+	protected $source                    = '';	//	address html tag
 
-	protected $text                      = [TStringTrim::class];
+	protected $text                      = [TStringNormalize::class];
 
 	protected $truncated                 = false;
 
@@ -46,7 +46,7 @@ trait TweetTrait {
 
 	protected function _set_text($v)
 	{
-		$this->text = preg_replace('/\s+/', ' ', \Normalizer::normalize((string)$v, \Normalizer::FORM_D));
+		$this->text->set(preg_replace('/\s+/', ' ', (string)$v));
 	}
 
 }

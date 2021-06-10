@@ -16,7 +16,6 @@ use Diskerror\Typed\Scalar\TFloat;
 use Diskerror\Typed\Scalar\TInteger;
 use Diskerror\Typed\Scalar\TString;
 use InvalidArgumentException;
-use Throwable;
 use Traversable;
 use TypeError;
 
@@ -578,6 +577,10 @@ abstract class TypedClass extends TypedAbstract
 	{
 		if (array_key_exists($propName, $this->_map)) {
 			$propName = $this->_map[$propName];
+		}
+
+		if(!in_array($propName, $this->_publicNames)){
+			return;
 		}
 
 		$setter = '_set_' . $propName;

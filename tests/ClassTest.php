@@ -1,6 +1,7 @@
 <?php /** @noinspection ALL */
 declare(strict_types = 1);
 
+use Diskerror\Typed\TypedClass;
 use PHPUnit\Framework\TestCase;
 
 final class ClassTest extends TestCase
@@ -62,12 +63,12 @@ final class ClassTest extends TestCase
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-class TypedDate extends \Diskerror\Typed\TypedClass
+class TypedDate extends TypedClass
 {
 	protected $date = [DateTime::class];
 }
 
-class Nested extends \Diskerror\Typed\TypedClass
+class Nested extends TypedClass
 {
 	protected $name = 'secret';
 
