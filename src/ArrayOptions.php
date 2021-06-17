@@ -51,6 +51,8 @@ final class ArrayOptions
 	 */
 	const CAST_ID_TO_OBJECTID = 32;
 
+	const SET_ALL_YES = 63;
+
 	/**
 	 * @var int
 	 */
