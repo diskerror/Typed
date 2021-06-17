@@ -44,13 +44,12 @@ class DateTime extends DT implements JsonSerializable
 		switch (gettype($time)) {
 			case 'object':
 				if ($time instanceof DateTimeInterface) {
-					parent::__construct(
-						$time->format(self::STRING_IO_FORMAT_MICRO),
-						$time->getTimezone()
-					);
+					$this->date          = $time->date;
+					$this->timezone_type = $time->timezone_type;
+					$this->timezone      = $time->timezone;
 					break;
 				}
-			//	no break, fall through
+			//	no break, fall through if not instance of DateTimeInterface
 			case 'array':
 				parent::__construct('now', $timezone);
 				$this->setDate($time);
@@ -69,7 +68,10 @@ class DateTime extends DT implements JsonSerializable
 					//	if this contains fractional seconds
 					//	$tmp is a PHP \DateTime
 					$tmp = DT::createFromFormat('U.u', sprintf('%f', substr($time, 1)), $timezone);
-					parent::__construct($tmp->format(self::RFC3339_EXTENDED), $timezone);
+
+					$this->date          = $tmp->date;
+					$this->timezone_type = $tmp->timezone_type;
+					$this->timezone      = $tmp->timezone;
 				}
 				else {
 					parent::__construct($time, $timezone);
@@ -84,7 +86,10 @@ class DateTime extends DT implements JsonSerializable
 			case 'float':
 			case 'double':
 				$tmp = DT::createFromFormat('U.u', sprintf('%f', $time), $timezone);
-				parent::__construct($tmp->format(self::RFC3339_EXTENDED), $timezone);
+
+				$this->date          = $tmp->date;
+				$this->timezone_type = $tmp->timezone_type;
+				$this->timezone      = $tmp->timezone;
 				break;
 
 			case 'null':
