@@ -53,6 +53,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param mixed             $param1 OPTIONAL ""
 	 * @param array|object|null $param2 OPTIONAL null
+	 *
+	 * @throws InvalidArgumentException
 	 */
 	public function __construct($param1 = '', $param2 = null)
 	{
@@ -176,8 +178,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Null clears the entire contents of the typed array but not it's type.
 	 *
 	 * @param $in
-	 *
-	 * @throws InvalidArgumentException
 	 */
 	public function assign($in)
 	{
@@ -194,8 +194,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Copies all members into this class. Indexed keys will be re-indexed.
 	 *
 	 * @param object|array|string|null $in
-	 *
-	 * @throws InvalidArgumentException
 	 */
 	public function replace($in)
 	{
