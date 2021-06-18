@@ -381,7 +381,7 @@ abstract class TypedClass extends TypedAbstract
 	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
 		$keepJsonExpr = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$ZJE_STRING   = '\\Zend\\Json\\Expr';    //  A string here so library does not need to be included.
+		$ZJE_STRING   = '\\Laminas\\Json\\Expr';    //  A string here so library does not need to be included.
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
