@@ -43,8 +43,8 @@ class DateTime extends DT implements JsonSerializable
 
 		switch (gettype($time)) {
 			case 'object':
-				if ($time instanceof DateTimeInterface) {
-					parent::__construct($time->format(DateTimeInterface::ATOM), $timezone);
+				if ($time instanceof \DateTimeInterface) {
+					parent::__construct($time->format(\DateTimeInterface::ATOM), $timezone);
 					break;
 				}
 			//	no break, fall through if not instance of DateTimeInterface
