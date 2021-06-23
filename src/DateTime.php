@@ -44,9 +44,7 @@ class DateTime extends DT implements JsonSerializable
 		switch (gettype($time)) {
 			case 'object':
 				if ($time instanceof DateTimeInterface) {
-					$this->date          = $time->date;
-					$this->timezone_type = $time->timezone_type;
-					$this->timezone      = $time->timezone;
+					parent::__construct($time->format(DateTimeInterface::ATOM), $timezone);
 					break;
 				}
 			//	no break, fall through if not instance of DateTimeInterface
@@ -64,14 +62,9 @@ class DateTime extends DT implements JsonSerializable
 				elseif (substr($time, -3) === '.0Z') {
 					parent::__construct(substr($time, 0, -3), $timezone);
 				}
-				elseif ($time[0] === '@' && strpos($time, '.')) {
-					//	if this contains fractional seconds
-					//	$tmp is a PHP \DateTime
-					$tmp = DT::createFromFormat('U.u', sprintf('%f', substr($time, 1)), $timezone);
-
-					$this->date          = $tmp->date;
-					$this->timezone_type = $tmp->timezone_type;
-					$this->timezone      = $tmp->timezone;
+				elseif ($time[0] === '@') {
+					//	if this possibly contains fractional seconds
+					parent::__construct(sprintf('@%f', substr($time, 1)), $timezone);
 				}
 				else {
 					parent::__construct($time, $timezone);
@@ -85,11 +78,7 @@ class DateTime extends DT implements JsonSerializable
 
 			case 'float':
 			case 'double':
-				$tmp = DT::createFromFormat('U.u', sprintf('%f', $time), $timezone);
-
-				$this->date          = $tmp->date;
-				$this->timezone_type = $tmp->timezone_type;
-				$this->timezone      = $tmp->timezone;
+				parent::__construct(sprintf('@%f', $time), $timezone);
 				break;
 
 			case 'null':
@@ -118,6 +107,13 @@ class DateTime extends DT implements JsonSerializable
 	{
 		switch (gettype($year)) {
 			case 'object':
+				if ($time instanceof DateTimeInterface) {
+					$day   = $year->format('j');
+					$month = $year->format('n');
+					$year  = $year->format('Y');
+					break;
+				}
+			//	fall through
 			case 'array':
 				$arrIn = $year;
 
@@ -164,6 +160,13 @@ class DateTime extends DT implements JsonSerializable
 	{
 		switch (gettype($hour)) {
 			case 'object':
+				if ($time instanceof DateTimeInterface) {
+					$second = $hour->format('j');
+					$minute = $hour->format('n');
+					$hour   = $hour->format('Y');
+					break;
+				}
+			//	fall through
 			case 'array':
 				$arrIn = $hour;
 				//	get current values as input is allowed to be incomplete
@@ -224,7 +227,7 @@ class DateTime extends DT implements JsonSerializable
 	 */
 	public function getTimestampMilli(): int
 	{
-		return ($this->format('U.v') * 1000);
+		return ((int)$this->format('U.v') * 1000);
 	}
 
 	/**

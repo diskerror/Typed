@@ -52,4 +52,14 @@ class SerializeTest extends PHPUnit\Framework\TestCase
 		);
 	}
 
+	public function testDate(){
+		$dt = new \Diskerror\Typed\DateTime(1561431851.34);
+
+//		jsonPrint($dt->__tostring());exit;
+		$this->assertEquals(
+			$dt->format(\Diskerror\Typed\DateTime::STRING_IO_FORMAT_MICRO),
+			'2019-06-25 03:04:11.340000'
+		);
+	}
+
 }
