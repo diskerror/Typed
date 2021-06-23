@@ -37,6 +37,8 @@ class DateTime extends DT implements JsonSerializable
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
+		$timezoneWasNull = $timezone === null ? true : false;
+
 		if (!($timezone instanceof DateTimeZone)) {
 			$timezone = new DateTimeZone(date_default_timezone_get());
 		}
@@ -44,7 +46,7 @@ class DateTime extends DT implements JsonSerializable
 		switch (gettype($time)) {
 			case 'object':
 				if ($time instanceof \DateTimeInterface) {
-					if($timezone!==null){
+					if ($timezoneWasNull) {
 						throw new InvalidArgumentException('Time zone must be null when passing DateTime object.');
 					}
 					parent::__construct(
@@ -233,7 +235,7 @@ class DateTime extends DT implements JsonSerializable
 	 */
 	public function getTimestampMilli(): int
 	{
-		return ((int)$this->format('U.v') * 1000);
+		return ((int) $this->format('U.v') * 1000);
 	}
 
 	/**
