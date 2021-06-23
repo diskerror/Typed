@@ -30,26 +30,4 @@ final class ArrayOptions extends Options
 	 * For Zend JSON encoding to JSON, these objects contain strings that should not be quoted.
 	 */
 	const KEEP_JSON_EXPR = 4;
-
-	/**
-	 * The following options are used with the project TypedBSON.
-	 */
-
-	/**
-	 * Setting this will instruct the conversion to an array to leave MongoDB\BSON instances alone,
-	 * don't convert to string.
-	 */
-	const NO_CAST_BSON = 8;
-
-	/**
-	 * Cast all DateTimeInterface objects to UTCDateTime.
-	 */
-	const CAST_DATETIME_TO_BSON = 16;
-
-	/**
-	 * Cast member with the name "_id" into MongoDB\BSON\ObjectId when doing bsonSerialize().
-	 */
-	const CAST_ID_TO_OBJECTID = 32;
-
-	const SET_ALL_YES = 63;
 }
