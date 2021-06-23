@@ -44,7 +44,13 @@ class DateTime extends DT implements JsonSerializable
 		switch (gettype($time)) {
 			case 'object':
 				if ($time instanceof \DateTimeInterface) {
-					parent::__construct($time->format(\DateTimeInterface::ATOM), $timezone);
+					if($timezone!==null){
+						throw new InvalidArgumentException('Time zone must be null when passing DateTime object.');
+					}
+					parent::__construct(
+						$time->format(self::STRING_IO_FORMAT_MICRO),
+						$time->getTimezone()
+					);
 					break;
 				}
 			//	no break, fall through if not instance of DateTimeInterface
