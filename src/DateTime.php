@@ -67,7 +67,7 @@ class DateTime extends DT implements JsonSerializable
 					parent::__construct(substr($time, 0, -3), $timezone);
 				}
 				elseif ($time[0] === '@') {
-					//	if this possibly contains fractional seconds
+					//	if this possibly contains fractional seconds, fixed formatting
 					parent::__construct(sprintf('@%f', substr($time, 1)), $timezone);
 				}
 				else {
