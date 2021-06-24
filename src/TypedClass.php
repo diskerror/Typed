@@ -120,7 +120,7 @@ abstract class TypedClass extends TypedAbstract
 		$this->replace($in);
 	}
 
-	private function _initMetaData()
+	protected function _initMetaData()
 	{
 		$this->_calledClass = get_called_class();
 
@@ -181,7 +181,7 @@ abstract class TypedClass extends TypedAbstract
 	/**
 	 * Should be called after _initMetaData().
 	 */
-	private function _initProperties()
+	protected function _initProperties()
 	{
 		foreach ($this->_defaultValues as $k => &$v) {
 			/**
