@@ -6,6 +6,7 @@ use DateTime as DT;
 use DateTimeZone;
 use InvalidArgumentException;
 use JsonSerializable;
+use function method_exists;
 
 /**
  * This class adds convenience methods to the built-in DateTime.
@@ -22,13 +23,13 @@ class DateTime extends DT implements JsonSerializable
 	 */
 	public const STRING_IO_FORMAT       = 'Y-m-d H:i:s';
 	public const STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
-	public const STRING_IO_FORMAT_JSON  = 'Y-m-d\TH:i:s.vP';
 
 	/**
 	 * Accepts a DateTime object or;
 	 * Adds the ability to pass in an array or object with key names of variable
 	 *       length but a minimum of 3 characters, upper or lower case.
 	 * See setTime and setDate for more information.
+	 * Timezone is ignored when DateTime object is passed in first param.
 	 *
 	 * @param mixed        $time     -OPTIONAL
 	 * @param DateTimeZone $timezone -OPTIONAL
@@ -37,8 +38,6 @@ class DateTime extends DT implements JsonSerializable
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
-		$timezoneWasNull = $timezone === null ? true : false;
-
 		if (!($timezone instanceof DateTimeZone)) {
 			$timezone = new DateTimeZone(date_default_timezone_get());
 		}
@@ -46,9 +45,6 @@ class DateTime extends DT implements JsonSerializable
 		switch (gettype($time)) {
 			case 'object':
 				if ($time instanceof \DateTimeInterface) {
-					if ($timezoneWasNull) {
-						throw new InvalidArgumentException('Time zone must be null when passing DateTime object.');
-					}
 					parent::__construct(
 						$time->format(self::STRING_IO_FORMAT_MICRO),
 						$time->getTimezone()
@@ -115,11 +111,17 @@ class DateTime extends DT implements JsonSerializable
 	{
 		switch (gettype($year)) {
 			case 'object':
-				if ($time instanceof DateTimeInterface) {
+				if ($time instanceof \DateTimeInterface) {
 					$day   = $year->format('j');
 					$month = $year->format('n');
 					$year  = $year->format('Y');
 					break;
+				}
+				elseif (method_exists($year, 'toArray')) {
+					$year = $year->toArray();
+				}
+				else {
+					$year = (array) $year;
 				}
 			//	fall through
 			case 'array':
@@ -168,11 +170,17 @@ class DateTime extends DT implements JsonSerializable
 	{
 		switch (gettype($hour)) {
 			case 'object':
-				if ($time instanceof DateTimeInterface) {
+				if ($time instanceof \DateTimeInterface) {
 					$second = $hour->format('j');
 					$minute = $hour->format('n');
 					$hour   = $hour->format('Y');
 					break;
+				}
+				elseif (method_exists($hour, 'toArray')) {
+					$hour = $hour->toArray();
+				}
+				else {
+					$hour = (array) $hour;
 				}
 			//	fall through
 			case 'array':
