@@ -1,10 +1,10 @@
 <?php
 
-require 'Tweet/TweetTrait.php';
+namespace TestClasses;
 
 use Diskerror\Typed\TypedClass;
-use Tweet\ReTweet;
-use Tweet\TweetTrait;
+use TestClasses\Tweet\ReTweet;
+use TestClasses\Tweet\TweetTrait;
 
 class Tweet extends TypedClass
 {

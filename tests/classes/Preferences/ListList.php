@@ -1,6 +1,6 @@
 <?php
 
-namespace Preferences;
+namespace TestClasses\Preferences;
 
 use Diskerror\Typed\TypedArray;
 

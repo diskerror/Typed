@@ -1,6 +1,6 @@
 <?php
 
-namespace Tweet;
+namespace TestClasses\Tweet;
 
 use Diskerror\Typed\DateTime;
 use Diskerror\Typed\Scalar\TStringNormalize;
@@ -11,7 +11,7 @@ trait TweetTrait {
 
 	protected $contributors              = null;
 
-	protected $entities                  = [\Tweet\Entity::class];
+	protected $entities                  = [Entity::class];
 
 	protected $extended_entities         = [ExtendedEntities::class];
 

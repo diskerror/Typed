@@ -1,10 +1,10 @@
 <?php
 
-namespace Preferences;
+namespace TestClasses\Preferences;
 
-use Preferences\Item\Compare;
-use Preferences\Item\Operator;
-use Preferences\Item\Sort;
+use TestClasses\Preferences\Item\Compare;
+use TestClasses\Preferences\Item\Operator;
+use TestClasses\Preferences\Item\Sort;
 
 class Item extends \Diskerror\Typed\TypedClass
 {

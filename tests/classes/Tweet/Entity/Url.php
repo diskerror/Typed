@@ -1,6 +1,6 @@
 <?php
 
-namespace Tweet\Entity;
+namespace TestClasses\Tweet\Entity;
 
 use Diskerror\Typed\{TypedArray, TypedClass};
 

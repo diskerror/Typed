@@ -2,6 +2,7 @@
 
 use Diskerror\Typed\DateTime as MyDateTime;
 use Diskerror\Typed\TypedArray;
+use TestClasses\SimpleTyped;
 
 class AssignTest extends PHPUnit\Framework\TestCase
 {

@@ -1,0 +1,104 @@
+{
+	"version": "0.4",
+	"mongo_db": {
+		"host": "mongodb:\/\/localhost:27017",
+		"database": "digester"
+	},
+	"tweets_expire": 600,
+	"word_stats": {
+		"quantity": 32,
+		"window": 180,
+		"stop": []
+	},
+	"twitter": {
+		"auth": {
+			"consumer_key": "",
+			"consumer_secret": "",
+			"oauth_token": "",
+			"oauth_token_secret": ""
+		},
+		"track": [
+			"atf",
+			"attorney",
+			"cia",
+			"congress",
+			"constitution",
+			"constitutionparty",
+			"court",
+			"democracy",
+			"democrat",
+			"democratic",
+			"democraticparty",
+			"democratparty",
+			"diplomacy",
+			"diplomatic",
+			"doj",
+			"fbi",
+			"gop",
+			"government",
+			"green",
+			"greenparty",
+			"ice",
+			"justice",
+			"libertarian",
+			"libertarianparty",
+			"potus",
+			"presidency",
+			"president",
+			"representative",
+			"republic",
+			"republican",
+			"republicanparty",
+			"scotus",
+			"senate",
+			"senator",
+			"socialdemocrat",
+			"socialdemocraticparty",
+			"supreme",
+			"supremecourt"
+		]
+	},
+	"process": {
+		"name": "twitter_digester",
+		"path": "\/var\/run\/",
+		"procDir": "\/proc\/"
+	},
+	"caches": {
+		"index": {
+			"front": {
+				"lifetime": null,
+				"adapter": "data"
+			},
+			"back": {
+				"directory": "",
+				"prefix": "",
+				"frontend": "",
+				"adapter": ""
+			}
+		},
+		"tag_cloud": {
+			"front": {
+				"lifetime": null,
+				"adapter": "data"
+			},
+			"back": {
+				"directory": "",
+				"prefix": "",
+				"frontend": "",
+				"adapter": ""
+			}
+		},
+		"summary": {
+			"front": {
+				"lifetime": null,
+				"adapter": "data"
+			},
+			"back": {
+				"directory": "",
+				"prefix": "",
+				"frontend": "",
+				"adapter": ""
+			}
+		}
+	}
+}

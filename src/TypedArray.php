@@ -229,7 +229,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param int $opts
 	 */
-	public function setArrayOptions(int $opts)
+	public function setArrayOptions(int $opts): void
 	{
 		$this->_arrayOptions->set($opts);
 	}

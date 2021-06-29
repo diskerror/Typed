@@ -133,7 +133,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	/**
 	 * @param int $opt
 	 */
-	public function setArrayOptions(int $opts)
+	public function setArrayOptions(int $opts): void
 	{
 		$this->_arrayOptions->set($opts);
 	}
@@ -143,7 +143,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 *
 	 * @return array
 	 */
-	public function jsonSerialize()
+	public function jsonSerialize(): array
 	{
 		return $this->_toArray($this->_jsonOptions);
 	}

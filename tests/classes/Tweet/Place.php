@@ -1,8 +1,10 @@
 <?php
 
-namespace Tweet;
+namespace TestClasses\Tweet;
 
-class Place extends \Diskerror\Typed\TypedClass
+use Diskerror\Typed\TypedClass;
+
+class Place extends TypedClass
 {
 	protected $id           = 0;
 

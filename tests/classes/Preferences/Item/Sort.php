@@ -1,6 +1,6 @@
 <?php
 
-namespace Preferences\Item;
+namespace TestClasses\Preferences\Item;
 
 use Diskerror\Typed\Scalar\TStringTrim;
 

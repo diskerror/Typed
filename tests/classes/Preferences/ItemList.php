@@ -1,8 +1,10 @@
 <?php
 
-namespace Preferences;
+namespace TestClasses\Preferences;
 
-class ItemList extends \Diskerror\Typed\TypedArray
+use Diskerror\Typed\TypedArray;
+
+class ItemList extends TypedArray
 {
 	protected $_type = Item::class;
 

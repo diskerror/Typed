@@ -1,8 +1,8 @@
 <?php
 
-use Preferences\Item;
-use Preferences\ListList;
-use Preferences\ItemList;
+use TestClasses\Preferences\Item;
+use TestClasses\Preferences\ItemList;
+use TestClasses\Preferences\ListList;
 
 class PrefListTest extends PHPUnit\Framework\TestCase
 {

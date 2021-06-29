@@ -1,6 +1,6 @@
 <?php
 
-namespace Tweet;
+namespace TestClasses\Tweet;
 
 use Diskerror\Typed\TypedClass;
 

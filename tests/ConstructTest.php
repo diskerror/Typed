@@ -1,6 +1,7 @@
 <?php /** @noinspection ALL */
 
 use Diskerror\Typed\TypedArray;
+use TestClasses\SimpleTyped;
 
 class ConstructTest extends PHPUnit\Framework\TestCase
 {

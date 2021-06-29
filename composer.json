@@ -37,13 +37,8 @@
 		}
 	},
 	"autoload-dev": {
-		"classmap": [
-			"tests/classes/"
-		],
 		"psr-4": {
-			"Mongo\\": "tests/classes/Mongo/",
-			"Preferences\\": "tests/classes/Preferences/",
-			"Tweet\\": "tests/classes/Tweet/"
+			"TestClasses\\": "tests/classes/"
 		}
 	}
 }

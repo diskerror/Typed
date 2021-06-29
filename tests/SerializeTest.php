@@ -1,5 +1,7 @@
 <?php
 
+use TestClasses\Tweet;
+
 class SerializeTest extends PHPUnit\Framework\TestCase
 {
 	public function testSerialize()

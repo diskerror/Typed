@@ -1,6 +1,7 @@
 <?php
 
 use Diskerror\Typed\SqlStatement;
+use TestClasses\SimpleTyped;
 
 class SqlTest extends PHPUnit\Framework\TestCase
 {
