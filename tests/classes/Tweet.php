@@ -8,7 +8,7 @@ use TestClasses\Tweet\TweetTrait;
 
 class Tweet extends TypedClass
 {
-	protected $_map = [
+	protected array $_map = [
 		'id' => '_id',    //	from Twitter
 	];
 

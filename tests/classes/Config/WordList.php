@@ -7,5 +7,5 @@ use Diskerror\Typed\TypedArray;
 
 class WordList extends TypedArray
 {
-	protected $_type = TString::class;
+	protected ?string $_type = TString::class;
 }

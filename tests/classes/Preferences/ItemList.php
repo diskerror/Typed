@@ -6,7 +6,7 @@ use Diskerror\Typed\TypedArray;
 
 class ItemList extends TypedArray
 {
-	protected $_type = Item::class;
+	protected ?string $_type = Item::class;
 
 	/**
 	 * Return new default set of fields with each call.

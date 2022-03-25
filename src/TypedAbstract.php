@@ -27,28 +27,28 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 *
 	 * @var ArrayOptions
 	 */
-	protected $_arrayOptions;
+	protected ArrayOptions $_arrayOptions;
 
 	/**
 	 * Holds default options for "toArray" customizations.
 	 *
 	 * @var int
 	 */
-	protected $_arrayOptionDefaults = 0;
+	protected int $_arrayOptionDefaults = 0;
 
 	/**
 	 * Holds options for "toArray" customizations when used by json_encode.
 	 *
 	 * @var ArrayOptions
 	 */
-	protected $_jsonOptions;
+	protected ArrayOptions $_jsonOptions;
 
 	/**
 	 * Holds default options for "toArray" customizations when used by json_encode.
 	 *
 	 * @var int
 	 */
-	protected $_jsonOptionDefaults =
+	protected int $_jsonOptionDefaults =
 		ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR;
 
 	/**
@@ -59,7 +59,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 *
 	 * @param mixed $in
 	 */
-	abstract public function assign($in);
+	abstract public function assign($in): void;
 
 	/**
 	 * Replace.
@@ -69,7 +69,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 *
 	 * @param mixed $in
 	 */
-	abstract public function replace($in);
+	abstract public function replace($in): void;
 
 	/**
 	 * Merge $this struct with $in struct and return new structure. Input
@@ -77,23 +77,21 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 *
 	 * @param mixed $in
 	 *
-	 * @return self
+	 * @return TypedAbstract
 	 */
-	abstract public function merge($in);
+	abstract public function merge($in): TypedAbstract;
 
 	/**
 	 * Check if the input data is good or needs to be massaged.
 	 *
 	 * @param $in
-	 *
-	 * @return object|array
 	 */
-	abstract protected function _massageInput(&$in);
+	abstract protected function _massageInput(&$in): void;
 
 	/**
 	 * Initialize options for when this object is converted to an array.
 	 */
-	protected function _initArrayOptions()
+	protected function _initArrayOptions(): void
 	{
 		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
 		$this->_jsonOptions  = new ArrayOptions($this->_jsonOptionDefaults);
@@ -139,7 +137,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	}
 
 	/**
-	 * Be sure json_encode get's our prepared array.
+	 * Be sure json_encode gets our prepared array.
 	 *
 	 * @return array
 	 */

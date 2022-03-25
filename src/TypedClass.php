@@ -55,35 +55,35 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @var array
 	 */
-	protected $_map = [];
+	protected array $_map = [];
 
 	/**
 	 * Holds the name of the name of the child class for method_exists and property_exists.
 	 *
 	 * @var string
 	 */
-	private $_calledClass;
+	private string $_calledClass;
 
 	/**
 	 * Holds the default values of the called class to-be-public properties in associative array.
 	 *
 	 * @var array
 	 */
-	private $_defaultValues;
+	private array $_defaultValues;
 
 	/**
 	 * Holds the names of the called class' to-be-public properties in an indexed array.
 	 *
 	 * @var array
 	 */
-	private $_publicNames;
+	private array $_publicNames;
 
 	/**
 	 * Holds the count of the to-be-public properties.
 	 *
 	 * @var int
 	 */
-	private $_count;
+	private int $_count;
 
 
 	/**
@@ -94,26 +94,6 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __construct($in = null)
 	{
-		switch (gettype($in)) {
-			case 'string':
-			case 'array':
-			case 'object':
-			case 'NULL':
-			case 'null':
-				break;
-
-			case 'bool':
-			case 'boolean':
-				if (!$in) {
-					break;
-				}
-			//	"True" falls through and triggers exception.
-			//	We allow "false" because some DB frameworks return "false" for empty result sets.
-
-			default:
-				throw new InvalidArgumentException('bad value to constructor');
-		}
-
 		$this->_initArrayOptions();
 		$this->_initMetaData();
 		$this->_initProperties();

@@ -33,14 +33,14 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @var string|null
 	 */
-	protected $_type;
+	protected ?string $_type;
 
 	/**
 	 * An array that contains the items of interest.
 	 *
 	 * @var array
 	 */
-	protected $_container;
+	protected array $_container;
 
 	/**
 	 * Constructor.
@@ -79,7 +79,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		}
 	}
 
-	protected function _initMetaData()
+	protected function _initMetaData(): void
 	{
 		switch (strtolower($this->_type)) {
 			case '':
@@ -179,7 +179,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param $in
 	 */
-	public function assign($in)
+	public function assign($in): void
 	{
 		$this->_massageInput($in);
 
@@ -195,7 +195,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param object|array|string|null $in
 	 */
-	public function replace($in)
+	public function replace($in): void
 	{
 		$this->_massageInput($in);
 
@@ -312,6 +312,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * that any member of type "Typed" will also be returned.
 	 * Use "__get" and "__set", or $var[$member] to access individual names.
 	 *
+	 * @param ArrayOptions $arrayOptions
+	 *
 	 * @return array
 	 */
 	protected function _toArray(ArrayOptions $arrayOptions): array
@@ -379,9 +381,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param  $it
 	 *
-	 * @return self
+	 * @return TypedArray
 	 */
-	public function merge($it): self
+	public function merge($it): TypedArray
 	{
 		$this->_massageInput($it);
 
@@ -471,7 +473,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * @param string|int $k
 	 * @param mixed      $v
 	 */
-	public function offsetSet($k, $v)
+	public function offsetSet($k, $v): void
 	{
 		if (null === $k || !$this->offsetExists($k)) {
 			$v = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
@@ -504,7 +506,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param string|int $offset
 	 */
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		unset($this->_container[$offset]);
 	}
