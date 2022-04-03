@@ -40,5 +40,10 @@
 		"psr-4": {
 			"TestClasses\\": "tests/classes/"
 		}
+	},
+	"config": {
+		"allow-plugins": {
+			"symfony/flex": true
+		}
 	}
 }

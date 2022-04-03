@@ -11,7 +11,6 @@ namespace Diskerror\Typed;
 
 use Countable;
 use IteratorAggregate;
-use Serializable;
 use JsonSerializable;
 
 /**
@@ -20,7 +19,7 @@ use JsonSerializable;
  *
  * @package Diskerror\Typed
  */
-abstract class TypedAbstract implements Countable, IteratorAggregate, Serializable, JsonSerializable
+abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerializable
 {
 	/**
 	 * Holds options for "toArray" customizations.
@@ -30,11 +29,11 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	protected ArrayOptions $_arrayOptions;
 
 	/**
-	 * Holds default options for "toArray" customizations.
+	 * Holds options for "toArray" customizations.
 	 *
-	 * @var int
+	 * @var ArrayOptions
 	 */
-	protected int $_arrayOptionDefaults = 0;
+	protected ArrayOptions $_serializeOptions;
 
 	/**
 	 * Holds options for "toArray" customizations when used by json_encode.
@@ -43,13 +42,17 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 */
 	protected ArrayOptions $_jsonOptions;
 
-	/**
-	 * Holds default options for "toArray" customizations when used by json_encode.
-	 *
-	 * @var int
-	 */
-	protected int $_jsonOptionDefaults =
-		ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR;
+
+	protected function __construct($param1 = null, $param2 = null)
+	{
+		/**
+		 * Initialize options for when this object is converted to an array.
+		 */
+		$this->_arrayOptions     = new ArrayOptions();
+		$this->_serializeOptions = new ArrayOptions(ArrayOptions::OMIT_DEFAULTS);
+		$this->_jsonOptions      =
+			new ArrayOptions(ArrayOptions::OMIT_DEFAULTS | ArrayOptions::KEEP_JSON_EXPR);
+	}
 
 	/**
 	 * Assign.
@@ -87,15 +90,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	 * @param $in
 	 */
 	abstract protected function _massageInput(&$in): void;
-
-	/**
-	 * Initialize options for when this object is converted to an array.
-	 */
-	protected function _initArrayOptions(): void
-	{
-		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
-		$this->_jsonOptions  = new ArrayOptions($this->_jsonOptionDefaults);
-	}
 
 	/**
 	 * Returns an array with all public, protected, and private properties in
@@ -144,5 +138,23 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, Serializab
 	public function jsonSerialize(): array
 	{
 		return $this->_toArray($this->_jsonOptions);
+	}
+
+	protected static function _isAssignableType(string $type): bool
+	{
+		static $assignableTypes;
+		if (!isset($assignableTypes)) {
+			$assignableTypes = [
+				'string',
+				'int', 'integer',
+				'float', 'double', 'real',
+				'numeric',
+				'bool', 'boolean',
+				'null', 'NULL',
+				'array',
+			];
+		}
+
+		return in_array($type, $assignableTypes, true);
 	}
 }

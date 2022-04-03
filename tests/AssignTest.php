@@ -183,19 +183,19 @@ class AssignTest extends PHPUnit\Framework\TestCase
 
 		////////////////////////////////////////////////////////////////////////
 		//	Array.
-		$this->assertEquals(new TypedArray(), $t->myArray);
+		$this->assertIsArray($t->myArray->toArray());
 
 		$t->myArray = [77];
-		$this->assertEquals(new TypedArray('', [77]), $t->myArray);
+		$this->assertEquals([77], $t->myArray->toArray());
 
 		$t->myArray = [3.14150];
-		$this->assertEquals(new TypedArray('', [3.1415]), $t->myArray);
+		$this->assertEquals([3.1415], $t->myArray->toArray());
 
 		$t->myArray = [true];
-		$this->assertEquals(new TypedArray('', [true]), $t->myArray);
+		$this->assertEquals([true], $t->myArray->toArray());
 
 		$t->myArray = null;
-		$this->assertEquals(new TypedArray(), $t->myArray);
+		$this->assertEquals([], $t->myArray->toArray());
 		$this->assertTrue(is_object($t->myArray));
 
 		$t->myArray = ['a', 'b'];
@@ -204,7 +204,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$c          = new stdClass();
 		$c->aMember = 'string data';
 		$t->myArray = $c;
-		$this->assertEquals(new TypedArray('', ['aMember' => 'string data']), $t->myArray);
+		$this->assertEquals(new TypedArray('', ['aMember' => 'string data', 'a', 'b']), $t->myArray);
 
 		unset($t->myArray);
 		$this->assertEquals(new TypedArray(), $t->myArray);
@@ -247,9 +247,9 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		//	Generic object.
 		$this->assertInstanceOf(MyDateTime::class, $t->myDate);
 
-		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
+		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001000+0000'), $t->myDate);
 
-		$this->assertEquals(new \DateTime('2010-01-01T01:01:01.001'), $t->myDate);
+		$this->assertEquals(new \DateTime('2010-01-01T01:01:01.001000+0000'), $t->myDate);
 
 		$this->assertNotSame(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
 
@@ -258,11 +258,11 @@ class AssignTest extends PHPUnit\Framework\TestCase
 		$this->assertEquals(new MyDateTime(77), $t->myDate);
 
 		$t->myDate = null;
-		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
+		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001000+0000'), $t->myDate);
 
 		$t->myDate = 'now';
 		unset($t->myDate);
-		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
+		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001000+0000'), $t->myDate);
 	}
 
 }

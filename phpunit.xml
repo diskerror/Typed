@@ -27,8 +27,8 @@
     <testsuite name="serialize">
       <file>tests/SerializeTest.php</file>
     </testsuite>
-    <testsuite name="config">
-      <file>tests/ConfigTest.php</file>
-    </testsuite>
+<!--    <testsuite name="config">-->
+<!--      <file>tests/ConfigTest.php</file>-->
+<!--    </testsuite>-->
   </testsuites>
 </phpunit>

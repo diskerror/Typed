@@ -9,10 +9,15 @@ use Diskerror\Typed\{TypedClass, TypedArray};
 
 class Entity extends TypedClass
 {
-	protected $hashtags      = [TypedArray::class, Hashtag::class];
-	protected $urls          = [TypedArray::class, Url::class];
-	protected $user_mentions = [TypedArray::class, UserMention::class];
+	protected TypedArray $hashtags;
+	protected TypedArray $urls;
+	protected TypedArray $user_mentions;
 
-// 	protected $symbols  = '';
-// 	protected $polls  = '';
+	protected function _initializeObjects()
+	{
+		$this->hashtags      = new TypedArray(Hashtag::class);
+		$this->urls          = new TypedArray(Url::class);
+		$this->user_mentions = new TypedArray(UserMention::class);
+	}
+
 }

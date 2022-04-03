@@ -22,9 +22,9 @@ final class ArrayOptions extends Options
 	const OMIT_EMPTY = 1;
 
 	/**
-	 * Omit resources from the array that is output.
+	 * Omit properties that match their default values.
 	 */
-	const OMIT_RESOURCE = 2;
+	const OMIT_DEFAULTS = 2;
 
 	/**
 	 * For Zend JSON encoding to JSON, these objects contain strings that should not be quoted.

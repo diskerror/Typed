@@ -11,14 +11,12 @@ namespace Diskerror\Typed;
 
 use ArrayAccess;
 use DateTimeInterface;
-use Diskerror\Typed\Scalar\TAnything;
-use Diskerror\Typed\Scalar\TBoolean;
-use Diskerror\Typed\Scalar\TFloat;
-use Diskerror\Typed\Scalar\TInteger;
-use Diskerror\Typed\Scalar\TString;
 use InvalidArgumentException;
 use LengthException;
+use SerializeTest;
 use Traversable;
+use function fprintf;
+use const STDERR;
 
 /**
  * Provides support for an array's elements to all have the same type.
@@ -31,9 +29,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * A string that specifies the type of values in the container.
 	 * A child class can override _type rather than it being set with the constructor.
 	 *
-	 * @var string|null
+	 * @var string
 	 */
-	protected ?string $_type;
+	protected string $_type = '';
 
 	/**
 	 * An array that contains the items of interest.
@@ -51,74 +49,25 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * If a derived class is instantiated then the data type must be contained in
 	 * the class, ie. "protected $_type = 'integer';", and $param1 can be the initial data.
 	 *
-	 * @param mixed             $param1 OPTIONAL ""
+	 * @param mixed $param1 OPTIONAL ""
 	 * @param array|object|null $param2 OPTIONAL null
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct($param1 = '', $param2 = null)
+	public function __construct($param1 = null, $param2 = null)
 	{
-		$this->_initArrayOptions();
+		parent::__construct();
 
 		if (get_called_class() === self::class) {
-			$this->_type = (string) $param1;
-			$this->_initMetaData();
+			$this->_type = is_string($param1) ? $param1 : '';
 			$this->assign($param2);
 		}
 		else {
-			if (!isset($this->_type)) {
-				throw new InvalidArgumentException('$this->_type must be set in child class.');
-			}
-
 			if (null !== $param2) {
 				throw new InvalidArgumentException('Only the first parameter can be set when using a derived class.');
 			}
 
-			$this->_initMetaData();
 			$this->assign($param1);
-		}
-	}
-
-	protected function _initMetaData(): void
-	{
-		switch (strtolower($this->_type)) {
-			case '':
-			case 'null':
-			case 'anything':
-				$this->_type = TAnything::class;
-				break;
-
-			case 'bool':
-			case 'boolean':
-				$this->_type = TBoolean::class;
-				break;
-
-			case 'int':
-			case 'integer':
-				$this->_type = TInteger::class;
-				break;
-
-			case 'float':
-			case 'double':
-			case 'real':
-				$this->_type = TFloat::class;
-				break;
-
-			case 'string':
-				$this->_type = TString::class;
-				break;
-
-			case 'array':
-				$this->_type = TypedArray::class;
-				break;
-
-			case 'date':
-				$this->_type = Date::class;
-				break;
-
-			case 'datetime':
-				$this->_type = DateTime::class;
-				break;
 		}
 	}
 
@@ -132,6 +81,16 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	protected function _massageInput(&$in): void
 	{
 		switch (gettype($in)) {
+			case 'object':
+			case 'array':
+				// Leave these as is.
+				break;
+
+			case 'null':
+			case 'NULL':
+				$in = [];
+				break;
+
 			case 'string':
 				if ('' === $in) {
 					$in = [];
@@ -146,16 +105,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 						);
 					}
 				}
-				break;
-
-			case 'object':
-			case 'array':
-				// Leave these as is.
-				break;
-
-			case 'null':
-			case 'NULL':
-				$in = [];
 				break;
 
 			case 'bool':
@@ -198,6 +147,11 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function replace($in): void
 	{
 		$this->_massageInput($in);
+
+		if (empty((array) $in)) {
+			$this->_container = [];
+			return;
+		}
 
 		foreach ($in as $k => $v) {
 			$this->offsetSet($k, $v);
@@ -264,7 +218,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 
 					//	Compare whole class names.
 					//	TODO: This doesn't test enough conditions.
-					if (get_class($v) !== $this->_type) {
+					$isObj = is_object($v);
+					if (($isObj && get_class($v) !== $this->_type) || (!$isObj && gettype($v) !== $this->_type)) {
 						$this->offsetSet($k, $v);
 					}
 				}
@@ -273,38 +228,36 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	}
 
 	/**
-	 * String representation of object.
+	 * Get string representation of object.
 	 *
-	 * @link  https://php.net/manual/en/serializable.serialize.php
+	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
 	 * @return string the string representation of the object or null
 	 */
-	public function serialize(): string
+	public function __serialize(): ?array
 	{
-		return serialize([
+		return [
+			'_arrayOptions' => $this->_arrayOptions->get(),
+			'_jsonOptions'  => $this->_jsonOptions->get(),
 			'_type'         => $this->_type,
-			'_arrayOptions' => $this->_arrayOptions,
-			'_jsonOptions'  => $this->_jsonOptions,
 			'_container'    => $this->_container,
-		]);
+		];
 	}
 
 	/**
 	 * Constructs the object
 	 *
-	 * @link  https://php.net/manual/en/serializable.unserialize.php
+	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
 	 *
-	 * @param string $serialized The string representation of the object.
+	 * @param array $serialized
 	 *
 	 * @return void
 	 */
-	public function unserialize($serialized): void
+	public function __unserialize(array $data): void
 	{
-		$data = unserialize($serialized);
-
-		$this->_type         = $data['_type'];
-		$this->_arrayOptions = $data['_arrayOptions'];
-		$this->_jsonOptions  = $data['_jsonOptions'];
-		$this->_container    = $data['_container'];
+		$this->_arrayOptions->set($data['_arrayOptions']);
+		$this->_jsonOptions->set($data['_jsonOptions']);
+		$this->_type      = $data['_type'];
+		$this->_container = $data['_container'];
 	}
 
 	/**
@@ -318,23 +271,27 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
-		$omitEmpty = $arrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$output    = [];
+		$output = [];
 
-		//	At this point all items are some type of object.
-		if (is_a($this->_type, AtomicInterface::class, true)) {
+		//	TODO: check special case for empty type
+		if ($this->_type === '' || self::_isAssignableType($this->_type)) {
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v;
+			}
+		}
+		elseif (is_a($this->_type, AtomicInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->get();
 			}
 		}
 		elseif (is_a($this->_type, TypedAbstract::class, true)) {
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v->_toArray($arrayOptions);
+				$output[$k] = $v->_toArray($arrayOptions);    //	can this happen? no...?
 			}
 		}
 		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v;
+				$output[$k] = $v->format(DateTime::STRING_IO_FORMAT_MICRO);
 			}
 		}
 		elseif (method_exists($this->_type, 'toArray')) {
@@ -350,17 +307,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		else {
 			//	else this is an array of some generic objects
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v;
+				$output[$k] = (array) $v;
 			}
 		}
 
-		if ($omitEmpty) {
+		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
 			//	Is this an indexed array (not associative)?
 			$isIndexed = (array_values($output) === $output);
 
 			//	Remove empty items.
 			foreach ($output as $k => $v) {
-				if (empty($v) || (is_object($v) && empty((array) $v))) {
+				if (empty($v)) {
 					unset($output[$k]);
 				}
 			}
@@ -441,7 +398,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 
-		if ($this->_container[$offset] instanceof AtomicInterface) {
+		if (is_a($this->_type, AtomicInterface::class, true)) {
 			return $this->_container[$offset]->get();
 		}
 
@@ -453,52 +410,76 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Coerces input values to be the required type.
 	 *
 	 * There are 5 basic conditions for $this->_type:
-	 * # $this->_type is null (accept any type and value, like a standard array);
-	 * # $this->_type is a scalar wrapper [bool, int, float, string];
-	 * # $this->_type is an array (check if input value is an object and has toArray);
-	 * # $this->_type is an object of type TypedAbstract (call replace());
-	 * # $this->_type is any other object.
+	 * * $this->_type is null (accept any type and value, like a standard array);
+	 * * $this->_type is a scalar wrapper [bool, int, float, string];
+	 * * $this->_type is an array (check if input value is an object and has toArray);
+	 * * $this->_type is an object of type TypedAbstract (call replace());
+	 * * $this->_type is any other object.
 	 *
 	 * There are 3 conditions involving $offset:
-	 * # $offset is null;
-	 * # $offset is set and does not exist (null);
-	 * # $offset is set and exists;
+	 * * $offset is null;
+	 * * $offset is set and does not exist (null);
+	 * * $offset is set and exists;
 	 *
 	 * There are 4 conditions for handling $value:
-	 * # $value is null (replace current scalar values with null, reset non-scalars);
-	 * # $value is a scalar (cast);
-	 * # $value is a an array (check for toArray, or cast);
-	 * # $value is a an object (clone if the same as _type, otherwise new _type(value) );
+	 * * $value is null (replace current scalar values with null, reset non-scalars);
+	 * * $value is a scalar (cast);
+	 * * $value is a an array (check for toArray, or cast);
+	 * * $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
 	 * @param string|int $k
-	 * @param mixed      $v
+	 * @param mixed $v
 	 */
 	public function offsetSet($k, $v): void
 	{
-		if (null === $k || !$this->offsetExists($k)) {
-			$v = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+		// if no type then
+		if ($this->_type === '') {
+			$this->_offsetSet($k, $v);
+			return;
+		}
 
-			if (null === $k) {
-				$this->_container[] = $v;
+		// if we're an assignable type then possibly massage before assigning
+		if (self::_isAssignableType($this->_type)) {
+			if ($this->_type !== gettype($v)) {
+				settype($v, $this->_type);
 			}
-			else {
-				$this->_container[$k] = $v;
-			}
-
+			$this->_offsetSet($k, $v);
 			return;
 		}
 
 		if (is_a($this->_type, AtomicInterface::class, true)) {
+			if (!isset($this->_container[$k])) {
+				$this->_container[$k] = new $this->_type();
+			}
 			$this->_container[$k]->set($v);
 			return;
 		}
 
 		if (is_a($this->_type, TypedAbstract::class, true)) {
+			if (!isset($this->_container[$k])) {
+				$this->_container[$k] = new $this->_type();
+			}
 			$this->_container[$k]->replace($v);
 			return;
 		}
 
-		$this->_container[$k] = new $this->_type($v);
+		// if no type or the object types match then
+		if (is_object($v) && get_class($v) === $this->_type) {
+			$this->_offsetSet($k, $v);
+			return;
+		}
+
+		$this->_offsetSet($k, new $this->_type($v));
+	}
+
+	private function _offsetSet($k, $v)
+	{
+		if (null === $k) {
+			$this->_container[] = $v;
+		}
+		else {
+			$this->_container[$k] = $v;
+		}
 	}
 
 	/**
@@ -516,9 +497,18 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function __clone()
 	{
-		foreach ($this->_container as $k => $v) {
-			if (is_object($v)) {
-				$this->_container[$k] = clone $v;
+		if ($this->_type === '') {
+			foreach ($this->_container as &$v) {
+				// container accepts anything so test each value
+				if (is_object($v)) {
+					$v = clone $v;
+				}
+			}
+		}
+		elseif (!self::_isAssignableType($this->_type)) {
+			// If not assignable then these must all already be objects.
+			foreach ($this->_container as &$v) {
+				$v = clone $v;
 			}
 		}
 	}
@@ -565,7 +555,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	/**
 	 * @return array
 	 */
-	public function getValues()
+	public function values()
 	{
 		return array_values($this->_container);
 	}

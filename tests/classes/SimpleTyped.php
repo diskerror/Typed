@@ -3,8 +3,11 @@
 namespace TestClasses;
 
 use Diskerror\Typed\DateTime as MyDateTime;
+use Diskerror\Typed\Scalar\TFloat;
+use Diskerror\Typed\Scalar\TInteger;
 use Diskerror\Typed\TypedArray;
 use Diskerror\Typed\TypedClass;
+use stdClass;
 
 
 /**
@@ -20,15 +23,27 @@ use Diskerror\Typed\TypedClass;
  */
 class SimpleTyped extends TypedClass
 {
-	protected       $myBool       = true;
-	protected       $myInt        = 0;
-	protected       $myFloat      = 3.14;
-	protected       $myString     = '';
-	protected       $myArray      = [];
-	protected       $myObj        = ['stdClass'];
-	protected       $myDate       = [MyDateTime::class, "2010-01-01T01:01:01.001+00:00"];
-	protected       $myTypedArray = [TypedArray::class, JRandom::class];
-	protected array $_map         = ['myDouble' => 'myFloat'];
+	protected array $_map = ['myDouble' => 'myFloat'];
+
+	protected bool       $myBool   = true;
+	protected TInteger   $myInt;
+	protected TFloat     $myFloat;
+	protected string     $myString = '';
+	protected TypedArray $myArray;
+	protected \stdClass  $myObj;
+	protected MyDateTime $myDate;
+	protected TypedArray $myTypedArray;
+
+	protected function _initializeObjects()
+	{
+		$this->myInt        = new TInteger(0);
+		$this->myFloat      = new TFloat(3.14);
+//		$this->myArray      = new TypedArray();
+		$this->myObj        = new stdClass();
+		$this->myDate       = new MyDateTime('2010-01-01T01:01:01.001+00:00');
+		$this->myTypedArray = new TypedArray(JRandom::class);
+	}
+
 
 }
 

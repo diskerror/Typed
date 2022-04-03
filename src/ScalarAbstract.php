@@ -9,9 +9,7 @@
 
 namespace Diskerror\Typed;
 
-use Diskerror\Typed\AtomicInterface;
 use stdClass;
-use function is_object;
 
 
 /**

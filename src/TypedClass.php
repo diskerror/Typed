@@ -7,17 +7,18 @@
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
+
 namespace Diskerror\Typed;
 
 use DateTimeInterface;
-use Diskerror\Typed\Scalar\TAnything;
-use Diskerror\Typed\Scalar\TBoolean;
-use Diskerror\Typed\Scalar\TFloat;
-use Diskerror\Typed\Scalar\TInteger;
-use Diskerror\Typed\Scalar\TString;
 use InvalidArgumentException;
+use ReflectionObject;
+use stdClass;
 use Traversable;
 use TypeError;
+use function get_class;
+use function gettype;
+use function is_object;
 
 /**
  * Create a child of this class with your named properties with a visibility of
@@ -65,18 +66,32 @@ abstract class TypedClass extends TypedAbstract
 	private string $_calledClass;
 
 	/**
-	 * Holds the default values of the called class to-be-public properties in associative array.
-	 *
-	 * @var array
-	 */
-	private array $_defaultValues;
-
-	/**
 	 * Holds the names of the called class' to-be-public properties in an indexed array.
 	 *
 	 * @var array
 	 */
-	private array $_publicNames;
+	private array $_publicNames = [];
+
+	/**
+	 * Holds the types of the called class to-be-public properties in associative array.
+	 *
+	 * @var array
+	 */
+	private array $_propertyTypes = [];
+
+	/**
+	 * Holds whether the called class of to-be-public properties allow null.
+	 *
+	 * @var array
+	 */
+	private array $_propertyAllowsNull = [];
+
+	/**
+	 * Holds the default values of the called class to-be-public properties in associative array.
+	 *
+	 * @var array
+	 */
+	private array $_defaultValues = [];
 
 	/**
 	 * Holds the count of the to-be-public properties.
@@ -90,88 +105,82 @@ abstract class TypedClass extends TypedAbstract
 	 * Constructor.
 	 * Accepts an object, array, or JSON string.
 	 *
-	 * @param mixed $in -OPTIONAL
+	 * @param mixed $param1 -OPTIONAL
+	 * @param mixed $param2 -UNUSED
 	 */
-	public function __construct($in = null)
+	public function __construct($param1 = null, $param2 = null)
 	{
-		$this->_initArrayOptions();
+		parent::__construct();
+		$this->_initializeObjects();
 		$this->_initMetaData();
-		$this->_initProperties();
-		$this->replace($in);
+		$this->replace($param1);
+	}
+
+	/**
+	 * Override to set default values for properties with object types.
+	 *
+	 * @return void
+	 */
+	protected function _initializeObjects()
+	{
 	}
 
 	protected function _initMetaData()
 	{
 		$this->_calledClass = get_called_class();
 
+		$ro = new ReflectionObject($this);
+
 		//	Build array of default values with converted types.
-		//	First, get all class properties then remove elements with names starting with underscore, except "_id".
-		$this->_defaultValues = get_class_vars($this->_calledClass);
-		foreach ($this->_defaultValues as $k => &$v) {
-			if ($k[0] === '_' && $k !== '_id') {
-				unset($this->_defaultValues[$k]);
+		//	Ignore all properties starting with underscore, except "_id".
+		foreach ($ro->getProperties() as $p) {
+			$name       = $p->getName();
+			$typeRefl   = $p->getType();
+			$typeName   = !is_null($typeRefl) ? $typeRefl->getName() : '';
+			$allowsNull = !is_null($typeRefl) ? $typeRefl->allowsNull() : true;
+
+			if (($name[0] === '_' && $name !== '_id') || empty($name)) {
 				continue;
 			}
 
-			switch (gettype($v)) {
-				case 'null':
-				case 'NULL':
-					$v = new TAnything($v);
-					break;
+			$this->_publicNames[] = $name;
+			$this->_propertyTypes[$name]      = $typeName;
+			$this->_propertyAllowsNull[$name] = $allowsNull;
 
-				case 'bool':
-				case 'boolean':
-					$v = new TBoolean($v);
-					break;
-
-				case 'int':
-				case 'integer':
-					$v = new TInteger($v);
-					break;
-
-				case 'float':
-				case 'double':
-				case 'real':
-					$v = new TFloat($v);
-					break;
-
-				case 'string':
-					$v = new TString($v);
-					break;
-
-				case 'array':
-					if (!empty($v) && array_values($v) === $v && is_string($v[0]) && class_exists($v[0])) {
-						$class = array_shift($v);
-						$v     = new $class(...$v);
+			if (isset($this->$name)) {
+				if ($typeName === '') {
+					if (is_object($this->$name)) {
+						$this->_defaultValues[$name] = clone $this->$name;
 					}
 					else {
-						$v = new TypedArray('', $v);
+						$this->_defaultValues[$name] = $this->$name;
 					}
-					break;
-
-				default:
-					//	Do nothing. Don't try to cast.
+				}
+				elseif (self::_isAssignableType($typeName)) {
+					$this->_defaultValues[$name] = $this->$name;
+				}
+				else {
+					$this->_defaultValues[$name] = clone $this->$name;
+				}
+			}
+			/* is not set */
+			elseif ($allowsNull) {
+				$this->_defaultValues[$name] = null;
+				$this->$name                 = null;
+			}
+			elseif (self::_isAssignableType($typeName)) {
+				$tmp = null;
+				settype($tmp, $typeName);
+				$this->_defaultValues[$name] = $tmp;
+				$this->$name                 = $tmp;
+			}
+			else {
+				$this->_defaultValues[$name] = new $typeName();
+				$this->$name                 = new $typeName();
 			}
 		}
 
-		$this->_publicNames = array_keys($this->_defaultValues);
-		$this->_count       = count($this->_defaultValues);
-	}
-
-	/**
-	 * Should be called after _initMetaData().
-	 */
-	protected function _initProperties()
-	{
-		foreach ($this->_defaultValues as $k => &$v) {
-			/**
-			 * All properties, except resources, are now objects.
-			 * Clone the default/original value back to the original property.
-			 */
-			if (is_object($v)) {
-				$this->{$k} = clone $v;
-			}
-		}
+		$this->_count       = count($this->_publicNames);
 	}
 
 	/**
@@ -199,17 +208,11 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function assign($in): void
 	{
-		$this->_massageInput($in);
-
 		foreach ($this->_publicNames as $publicName) {
 			$this->__unset($publicName);
 		}
 
-		foreach ($in as $k => $v) {
-			$this->_setByName($k, $v);
-		}
-
-		$this->_checkRelatedProperties();
+		$this->replace($in);
 	}
 
 	/**
@@ -231,8 +234,8 @@ abstract class TypedClass extends TypedAbstract
 	public function getIterator(): Traversable
 	{
 		return (function &() {
-			foreach ($this->_defaultValues as $k => &$vDefault) {
-				if ($vDefault instanceof AtomicInterface) {
+			foreach ($this->_publicNames as $k) {
+				if (is_a($this->_propertyTypes[$k], AtomicInterface::class, true)) {
 					$v     = $this->{$k}->get();
 					$vOrig = $v;
 
@@ -246,7 +249,7 @@ abstract class TypedClass extends TypedAbstract
 					yield $k => $this->{$k};
 
 					//	Cast if not the same type.
-					if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($vDefault)) {
+					if (!is_object($this->{$k}) || get_class($this->{$k}) !== $this->_propertyTypes[$k]) {
 						$this->_setByName($k, $this->{$k});
 					}
 					//	Null property types don't get checked.
@@ -264,18 +267,15 @@ abstract class TypedClass extends TypedAbstract
 	 * @link  https://php.net/manual/en/serializable.serialize.php
 	 * @return string the string representation of the object or null
 	 */
-	public function serialize(): string
+	public function __serialize(): ?array
 	{
-		$toSerialize = [
-			'_arrayOptions' => $this->_arrayOptions,
-			'_jsonOptions'  => $this->_jsonOptions,
-		];
-		foreach ($this->_publicNames as $k) {
-			$toSerialize[$k] = $this->{$k};
-		}
+		$ret                  = $this->_toArray($this->_arrayOptions);
+		$ret['_arrayOptions'] = $this->_arrayOptions->get();
+		$ret['_jsonOptions']  = $this->_jsonOptions->get();
 
-		return serialize($toSerialize);
+		return $ret;
 	}
+
 
 	/**
 	 * Constructs the object from serialized PHP.
@@ -286,21 +286,23 @@ abstract class TypedClass extends TypedAbstract
 	 * data structure members have been serialized so no initialization of
 	 * empty need be done.
 	 *
-	 * @link  https://php.net/manual/en/serializable.unserialize.php
+	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
 	 *
-	 * @param string $serialized The string representation of the object.
+	 * @param array $data
 	 *
 	 * @return void
 	 */
-	public function unserialize($serialized): void
+	public function __unserialize(array $data): void
 	{
 		$this->_initMetaData();
+		$this->_initializeObjects();
 
-		$data = unserialize($serialized);
+		$this->_arrayOptions = new ArrayOptions($data['_arrayOptions']);
+		unset($data['_arrayOptions']);
+		$this->_jsonOptions = new ArrayOptions($data['_jsonOptions']);
+		unset($data['_jsonOptions']);
 
-		foreach ($data as $k => $v) {
-			$this->{$k} = $v;
-		}
+		$this->replace($data);
 	}
 
 
@@ -315,17 +317,23 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * Input can be an object, or an indexed or associative array.
 	 *
-	 * @param $in
+	 * @param array|stdClass $in
 	 *
 	 * @return void
 	 */
 	public function replace($in): void
 	{
+		if (is_scalar($in) && !is_string($in)) {
+			throw new TypeError('Input must be an object, an array, or a JSON compatible string.');
+		}
+
 		$this->_massageInput($in);
 
 		foreach ($in as $k => $v) {
+			$k = $this->_getMappedName($k);
+
 			if ($this->_keyExists($k)) {
-				if ($this->{$k} instanceof TypedAbstract) {
+				if (is_a($this->{$k}, TypedAbstract::class, true)) {
 					$this->{$k}->replace($v);
 				}
 				else {
@@ -361,7 +369,6 @@ abstract class TypedClass extends TypedAbstract
 	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
 		$keepJsonExpr = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$ZJE_STRING   = '\\Laminas\\Json\\Expr';    //  A string here so library does not need to be included.
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
@@ -375,13 +382,10 @@ abstract class TypedClass extends TypedAbstract
 					break;
 
 				case 'object':
-					if ($this->{$k} instanceof TypedAbstract) {
-						$arr[$k] = $v->_toArray($arrayOptions);
+					if (is_a($v, TypedAbstract::class, true)) {
+						$arr[$k] = $v->_toArray($arrayOptions);    //	??
 					}
-					elseif ($this->{$k} instanceof DateTimeInterface) {
-						$arr[$k] = $v;    // maintain the type
-					}
-					elseif (($this->{$k} instanceof $ZJE_STRING) && $keepJsonExpr) {
+					elseif (is_a($v, DateTimeInterface::class, true)) {
 						$arr[$k] = $v;    // maintain the type
 					}
 					elseif (method_exists($v, 'toArray')) {
@@ -389,6 +393,9 @@ abstract class TypedClass extends TypedAbstract
 					}
 					elseif (method_exists($v, '__toString')) {
 						$arr[$k] = $v->__toString();
+					}
+					elseif ((is_a($v, '\\Laminas\\Json\\Expr', true)) && $keepJsonExpr) {
+						$arr[$k] = $v;    // maintain the type
 					}
 					else {
 						$arr[$k] = $v;
@@ -419,7 +426,7 @@ abstract class TypedClass extends TypedAbstract
 	 * property (property names not starting with an underscore). Extra values
 	 * are ignored. Unused properties are unchanged.
 	 *
-	 * @param $in
+	 * @param mixed $in
 	 *
 	 * @throws InvalidArgumentException
 	 */
@@ -488,6 +495,19 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __unset($k)
 	{
+		$k = $this->_getMappedName($k);
+		$this->_assertPropName($k);
+
+//		if ($this->_propertyAllowsNull[$k]) {
+//			$this->{$k} = null;
+//			return;
+//		}
+
+		if (self::_isAssignableType($this->_propertyTypes[$k])) {
+			$this->{$k} = $this->_defaultValues[$k];
+			return;
+		}
+
 		$this->{$k} = clone $this->_defaultValues[$k];
 	}
 
@@ -512,6 +532,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __get($k)
 	{
+		$k = $this->_getMappedName($k);
 		$this->_assertPropName($k);
 		return $this->_getByName($k);
 	}
@@ -521,10 +542,11 @@ abstract class TypedClass extends TypedAbstract
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
 	 * @param string $k
-	 * @param mixed  $v
+	 * @param mixed $v
 	 */
 	public function __set($k, $v)
 	{
+		$k = $this->_getMappedName($k);
 		$this->_assertPropName($k);
 		$this->_setByName($k, $v);
 		$this->_checkRelatedProperties();
@@ -546,60 +568,92 @@ abstract class TypedClass extends TypedAbstract
 
 	/**
 	 * Set data to named variable.
+	 * Property name must exist.
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
 	 * @param string $propName
-	 * @param mixed  $in
+	 * @param mixed $in
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _setByName($propName, $in)
+	protected function _setByName(string $propName, $in): void
 	{
-		if (array_key_exists($propName, $this->_map)) {
-			$propName = $this->_map[$propName];
-		}
+		$propertyDefaultValue = $this->_defaultValues[$propName];
+		$propertyType         = (string) $this->_propertyTypes[$propName];
+		$allowsNull           = (bool) $this->_propertyAllowsNull[$propName];
 
-		if(!in_array($propName, $this->_publicNames)){
+		if ($propertyType === '') {
+			$this->{$propName} = $in;
 			return;
 		}
 
-		$setter = '_set_' . $propName;
-		if (method_exists($this->_calledClass, $setter)) {
-			$this->{$setter}($in);
+		if (self::_isAssignableType($propertyType)) {
+			if ($in === null) {
+				if ($allowsNull) {
+					$this->{$propName} = null;
+					return;
+				}
+
+				$this->{$propName} = $this->_defaultValues[$propName];
+				return;
+			}
+
+			switch ($propertyType) {
+				case 'bool':
+					switch (gettype($in)) {
+						case 'array':
+						case 'object':
+							$this->{$propName} = !empty((array) $in);
+							return;
+					}
+					break;
+
+				case 'string':
+					if (is_array($in) || is_object($in)) {
+						$this->{$propName} = json_encode($in);
+						return;
+					}
+					break;
+			}
+
+			settype($in, $propertyType);
+			$this->{$propName} = $in;
 			return;
 		}
 
 		/** All properties are now handled as objects. */
-		$propertyDefaultValue = $this->_defaultValues[$propName];
+
+		if (is_a($propertyType, TypedClass::class, true)) {
+			$this->{$propName}->replace($in);
+			return;
+		}
+
+		if (is_a($propertyType, TypedArray::class, true)) {
+			$this->{$propName}->replace($in);
+			return;
+		}
 
 		//	Handle our atomic types.
-		if ($propertyDefaultValue instanceof AtomicInterface) {
+		if (is_a($propertyType, AtomicInterface::class, true)) {
 			$this->{$propName}->set($in);
 			return;
 		}
 
-		//	Handle our two special object types.
-		if ($propertyDefaultValue instanceof TypedAbstract) {
-			$this->{$propName}->assign($in);
-			return;
-		}
-
 		//	Handler for other types of objects.
-		$propertyClassType = get_class($propertyDefaultValue);
 		switch (gettype($in)) {
 			case 'object':
 				//	if identical types then reference the original object
-				if ($propertyClassType === get_class($in)) {
+				if ($propertyType === get_class($in)) {
 					$this->{$propName} = $in;
 				}
 				else {
-					//	First try to absorb the input in it's entirety,
+					//	First try to absorb the input in its entirety,
 					try {
-						$this->{$propName} = new $propertyClassType($in);
+						$this->{$propName} = new $propertyType($in);
 					}
 						//	Then try to copy matching members by name.
 					catch (TypeError $t) {
-						$this->replace($in);
+						$this->{$propName} = new $propertyType((array) $in);
 					}
 				}
 				break;
@@ -610,7 +664,7 @@ abstract class TypedClass extends TypedAbstract
 				break;
 
 			case 'array':
-				if ($propertyClassType === 'stdClass') {
+				if ($propertyType === 'stdClass') {
 					$this->{$propName} = (object) $in;
 					break;
 				}
@@ -619,7 +673,7 @@ abstract class TypedClass extends TypedAbstract
 			default:
 				//	Other classes might be able to absorb/convert other input,
 				//		like «DateTime::__construct("now")» accepts a string.
-				$this->{$propName} = new $propertyClassType($in);
+				$this->{$propName} = new $propertyType($in);
 		}
 	}
 
@@ -630,6 +684,11 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	protected function _checkRelatedProperties()
 	{
+	}
+
+	protected function _getMappedName(string $name): string
+	{
+		return array_key_exists($name, $this->_map) ? $this->_map[$name] : $name;
 	}
 
 	/**
@@ -647,7 +706,7 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
-	 * Get variable by name.
+	 * Get variable by name. Name must exist.
 	 *
 	 * @param string $propName
 	 *
@@ -655,17 +714,8 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	protected function _getByName($propName)
 	{
-		if (array_key_exists($propName, $this->_map)) {
-			$propName = $this->_map[$propName];
-		}
-
-		if ($this->{$propName} instanceof AtomicInterface) {
+		if (is_a($this->{$propName}, AtomicInterface::class, true)) {
 			return $this->{$propName}->get();
-		}
-
-		$getter = '_get_' . $propName;
-		if (method_exists($this->_calledClass, $getter)) {
-			return $this->{$getter}();
 		}
 
 		return $this->{$propName};
@@ -680,10 +730,6 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	private function _keyExists($propName): bool
 	{
-		if (array_key_exists($propName, $this->_map)) {
-			$propName = $this->_map[$propName];
-		}
-
-		return in_array($propName, $this->_publicNames);
+		return in_array($this->_getMappedName($propName), $this->_publicNames);
 	}
 }

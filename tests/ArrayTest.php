@@ -1,5 +1,6 @@
 <?php
 
+use Diskerror\Typed\Scalar\TString;
 class ArrayTest extends PHPUnit\Framework\TestCase
 {
 	/**
@@ -7,7 +8,7 @@ class ArrayTest extends PHPUnit\Framework\TestCase
 	 */
 	public function testWalk()
 	{
-		$walk = new Diskerror\Typed\TypedArray('string', ['1', 2, '3', 'z', 5]);
+		$walk = new Diskerror\Typed\TypedArray(TString::class, ['1', 2, '3', 'z', 5]);
 //		jsonPrint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array1.json',

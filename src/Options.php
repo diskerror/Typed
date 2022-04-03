@@ -9,7 +9,7 @@ class Options
 	/**
 	 * @var int
 	 */
-	private $_options;
+	private int $_options;
 
 	/**
 	 * @param int $opts

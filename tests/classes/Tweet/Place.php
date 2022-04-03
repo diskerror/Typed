@@ -6,17 +6,11 @@ use Diskerror\Typed\TypedClass;
 
 class Place extends TypedClass
 {
-	protected $id           = 0;
-
-	protected $url          = '';
-
-	protected $place_type   = '';
-
-	protected $name         = '';
-
-	protected $full_name    = '';
-
-	protected $country_code = '';
-
-	protected $country      = '';
+	protected int    $id           = 0;
+	protected string $url          = '';
+	protected string $place_type   = '';
+	protected string $name         = '';
+	protected string $full_name    = '';
+	protected string $country_code = '';
+	protected string $country      = '';
 }

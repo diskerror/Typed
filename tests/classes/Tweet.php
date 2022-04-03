@@ -2,6 +2,7 @@
 
 namespace TestClasses;
 
+use Diskerror\Typed\Scalar\TIntegerUnsigned;
 use Diskerror\Typed\TypedClass;
 use TestClasses\Tweet\ReTweet;
 use TestClasses\Tweet\TweetTrait;
@@ -12,10 +13,10 @@ class Tweet extends TypedClass
 		'id' => '_id',    //	from Twitter
 	];
 
-	protected $_id  = 0;
+	protected TIntegerUnsigned $_id;
 
 	use TweetTrait;
 
-	protected $retweeted_status = [ReTweet::class];
+	protected ReTweet $retweeted_status;
 
 }

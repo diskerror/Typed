@@ -6,11 +6,14 @@ use Diskerror\Typed\{TypedArray, TypedClass};
 
 class Url extends TypedClass
 {
-	protected $url          = '';	//	We could do some fancy filtering for this.
+	protected string     $url          = '';    //	We could do some fancy filtering for this.
+	protected string     $expanded_url = '';
+	protected string     $display_url  = '';
+	protected TypedArray $indices;
 
-	protected $expanded_url = '';
+	protected function _initializeObjects()
+	{
+		$this->indices = new TypedArray('int');
+	}
 
-	protected $display_url  = '';
-
-	protected $indices      = [TypedArray::class, 'int'];
 }

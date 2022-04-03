@@ -6,7 +6,12 @@ use Diskerror\Typed\{TypedArray, TypedClass};
 
 class Hashtag extends TypedClass
 {
-	protected $text    = '';
+	protected string     $text = '';
+	protected TypedArray $indices;
 
-	protected $indices = [TypedArray::class, 'int'];
+	protected function _initializeObjects()
+	{
+		$this->indices = new TypedArray('int');
+	}
+
 }

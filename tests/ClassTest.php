@@ -1,4 +1,5 @@
-<?php /** @noinspection ALL */
+<?php
+/** @noinspection ALL */
 declare(strict_types = 1);
 
 use Diskerror\Typed\TypedClass;
@@ -65,23 +66,30 @@ final class ClassTest extends TestCase
 
 class TypedDate extends TypedClass
 {
-	protected $date = [DateTime::class];
+	protected DateTime $date;
 }
 
 class Nested extends TypedClass
 {
-	protected $name = 'secret';
+	protected string $name = 'secret';
 
-	protected $d = [TypedDate::class];
+	protected TypedDate $d;
 
-	protected $date = [DateTime::class, 'Jan 1, 2015'];
+	protected DateTime $date;
+
+	protected function _initializeObjects()
+	{
+		$this->date = new DateTime('Jan 1, 2015');
+	}
+
+
 }
 
 class DateRange extends \Diskerror\Typed\TypedClass
 {
-	protected $start = [DateTime::class];
+	protected DateTime $start;
 
-	protected $end = [DateTime::class];
+	protected DateTime $end;
 
 	protected function _checkRelatedProperties()
 	{

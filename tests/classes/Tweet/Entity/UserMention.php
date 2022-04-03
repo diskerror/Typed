@@ -6,12 +6,13 @@ use Diskerror\Typed\{TypedClass, TypedArray};
 
 class UserMention extends TypedClass
 {
-	protected $id          = '';
+	protected string     $id          = '';
+	protected string     $screen_name = '';
+	protected string     $name        = '';
+	protected TypedArray $indices;
 
-	protected $screen_name = '';
-
-	protected $name        = '';
-
-	protected $indices     = [TypedArray::class, 'int'];
-
+	protected function _initializeObjects()
+	{
+		$this->indices = new TypedArray('int');
+	}
 }
