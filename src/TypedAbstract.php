@@ -20,7 +20,7 @@ use JsonSerializable;
  *
  * @package Diskerror\Typed
  */
-abstract class TypedAbstract implements Countable, IteratorAggregate, Serializable, JsonSerializable
+abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerializable
 {
 	/**
 	 * Holds options for "toArray" customizations.

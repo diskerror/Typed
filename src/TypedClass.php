@@ -281,20 +281,20 @@ abstract class TypedClass extends TypedAbstract
 	 * This serialization, as opposed to JSON or BSON, does not unwrap the
 	 * structured data. It only omits data that is part of the class definition.
 	 *
-	 * @link  https://php.net/manual/en/serializable.serialize.php
-	 * @return string the string representation of the object or null
+	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
+	 * @return ?array
 	 */
-	public function serialize(): string
+	public function __serialize(): ?array
 	{
 		$toSerialize = [
-			'_arrayOptions' => $this->_arrayOptions,
-			'_jsonOptions'  => $this->_jsonOptions,
+			'_arrayOptions' => $this->_arrayOptions->get(),
+			'_jsonOptions'  => $this->_jsonOptions->get(),
 		];
 		foreach ($this->_publicNames as $k) {
-			$toSerialize[$k] = $this->{$k};
+			$toSerialize[$k] = $this->_getByName($k);
 		}
 
-		return serialize($toSerialize);
+		return $toSerialize;
 	}
 
 	/**
@@ -306,17 +306,15 @@ abstract class TypedClass extends TypedAbstract
 	 * data structure members have been serialized so no initialization of
 	 * empty need be done.
 	 *
-	 * @link  https://php.net/manual/en/serializable.unserialize.php
+	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
 	 *
-	 * @param string $serialized The string representation of the object.
+	 * @param array $data
 	 *
 	 * @return void
 	 */
-	public function unserialize($serialized): void
+	public function __unserialize(array $data): void
 	{
 		$this->_initMetaData();
-
-		$data = unserialize($serialized);
 
 		foreach ($data as $k => $v) {
 			$this->{$k} = $v;
