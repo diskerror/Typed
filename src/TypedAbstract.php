@@ -9,6 +9,7 @@
 
 namespace Diskerror\Typed;
 
+use BadMethodCallException;
 use Countable;
 use InvalidArgumentException;
 use IteratorAggregate;
@@ -146,6 +147,23 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 			default:
 				throw new InvalidArgumentException('bad input type ' . gettype($in) . ', value: "' . $in . '"');
 		}
+	}
+
+	/**
+	 * Protected and private methods will behave like a friend method as in C++.
+	 *
+	 * @param $name
+	 * @param $args
+	 * @return mixed
+	 */
+	public function __call($name, $args)
+	{
+		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+		if (!is_a($bt[1]['class'], TypedAbstract::class, true)) {
+			throw new BadMethodCallException();
+		}
+
+		return $this->$name(...$args);
 	}
 
 	/**
