@@ -161,13 +161,13 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	abstract protected function _toArray(ArrayOptions $arrayOptions): array;
 
 	/**
-	 * Protected and private methods will behave like a fried method as in C++.
+	 * Protected and private methods will behave like a friend method as in C++.
 	 *
-	 * @param $name
-	 * @param $args
+	 * @param string $name
+	 * @param array $args
 	 * @return mixed
 	 */
-	public function __call($name, $args)
+	public function __call(string $name, array $args)
 	{
 		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
 		if (!is_a($bt[1]['class'], TypedAbstract::class, true)) {
