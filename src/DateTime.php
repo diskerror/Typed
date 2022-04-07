@@ -3,10 +3,10 @@
 namespace Diskerror\Typed;
 
 use DateTime as DT;
+use DateTimeInterface;
 use DateTimeZone;
 use InvalidArgumentException;
 use JsonSerializable;
-use function method_exists;
 
 /**
  * This class adds convenience methods to the built-in DateTime.
@@ -21,8 +21,8 @@ class DateTime extends DT implements JsonSerializable
 	/**
 	 * Default MySQL datetime format.
 	 */
-	public const STRING_IO_FORMAT       = 'Y-m-d H:i:s';
-	public const STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
+	public const MYSQL_STRING_IO_FORMAT = 'Y-m-d H:i:s';
+	public const MYSQL_STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
 
 	/**
 	 * Accepts a DateTime object or;
@@ -44,9 +44,9 @@ class DateTime extends DT implements JsonSerializable
 
 		switch (gettype($time)) {
 			case 'object':
-				if ($time instanceof \DateTimeInterface) {
+				if ($time instanceof DateTimeInterface) {
 					parent::__construct(
-						$time->format(self::STRING_IO_FORMAT_MICRO),
+						$time->format(self::MYSQL_STRING_IO_FORMAT_MICRO),
 						$time->getTimezone()
 					);
 					break;
@@ -111,7 +111,7 @@ class DateTime extends DT implements JsonSerializable
 	{
 		switch (gettype($year)) {
 			case 'object':
-				if ($time instanceof \DateTimeInterface) {
+				if ($time instanceof DateTimeInterface) {
 					$day   = $year->format('j');
 					$month = $year->format('n');
 					$year  = $year->format('Y');
@@ -170,7 +170,7 @@ class DateTime extends DT implements JsonSerializable
 	{
 		switch (gettype($hour)) {
 			case 'object':
-				if ($time instanceof \DateTimeInterface) {
+				if ($time instanceof DateTimeInterface) {
 					$second = $hour->format('j');
 					$minute = $hour->format('n');
 					$hour   = $hour->format('Y');
@@ -230,10 +230,10 @@ class DateTime extends DT implements JsonSerializable
 	public function __toString()
 	{
 		if ($this->format('u') > 0) {
-			return rtrim($this->format(self::STRING_IO_FORMAT_MICRO), '0');    //	also remove trailing zeros
+			return $this->format(self::MYSQL_STRING_IO_FORMAT_MICRO);
 		}
 
-		return $this->format(self::STRING_IO_FORMAT);
+		return $this->format(self::MYSQL_STRING_IO_FORMAT);
 	}
 
 	/**

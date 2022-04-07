@@ -2,6 +2,7 @@
 
 namespace TestClasses\Tweet;
 
+use DateTimeZone;
 use Diskerror\Typed\DateTime;
 use Diskerror\Typed\Scalar\TStringNormalize;
 use Diskerror\Typed\TypedClass;
@@ -30,7 +31,7 @@ class User extends TypedClass
 
 	protected function _initializeObjects()
 	{
-		$this->created_at = new DateTime('2018-07-18 17:10:28');
+		$this->created_at = new DateTime('2018-07-18 17:10:28', new DateTimeZone('UTC'));
 	}
 
 }

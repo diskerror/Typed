@@ -7,7 +7,7 @@ use Diskerror\Typed\TypedClass;
 
 class WordStats extends TypedClass
 {
-	protected $quantity = [TIntegerUnsigned::class];
-	protected $window   = [TIntegerUnsigned::class];
-	protected $stop     = [WordList::class];
+	protected TIntegerUnsigned $quantity;
+	protected TIntegerUnsigned $window;
+	protected WordList $stop;
 }

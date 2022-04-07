@@ -19,6 +19,8 @@ function jsonPrint($in)
 	}
 	else {
 		fwrite(STDERR, json_encode($in, JSON_PRETTY_PRINT) . PHP_EOL);
+//		fwrite(STDERR, var_export($in, true) . PHP_EOL);
+//		fwrite(STDERR, serialize($in) . PHP_EOL);
 	}
 }
 

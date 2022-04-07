@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\\Diskerror\Typed\Scalar\SAString
+ * @name        \Diskerror\Typed\Scalar\SAString
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -16,12 +16,14 @@ class TString extends ScalarAbstract
 {
 	public function set($in)
 	{
-		if (is_object($in)) {
-			// Every object is converted to an array or a string.
-			$in = self::_castObject($in);
-		}
+			$in = self::_castIfObject($in);
 
 		switch (gettype($in)) {
+			case 'null':
+			case 'NULL':
+				$this->unset();
+				break;
+
 			case 'array':
 				$jsonStr     = json_encode($in);
 				$jsonLastErr = json_last_error();
@@ -29,11 +31,6 @@ class TString extends ScalarAbstract
 					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 				}
 				$this->_value = $jsonStr;
-				break;
-
-			case 'null':
-			case 'NULL':
-				$this->unset();
 				break;
 
 			case 'resource':

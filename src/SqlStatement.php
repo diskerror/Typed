@@ -37,7 +37,7 @@ class SqlStatement
 	 * An empty "include" array means to use all.
 	 *
 	 * @param array|stdClass $input
-	 * @param array          $include
+	 * @param array $include
 	 *
 	 * @return string
 	 */
@@ -71,7 +71,7 @@ class SqlStatement
 		}
 
 		$sqlStrs = [];
-		foreach ($arr as $k => &$v) {
+		foreach ($arr as $k => $v) {
 			$kEq = '`' . $k . '` = ';
 			switch (gettype($v)) {
 				case 'bool':
@@ -109,7 +109,7 @@ class SqlStatement
 
 				case 'object':
 					if ($v instanceof DateTime) {
-						$sqlStrs[] = $kEq . '"' . $v . '"';
+						$sqlStrs[] = $kEq . '"' . rtrim($v, '0') . '"';
 						break;
 					}
 				//	other objects fall through
@@ -140,7 +140,7 @@ class SqlStatement
 	 * An empty "include" array means to use all.
 	 *
 	 * @param array|stdClass $input
-	 * @param array          $include
+	 * @param array $include
 	 *
 	 * @return string
 	 */
@@ -160,7 +160,7 @@ class SqlStatement
 			}
 		}
 		else {
-			foreach ($input as $k => &$v) {
+			foreach ($input as $k => $v) {
 				$sqlStrs[] = '`' . $k . '` = VALUES(`' . $k . '`)';
 			}
 		}

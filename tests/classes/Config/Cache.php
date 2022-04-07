@@ -6,6 +6,6 @@ use Diskerror\Typed\TypedClass;
 
 class Cache extends TypedClass
 {
-	protected $front = [CacheFront::class];
-	protected $back  = [CacheBack::class];
+	protected CacheFront $front;
+	protected CacheBack  $back;
 }

@@ -6,6 +6,6 @@ use Diskerror\Typed\TypedClass;
 
 class Twitter extends TypedClass
 {
-	protected $auth  = [TwitterAuth::class];
-	protected $track = [WordList::class];
+	protected TwitterAuth $auth;
+	protected WordList    $track;
 }

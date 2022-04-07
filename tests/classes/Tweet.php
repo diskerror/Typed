@@ -19,4 +19,10 @@ class Tweet extends TypedClass
 
 	protected ReTweet $retweeted_status;
 
+	protected function _initializeObjects()
+	{
+		$this->_id = new TIntegerUnsigned();
+	}
+
+
 }

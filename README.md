@@ -28,7 +28,7 @@ The following are defined here but are only used in the [project defining the Mo
 * CAST\_DATETIME\_TO\_BSON: Cast all *DateTimeInterface* objects to *MongoDB\BSON\UTCDateTime* objects.
 * CAST\_ID\_TO\_OBJECTID: Cast member with the name “_id” into *MongoDB\BSON\ObjectId* when performing “bsonSerialize()”.
 
-### getArrayOptions & setArrayOptions
+### getToArrayOptions & setToArrayOptions
 These manage the usage of the options for how these classes are converted to an array.
 
 ### Serialization

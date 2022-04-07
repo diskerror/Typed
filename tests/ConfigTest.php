@@ -8,7 +8,7 @@ class ConfigTest extends TestCase
 {
 	public function testBuild()
 	{
-		//	Always open this configuration file with it's default values.
+		//	Always open this configuration file with its default values.
 		$configFile = __DIR__ . '/data/config.php';
 		$config     = new Config(require $configFile);
 

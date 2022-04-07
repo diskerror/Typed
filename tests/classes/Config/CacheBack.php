@@ -6,8 +6,8 @@ use Diskerror\Typed\TypedClass;
 
 class CacheBack extends TypedClass
 {
-	protected $directory = '';
-	protected $prefix    = '';
-	protected $frontend  = null;
-	protected $adapter   = '';
+	protected string  $directory = '';
+	protected string  $prefix    = '';
+	protected ?string $frontend  = null;
+	protected string  $adapter   = '';
 }

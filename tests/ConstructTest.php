@@ -1,4 +1,5 @@
-<?php /** @noinspection ALL */
+<?php
+/** @noinspection ALL */
 
 use Diskerror\Typed\TypedArray;
 use TestClasses\SimpleTyped;

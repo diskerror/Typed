@@ -6,7 +6,11 @@
  * Time: 2:59 PM
  */
 
-class IndexSort extends \Diskerror\Typed\Scalar\TInteger
+namespace TestClasses\Mongo;
+
+use Diskerror\Typed\Scalar\TInteger;
+
+class IndexSort extends TInteger
 {
 	/**
 	 * MongoIndexSort constructor.
@@ -23,7 +27,7 @@ class IndexSort extends \Diskerror\Typed\Scalar\TInteger
 	{
 		parent::set($in);
 
-		$this->_value = $this->_value > 0 ? 1 : -1;
+		$this->_value = $this->_value >= 0 ? 1 : -1;
 	}
 
 }

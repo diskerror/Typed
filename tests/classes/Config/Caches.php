@@ -6,7 +6,7 @@ use Diskerror\Typed\TypedClass;
 
 class Caches extends TypedClass
 {
-	protected $index     = [Cache::class];
-	protected $tag_cloud = [Cache::class];
-	protected $summary   = [Cache::class];
+	protected Cache $index;
+	protected Cache $tag_cloud;
+	protected Cache $summary;
 }

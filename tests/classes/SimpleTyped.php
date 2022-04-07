@@ -30,7 +30,7 @@ class SimpleTyped extends TypedClass
 	protected TFloat     $myFloat;
 	protected string     $myString = '';
 	protected TypedArray $myArray;
-	protected \stdClass  $myObj;
+	protected stdClass   $myObj;
 	protected MyDateTime $myDate;
 	protected TypedArray $myTypedArray;
 
@@ -38,7 +38,7 @@ class SimpleTyped extends TypedClass
 	{
 		$this->myInt        = new TInteger(0);
 		$this->myFloat      = new TFloat(3.14);
-//		$this->myArray      = new TypedArray();
+		$this->myArray      = new TypedArray();
 		$this->myObj        = new stdClass();
 		$this->myDate       = new MyDateTime('2010-01-01T01:01:01.001+00:00');
 		$this->myTypedArray = new TypedArray(JRandom::class);

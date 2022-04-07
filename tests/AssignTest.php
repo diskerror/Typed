@@ -249,7 +249,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 
 		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001000+0000'), $t->myDate);
 
-		$this->assertEquals(new \DateTime('2010-01-01T01:01:01.001000+0000'), $t->myDate);
+		$this->assertEquals(new DateTime('2010-01-01T01:01:01.001000+0000'), $t->myDate);
 
 		$this->assertNotSame(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
 

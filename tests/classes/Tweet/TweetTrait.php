@@ -2,6 +2,7 @@
 
 namespace TestClasses\Tweet;
 
+use DateTimeZone;
 use Diskerror\Typed\DateTime;
 use Diskerror\Typed\Scalar\TStringNormalize;
 
@@ -9,7 +10,7 @@ trait TweetTrait
 {
 
 	protected DateTime         $created_at;
-	protected ?string          $contributors              = null;
+	protected string          $contributors              = '';
 	protected Entity           $entities;
 	protected ExtendedEntities $extended_entities;
 	protected int              $favorite_count            = 0;
@@ -30,13 +31,7 @@ trait TweetTrait
 
 	protected function _initializeObjects()
 	{
-		$this->created_at = new DateTime('2018-07-18 17:10:28');
-	}
-
-
-	protected function _set_text($v)
-	{
-		$this->text->set(preg_replace('/\s+/', ' ', (string) $v));
+		$this->created_at = new DateTime('2018-07-18 17:10:28', new DateTimeZone('UTC'));
 	}
 
 }

@@ -2,14 +2,12 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\Scalar\\Diskerror\Typed\ScalarAbstract
- * @copyright      Copyright (c) 2018 Reid Woodbury Jr
- * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
+ * @name        Diskerror\Typed\ScalarAbstract
+ * @copyright   Copyright (c) 2018 Reid Woodbury Jr
+ * @license     http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed;
-
-use stdClass;
 
 
 /**
@@ -17,7 +15,7 @@ use stdClass;
  *
  * @package Diskerror\Typed\ScalarAbstract
  */
-abstract class ScalarAbstract extends stdClass implements AtomicInterface
+abstract class ScalarAbstract implements AtomicInterface
 {
 	/**
 	 * Stores the scalar value.
@@ -27,7 +25,7 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	protected $_value;
 
 	/**
-	 * Indicates whether or not the value can also be null.
+	 * Indicates whether the value can also be null.
 	 *
 	 * @var bool
 	 */
@@ -42,7 +40,7 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	 * ScalarAbstract constructor.
 	 *
 	 * @param mixed $in A default of an empty string will cast to false or zero as needed.
-	 * @param bool  $allowNull
+	 * @param bool $allowNull
 	 */
 	public function __construct($in = '', bool $allowNull = false)
 	{
@@ -53,7 +51,7 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 			$this->_defaultValue = null;
 		}
 		else {
-			$this->set(null === $in ? '' : $in);
+			$this->set($in);
 			$this->_defaultValue = $this->_value;
 		}
 	}
@@ -67,7 +65,7 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	}
 
 	/**
-	 * Filters the value before saving.
+	 * Filters the value before setting.
 	 */
 	abstract public function set($in);
 
@@ -88,35 +86,32 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	}
 
 	/**
-	 * @param stdClass $in
+	 * @param  $in
 	 *
 	 * @return mixed
 	 */
-	protected static function _castObject(stdClass $in)
+	protected static function _castIfObject($in)
 	{
-		//	This could be any type
-		if ($in instanceof AtomicInterface) {
-			$val = $in->get();
+		if (is_object($in)) {
+			switch (true) {
+				case is_a($in, AtomicInterface::class):
+					return $in->get();
 
-			if (is_object($val)) {
-				$val = self::_castObject($val);
+				case method_exists($in, '__toString'):
+					return $in->__toString();
+
+				case method_exists($in, 'format'):
+					return $in->format('c');
+
+				case method_exists($in, 'toArray'):
+					return $in->toArray();
+
+				default:
+					return (array) $in;
 			}
-
-			return $val;
 		}
-
-		if (method_exists($in, '__toString')) {
-			return $in->__toString();
+		else {
+			return $in;
 		}
-
-		if (method_exists($in, 'format')) {
-			return $in->format('c');
-		}
-
-		if (method_exists($in, 'toArray')) {
-			return $in->toArray();
-		}
-
-		return (array) $in;
 	}
 }

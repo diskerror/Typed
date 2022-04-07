@@ -12,11 +12,21 @@ use Diskerror\Typed\TypedClass;
 
 class Config extends TypedClass
 {
-	protected $version       = [TString::class];
-	protected $mongo_db      = [Mongo::class];
-	protected $tweets_expire = 600;
-	protected $word_stats    = [WordStats::class];
-	protected $twitter       = [Twitter::class];
-	protected $process       = [Process::class];
-	protected $caches        = [Caches::class];
+	protected TString   $version;
+	protected Mongo     $mongo_db;
+	protected int       $tweets_expire = 600;
+	protected WordStats $word_stats;
+	protected Twitter   $twitter;
+	protected Process   $process;
+	protected Caches    $caches;
+
+	protected function _initializeObjects()
+	{
+		$this->version    = new TString();
+		$this->mongo_db   = new Mongo();
+		$this->word_stats = new WordStats();
+		$this->twitter    = new Twitter();
+		$this->process    = new Process();
+		$this->caches     = new Caches();
+	}
 }

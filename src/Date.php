@@ -32,7 +32,7 @@ class Date extends DateTime
 	public function __construct($time = 'now', $timezone = null)
 	{
 		parent::__construct($time, $timezone);
-		parent::setTime(12, 0, 0);
+		parent::setTime(12);
 	}
 
 	/**
@@ -46,7 +46,7 @@ class Date extends DateTime
 	public function add($interval)
 	{
 		parent::add($interval);
-		parent::setTime(12, 0, 0);
+		parent::setTime(12);
 
 		return $this;
 	}
@@ -62,7 +62,7 @@ class Date extends DateTime
 	public function sub($interval)
 	{
 		parent::sub($interval);
-		parent::setTime(12, 0, 0);
+		parent::setTime(12);
 
 		return $this;
 	}

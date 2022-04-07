@@ -13,7 +13,6 @@ use ArrayAccess;
 use DateTimeInterface;
 use InvalidArgumentException;
 use LengthException;
-use SerializeTest;
 use Traversable;
 use function fprintf;
 use const STDERR;
@@ -38,7 +37,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @var array
 	 */
-	protected array $_container;
+	protected array $_container = [];
 
 	/**
 	 * Constructor.
@@ -56,68 +55,18 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function __construct($param1 = null, $param2 = null)
 	{
-		parent::__construct();
+		$this->_initToArrayOptions();
 
 		if (get_called_class() === self::class) {
 			$this->_type = is_string($param1) ? $param1 : '';
-			$this->assign($param2);
+			$this->replace($param2);
 		}
 		else {
 			if (null !== $param2) {
 				throw new InvalidArgumentException('Only the first parameter can be set when using a derived class.');
 			}
 
-			$this->assign($param1);
-		}
-	}
-
-	/**
-	 * Check if the input data is good or needs to be massaged.
-	 *
-	 * @param $in
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	protected function _massageInput(&$in): void
-	{
-		switch (gettype($in)) {
-			case 'object':
-			case 'array':
-				// Leave these as is.
-				break;
-
-			case 'null':
-			case 'NULL':
-				$in = [];
-				break;
-
-			case 'string':
-				if ('' === $in) {
-					$in = [];
-				}
-				else {
-					$in        = json_decode($in);
-					$lastError = json_last_error();
-					if ($lastError !== JSON_ERROR_NONE) {
-						throw new InvalidArgumentException(
-							'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
-							$lastError
-						);
-					}
-				}
-				break;
-
-			case 'bool':
-			case 'boolean':
-				// A 'false' is returned by MySQL:PDO for "no results".
-				if (true !== $in) {
-					/** Change false to empty array. */
-					$in = [];
-				}
-			//	A boolean 'true' falls through.
-
-			default:
-				throw new InvalidArgumentException('bad input type ' . gettype($in) . ', value: "' . $in . '"');
+			$this->replace($param1);
 		}
 	}
 
@@ -148,11 +97,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	{
 		$this->_massageInput($in);
 
-		if (empty((array) $in)) {
-			$this->_container = [];
-			return;
-		}
-
 		foreach ($in as $k => $v) {
 			$this->offsetSet($k, $v);
 		}
@@ -169,26 +113,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	}
 
 	/**
-	 * Return an integer representing the toArray conversion options.
-	 *
-	 * @return int
-	 */
-	public function getArrayOptions(): int
-	{
-		return $this->_arrayOptions->get();
-	}
-
-	/**
-	 * Takes an integer representing the toArray conversion options.
-	 *
-	 * @param int $opts
-	 */
-	public function setArrayOptions(int $opts): void
-	{
-		$this->_arrayOptions->set($opts);
-	}
-
-	/**
 	 * Required by the IteratorAggregate interface.
 	 * Every value is checked for change during iteration.
 	 *
@@ -202,18 +126,15 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		if (is_a($this->_type, AtomicInterface::class, true)) {
 			return (function &() {
 				foreach ($this->_container as $k => $v) {
-					$v     = $v->get();
-					$vOrig = $v;
+					$v = $v->get();
 					yield $k => $v;
-					if ($v !== $vOrig) {
-						$this->_container[$k]->set($v);
-					}
+					$this->_container[$k]->set($v);
 				}
 			})();
 		}
 		else {
 			return (function &() {
-				foreach ($this->_container as $k => &$v) {
+				foreach ($this->_container as $k => $v) {
 					yield $k => $v;
 
 					//	Compare whole class names.
@@ -231,16 +152,14 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Get string representation of object.
 	 *
 	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
-	 * @return string the string representation of the object or null
+	 * @return ?array the string representation of the object or null
 	 */
 	public function __serialize(): ?array
 	{
-		return [
-			'_arrayOptions' => $this->_arrayOptions->get(),
-			'_jsonOptions'  => $this->_jsonOptions->get(),
-			'_type'         => $this->_type,
-			'_container'    => $this->_container,
-		];
+		$ret               = parent::__serialize();
+		$ret['_type']      = $this->_type;
+		$ret['_container'] = $this->_container;
+		return $ret;
 	}
 
 	/**
@@ -248,14 +167,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
 	 *
-	 * @param array $serialized
+	 * @param array $data
 	 *
 	 * @return void
 	 */
 	public function __unserialize(array $data): void
 	{
-		$this->_arrayOptions->set($data['_arrayOptions']);
-		$this->_jsonOptions->set($data['_jsonOptions']);
+		parent::__unserialize($data);
 		$this->_type      = $data['_type'];
 		$this->_container = $data['_container'];
 	}
@@ -274,7 +192,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		$output = [];
 
 		//	TODO: check special case for empty type
-		if ($this->_type === '' || self::_isAssignableType($this->_type)) {
+		if ($this->_type === '' || self::_isNonObject($this->_type)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}
@@ -291,7 +209,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		}
 		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v->format(DateTime::STRING_IO_FORMAT_MICRO);
+				$output[$k] = $v->format(DateTime::MYSQL_STRING_IO_FORMAT_MICRO);
 			}
 		}
 		elseif (method_exists($this->_type, 'toArray')) {
@@ -432,38 +350,32 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function offsetSet($k, $v): void
 	{
-		// if no type then
-		if ($this->_type === '') {
-			$this->_offsetSet($k, $v);
-			return;
-		}
-
-		// if we're an assignable type then possibly massage before assigning
-		if (self::_isAssignableType($this->_type)) {
-			if ($this->_type !== gettype($v)) {
-				settype($v, $this->_type);
-			}
+		if (self::_setBasicTypeAndConfirm($v, $this->_type)) {
 			$this->_offsetSet($k, $v);
 			return;
 		}
 
 		if (is_a($this->_type, AtomicInterface::class, true)) {
 			if (!isset($this->_container[$k])) {
-				$this->_container[$k] = new $this->_type();
+				$this->_container[$k] = new $this->_type($v);
 			}
-			$this->_container[$k]->set($v);
+			else {
+				$this->_container[$k]->set($v);
+			}
 			return;
 		}
 
 		if (is_a($this->_type, TypedAbstract::class, true)) {
 			if (!isset($this->_container[$k])) {
-				$this->_container[$k] = new $this->_type();
+				$this->_container[$k] = new $this->_type($v);
 			}
-			$this->_container[$k]->replace($v);
+			else {
+				$this->_container[$k]->replace($v);
+			}
 			return;
 		}
 
-		// if no type or the object types match then
+		// if the object types match then
 		if (is_object($v) && get_class($v) === $this->_type) {
 			$this->_offsetSet($k, $v);
 			return;
@@ -505,7 +417,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				}
 			}
 		}
-		elseif (!self::_isAssignableType($this->_type)) {
+		elseif (!self::_isNonObject($this->_type)) {
 			// If not assignable then these must all already be objects.
 			foreach ($this->_container as &$v) {
 				$v = clone $v;

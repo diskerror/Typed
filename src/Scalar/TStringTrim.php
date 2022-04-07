@@ -2,14 +2,12 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\Scalar\TStringTrim
+ * @name        TStringTrim
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed\Scalar;
-
-use Diskerror\Typed\Scalar\TString;
 
 class TStringTrim extends TString
 {

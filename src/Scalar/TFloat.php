@@ -2,25 +2,27 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\Scalar\TFloat
+ * @name        TFloat
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed\Scalar;
 
-
 use Diskerror\Typed\ScalarAbstract;
 
-class TFloat extends \Diskerror\Typed\ScalarAbstract
+class TFloat extends ScalarAbstract
 {
 	public function set($in)
 	{
-		if (is_object($in)) {
-			$in = self::_castObject($in);
-		}
+		$in = self::_castIfObject($in);
 
 		switch (gettype($in)) {
+			case 'null':
+			case 'NULL':
+				$this->unset();
+				break;
+
 			case 'string':
 				$in = trim(strtolower($in), "\x00..\x20\x7F");
 				if ($in === '' || $in === 'null' || $in === 'nan') {
@@ -45,14 +47,7 @@ class TFloat extends \Diskerror\Typed\ScalarAbstract
 				elseif ($comaPos !== false) {
 					$in = str_replace(',', '.', $in);
 				}
-
-				$this->_value = (float) $in;
-				break;
-
-			case 'null':
-			case 'NULL':
-				$this->unset();
-				break;
+			//	fall through
 
 			default:
 				$this->_value = (float) $in;
