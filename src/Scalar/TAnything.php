@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\Scalar\TAnything
+ * @name           TAnything
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -21,7 +21,7 @@ use Diskerror\Typed\ScalarAbstract;
  */
 class TAnything extends ScalarAbstract
 {
-	public function set($in)
+	public function set($in): void
 	{
 		if (null === $in) {
 			$this->unset();

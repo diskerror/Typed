@@ -2,16 +2,14 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\Scalar\\Diskerror\Typed\ScalarAbstract
+ * @name           ScalarAbstract
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed;
 
-use Diskerror\Typed\AtomicInterface;
 use stdClass;
-use function is_object;
 
 
 /**
@@ -29,7 +27,7 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	protected $_value;
 
 	/**
-	 * Indicates whether or not the value can also be null.
+	 * Indicates whether the value can also be null.
 	 *
 	 * @var bool
 	 */
@@ -69,11 +67,6 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	}
 
 	/**
-	 * Filters the value before saving.
-	 */
-	abstract public function set($in);
-
-	/**
 	 * Returns true if value is not null.
 	 */
 	public function isset(): bool
@@ -84,7 +77,7 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	/**
 	 * Sets a null or the default value.
 	 */
-	public function unset()
+	public function unset(): void
 	{
 		$this->_value = $this->_allowNull ? null : $this->_defaultValue;
 	}

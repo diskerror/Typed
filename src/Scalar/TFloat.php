@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\Scalar\TFloat
+ * @name           TFloat
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -12,9 +12,9 @@ namespace Diskerror\Typed\Scalar;
 
 use Diskerror\Typed\ScalarAbstract;
 
-class TFloat extends \Diskerror\Typed\ScalarAbstract
+class TFloat extends ScalarAbstract
 {
-	public function set($in)
+	public function set($in): void
 	{
 		if (is_object($in)) {
 			$in = self::_castObject($in);

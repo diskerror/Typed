@@ -41,7 +41,7 @@ class SqlStatement
 	 *
 	 * @return string
 	 */
-	public static function toInsert($input, array $include = [])
+	public static function toInsert($input, array $include = []): string
 	{
 		if (is_object($input)) {
 			if (method_exists($input, 'toArray')) {
@@ -71,7 +71,7 @@ class SqlStatement
 		}
 
 		$sqlStrs = [];
-		foreach ($arr as $k => &$v) {
+		foreach ($arr as $k => $v) {
 			$kEq = '`' . $k . '` = ';
 			switch (gettype($v)) {
 				case 'bool':
@@ -144,7 +144,7 @@ class SqlStatement
 	 *
 	 * @return string
 	 */
-	public static function toValues($input, array $include = [])
+	public static function toValues($input, array $include = []): string
 	{
 		if (!is_array($input) && !is_object($input)) {
 			throw new InvalidArgumentException('input must be an associative array or traversable object');
@@ -160,7 +160,7 @@ class SqlStatement
 			}
 		}
 		else {
-			foreach ($input as $k => &$v) {
+			foreach ($input as $k => $v) {
 				$sqlStrs[] = '`' . $k . '` = VALUES(`' . $k . '`)';
 			}
 		}

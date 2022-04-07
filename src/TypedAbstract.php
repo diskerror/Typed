@@ -10,8 +10,8 @@
 namespace Diskerror\Typed;
 
 use Countable;
+use InvalidArgumentException;
 use IteratorAggregate;
-use Serializable;
 use JsonSerializable;
 
 /**
@@ -77,18 +77,9 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 *
 	 * @param mixed $in
 	 *
-	 * @return self
+	 * @return called class
 	 */
 	abstract public function merge($in);
-
-	/**
-	 * Check if the input data is good or needs to be massaged.
-	 *
-	 * @param $in
-	 *
-	 * @return object|array
-	 */
-	abstract protected function _massageInput(&$in);
 
 	/**
 	 * Initialize options for when this object is converted to an array.
@@ -97,6 +88,56 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	{
 		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
 		$this->_jsonOptions  = new ArrayOptions($this->_jsonOptionDefaults);
+	}
+
+	/**
+	 * Check if the input data is good or needs to be massaged.
+	 *
+	 * @param $in
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	protected function _massageInput(&$in): void
+	{
+		switch (gettype($in)) {
+			case 'string':
+				if ('' === $in) {
+					$in = [];
+				}
+				else {
+					$in        = json_decode($in);
+					$lastError = json_last_error();
+					if ($lastError !== JSON_ERROR_NONE) {
+						throw new InvalidArgumentException(
+							'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
+							$lastError
+						);
+					}
+				}
+				break;
+
+			case 'object':
+			case 'array':
+				// Leave these as is.
+				break;
+
+			case 'null':
+			case 'NULL':
+				$in = [];
+				break;
+
+			case 'bool':
+			case 'boolean':
+				// A 'false' is returned by MySQL:PDO for "no results".
+				if (true !== $in) {
+					/** Change false to empty array. */
+					$in = [];
+				}
+			//	A boolean 'true' falls through.
+
+			default:
+				throw new InvalidArgumentException('bad input type ' . gettype($in) . ', value: "' . $in . '"');
+		}
 	}
 
 	/**
@@ -131,7 +172,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	}
 
 	/**
-	 * @param int $opt
+	 * @param int $opts
 	 */
 	public function setArrayOptions(int $opts): void
 	{
@@ -139,7 +180,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	}
 
 	/**
-	 * Be sure json_encode get's our prepared array.
+	 * Be sure json_encode gets our prepared array.
 	 *
 	 * @return array
 	 */

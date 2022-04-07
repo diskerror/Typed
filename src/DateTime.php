@@ -3,6 +3,7 @@
 namespace Diskerror\Typed;
 
 use DateTime as DT;
+use DateTimeInterface;
 use DateTimeZone;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -31,10 +32,10 @@ class DateTime extends DT implements JsonSerializable
 	 * See setTime and setDate for more information.
 	 * Timezone is ignored when DateTime object is passed in first param.
 	 *
-	 * @param mixed        $time     -OPTIONAL
-	 * @param DateTimeZone $timezone -OPTIONAL
+	 * @param mixed $time -OPTIONAL
+	 * @param null $timezone -OPTIONAL
 	 *
-	 * @throws InvalidArgumentException
+	 * @throws \Exception
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
@@ -44,7 +45,7 @@ class DateTime extends DT implements JsonSerializable
 
 		switch (gettype($time)) {
 			case 'object':
-				if ($time instanceof \DateTimeInterface) {
+				if ($time instanceof DateTimeInterface) {
 					parent::__construct(
 						$time->format(self::STRING_IO_FORMAT_MICRO),
 						$time->getTimezone()
@@ -111,7 +112,7 @@ class DateTime extends DT implements JsonSerializable
 	{
 		switch (gettype($year)) {
 			case 'object':
-				if ($time instanceof \DateTimeInterface) {
+				if ($year instanceof DateTimeInterface) {
 					$day   = $year->format('j');
 					$month = $year->format('n');
 					$year  = $year->format('Y');
@@ -170,7 +171,7 @@ class DateTime extends DT implements JsonSerializable
 	{
 		switch (gettype($hour)) {
 			case 'object':
-				if ($time instanceof \DateTimeInterface) {
+				if ($hour instanceof DateTimeInterface) {
 					$second = $hour->format('j');
 					$minute = $hour->format('n');
 					$hour   = $hour->format('Y');

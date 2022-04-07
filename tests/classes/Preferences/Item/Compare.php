@@ -6,7 +6,7 @@ use Diskerror\Typed\Scalar\TStringTrim;
 
 class Compare extends TStringTrim
 {
-	public function set($in)
+	public function set($in): void
 	{
 		parent::set($in);
 

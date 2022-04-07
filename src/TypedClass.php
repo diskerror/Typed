@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection ALL */
 /**
  * Provides support for class members/properties maintain their initial types.
  *
@@ -18,6 +18,7 @@ use Diskerror\Typed\Scalar\TString;
 use InvalidArgumentException;
 use Traversable;
 use TypeError;
+use function is_array;
 
 /**
  * Create a child of this class with your named properties with a visibility of
@@ -32,7 +33,7 @@ use TypeError;
  *      values in the matching names will be filtered and copied into the object.
  *      All input will be copied by value, not referenced.
  *
- * This class will adds simple casting of input values to be the same type as the
+ * This class adds simple casting of input values to be the same type as the
  *      named property or member. This includes scalar values, built-in PHP classes,
  *      and other classes, especially those derived from this class.
  *
@@ -183,7 +184,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	protected function _initProperties()
 	{
-		foreach ($this->_defaultValues as $k => &$v) {
+		foreach ($this->_defaultValues as $k => $v) {
 			/**
 			 * All properties, except resources, are now objects.
 			 * Clone the default/original value back to the original property.
@@ -220,6 +221,7 @@ abstract class TypedClass extends TypedAbstract
 	public function assign($in): void
 	{
 		$this->_massageInput($in);
+		$this->_massageInputArray($in);
 
 		foreach ($this->_publicNames as $publicName) {
 			$this->__unset($publicName);
@@ -251,16 +253,11 @@ abstract class TypedClass extends TypedAbstract
 	public function getIterator(): Traversable
 	{
 		return (function &() {
-			foreach ($this->_defaultValues as $k => &$vDefault) {
+			foreach ($this->_defaultValues as $k => $vDefault) {
 				if ($vDefault instanceof AtomicInterface) {
-					$v     = $this->{$k}->get();
-					$vOrig = $v;
-
+					$v = $this->{$k}->get();
 					yield $k => $v;
-
-					if ($v !== $vOrig) {
-						$this->{$k}->set($v);
-					}
+					$this->{$k}->set($v);
 				}
 				else {
 					yield $k => $this->{$k};
@@ -340,6 +337,7 @@ abstract class TypedClass extends TypedAbstract
 	public function replace($in): void
 	{
 		$this->_massageInput($in);
+		$this->_massageInputArray($in);
 
 		foreach ($in as $k => $v) {
 			if ($this->_keyExists($k)) {
@@ -365,7 +363,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return self
 	 */
-	public function merge($in): self
+	public function merge($in): TypedAbstract
 	{
 		$clone = clone $this;
 		$clone->replace($in);
@@ -430,81 +428,28 @@ abstract class TypedClass extends TypedAbstract
 		return $arr;
 	}
 
-	/**
-	 * Check if the input data is good or needs to be massaged.
-	 *
-	 * Indexed arrays ARE COPIED BY POSITION starting with the first sudo-public
-	 * property (property names not starting with an underscore). Extra values
-	 * are ignored. Unused properties are unchanged.
-	 *
-	 * @param $in
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	protected function _massageInput(&$in): void
+	protected final function _massageInputArray(&$in): void
 	{
-		switch (gettype($in)) {
-			case 'string':
-				if ('' === $in) {
-					$in = [];
-				}
-				else {
-					$in        = json_decode($in);
-					$lastError = json_last_error();
-					if ($lastError !== JSON_ERROR_NONE) {
-						throw new InvalidArgumentException(
-							'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
-							$lastError
-						);
-					}
-				}
-				break;
+		//	Test to see if it's an indexed or an associative array.
+		//	Leave associative array as is.
+		//	Copy indexed array by position to a named array
+		if (is_array($in) && !empty($in) && array_values($in) === $in) {
+			$newArr   = [];
+			$minCount = min(count($in), $this->_count);
+			for ($i = 0; $i < $minCount; ++$i) {
+				$newArr[$this->_publicNames[$i]] = $in[$i];
+			}
 
-			case 'object':
-				//	Leave object as is.
-				break;
-
-			case 'array':
-				//	Test to see if it's an indexed or an associative array.
-				//	Leave associative array as is.
-				//	Copy indexed array by position to a named array
-				if (!empty($in) && array_values($in) === $in) {
-					$newArr   = [];
-					$minCount = min(count($in), $this->_count);
-					for ($i = 0; $i < $minCount; ++$i) {
-						$newArr[$this->_publicNames[$i]] = $in[$i];
-					}
-
-					$in = $newArr;
-				}
-				break;
-
-			case 'null':
-			case 'NULL':
-				$in = [];
-				break;
-
-			case 'bool':
-			case 'boolean':
-				/** A 'false' is returned by MySQL:PDO for "no results" */
-				if (false === $in) {
-					/** Change false to empty array. */
-					$in = [];
-					break;
-				}
-			//	A boolean 'true' falls through.
-
-			default:
-				throw new InvalidArgumentException('invalid input type: ' . gettype($in));
+			$in = $newArr;
 		}
 	}
 
 	/**
-	 * Sets a variable to it's default value rather than unsetting it.
+	 * Sets a variable to its default value rather than unsetting it.
 	 *
 	 * @param string $k
 	 */
-	public function __unset($k)
+	public function __unset(string $k)
 	{
 		$this->{$k} = clone $this->_defaultValues[$k];
 	}
@@ -528,7 +473,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return mixed
 	 */
-	public function __get($k)
+	public function __get(string $k)
 	{
 		$this->_assertPropName($k);
 		return $this->_getByName($k);
@@ -539,7 +484,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
 	 * @param string $k
-	 * @param mixed  $v
+	 * @param mixed $v
 	 */
 	public function __set($k, $v)
 	{
@@ -557,7 +502,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return bool
 	 */
-	public function __isset($k): bool
+	public function __isset(string $k): bool
 	{
 		return $this->_keyExists($k) && ($this->{$k} !== null);
 	}
@@ -567,17 +512,17 @@ abstract class TypedClass extends TypedAbstract
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
 	 * @param string $propName
-	 * @param mixed  $in
+	 * @param mixed $in
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _setByName($propName, $in)
+	protected function _setByName(string $propName, $in)
 	{
 		if (array_key_exists($propName, $this->_map)) {
 			$propName = $this->_map[$propName];
 		}
 
-		if(!in_array($propName, $this->_publicNames)){
+		if (!in_array($propName, $this->_publicNames)) {
 			return;
 		}
 
@@ -611,7 +556,7 @@ abstract class TypedClass extends TypedAbstract
 					$this->{$propName} = $in;
 				}
 				else {
-					//	First try to absorb the input in it's entirety,
+					//	First try to absorb the input in its entirety,
 					try {
 						$this->{$propName} = new $propertyClassType($in);
 					}
@@ -657,7 +602,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _assertPropName($k)
+	protected function _assertPropName(string $k)
 	{
 		if (!$this->_keyExists($k)) {
 			throw new InvalidArgumentException();
@@ -671,7 +616,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return mixed
 	 */
-	protected function _getByName($propName)
+	protected function _getByName(string $propName)
 	{
 		if (array_key_exists($propName, $this->_map)) {
 			$propName = $this->_map[$propName];
@@ -696,7 +641,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return bool
 	 */
-	private function _keyExists($propName): bool
+	private function _keyExists(string $propName): bool
 	{
 		if (array_key_exists($propName, $this->_map)) {
 			$propName = $this->_map[$propName];

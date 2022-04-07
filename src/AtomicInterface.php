@@ -15,9 +15,9 @@ interface AtomicInterface
 {
 	public function get();
 
-	public function set($in);
+	public function set($in): void;
 
-	public function isset();
+	public function isset(): bool;
 
-	public function unset();
+	public function unset(): void;
 }

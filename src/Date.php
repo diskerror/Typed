@@ -26,13 +26,11 @@ class Date extends DateTime
 	 *
 	 * @param object|array|string $time     -OPTIONAL
 	 * @param string              $timezone -OPTIONAL
-	 *
-	 * @throws InvalidArgumentException
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
 		parent::__construct($time, $timezone);
-		parent::setTime(12, 0, 0);
+		parent::setTime(12);
 	}
 
 	/**
@@ -43,10 +41,10 @@ class Date extends DateTime
 	 *
 	 * @return Date
 	 */
-	public function add($interval)
+	public function add(DateInterval $interval): Date
 	{
 		parent::add($interval);
-		parent::setTime(12, 0, 0);
+		parent::setTime(12);
 
 		return $this;
 	}
@@ -59,10 +57,10 @@ class Date extends DateTime
 	 *
 	 * @return Date
 	 */
-	public function sub($interval)
+	public function sub(DateInterval $interval): Date
 	{
 		parent::sub($interval);
-		parent::setTime(12, 0, 0);
+		parent::setTime(12);
 
 		return $this;
 	}

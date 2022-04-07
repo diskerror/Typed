@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        \Diskerror\Typed\\Diskerror\Typed\Scalar\SAString
+ * @name           TString
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -14,7 +14,7 @@ use UnexpectedValueException;
 
 class TString extends ScalarAbstract
 {
-	public function set($in)
+	public function set($in): void
 	{
 		if (is_object($in)) {
 			// Every object is converted to an array or a string.

@@ -22,7 +22,7 @@ use Traversable;
 
 /**
  * Provides support for an array's elements to all have the same type.
- * If type is defined as null then any element can have any type but
+ * If type is defined as null, then any element can have any type but
  *      deep copying of objects is always available.
  */
 class TypedArray extends TypedAbstract implements ArrayAccess
@@ -51,12 +51,12 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * If a derived class is instantiated then the data type must be contained in
 	 * the class, ie. "protected $_type = 'integer';", and $param1 can be the initial data.
 	 *
-	 * @param mixed             $param1 OPTIONAL ""
+	 * @param mixed $param1 OPTIONAL ""
 	 * @param array|object|null $param2 OPTIONAL null
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct($param1 = '', $param2 = null)
+	public final function __construct($param1 = '', $param2 = null)
 	{
 		$this->_initArrayOptions();
 
@@ -119,56 +119,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			case 'datetime':
 				$this->_type = DateTime::class;
 				break;
-		}
-	}
-
-	/**
-	 * Check if the input data is good or needs to be massaged.
-	 *
-	 * @param $in
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	protected function _massageInput(&$in): void
-	{
-		switch (gettype($in)) {
-			case 'string':
-				if ('' === $in) {
-					$in = [];
-				}
-				else {
-					$in        = json_decode($in);
-					$lastError = json_last_error();
-					if ($lastError !== JSON_ERROR_NONE) {
-						throw new InvalidArgumentException(
-							'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
-							$lastError
-						);
-					}
-				}
-				break;
-
-			case 'object':
-			case 'array':
-				// Leave these as is.
-				break;
-
-			case 'null':
-			case 'NULL':
-				$in = [];
-				break;
-
-			case 'bool':
-			case 'boolean':
-				// A 'false' is returned by MySQL:PDO for "no results".
-				if (true !== $in) {
-					/** Change false to empty array. */
-					$in = [];
-				}
-			//	A boolean 'true' falls through.
-
-			default:
-				throw new InvalidArgumentException('bad input type ' . gettype($in) . ', value: "' . $in . '"');
 		}
 	}
 
@@ -248,18 +198,15 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		if (is_a($this->_type, AtomicInterface::class, true)) {
 			return (function &() {
 				foreach ($this->_container as $k => $v) {
-					$v     = $v->get();
-					$vOrig = $v;
+					$v = $v->get();
 					yield $k => $v;
-					if ($v !== $vOrig) {
-						$this->_container[$k]->set($v);
-					}
+					$this->_container[$k]->set($v);
 				}
 			})();
 		}
 		else {
 			return (function &() {
-				foreach ($this->_container as $k => &$v) {
+				foreach ($this->_container as $k => $v) {
 					yield $k => $v;
 
 					//	Compare whole class names.
@@ -297,7 +244,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return void
 	 */
-	public function __unserialize($data): void
+	public function __unserialize(array $data): void
 	{
 		$this->_type         = $data['_type'];
 		$this->_arrayOptions = new ArrayOptions($data['_arrayOptions']);
@@ -310,6 +257,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * that any member of type "Typed" will also be returned.
 	 * Use "__get" and "__set", or $var[$member] to access individual names.
 	 *
+	 * @param ArrayOptions $arrayOptions
 	 * @return array
 	 */
 	protected function _toArray(ArrayOptions $arrayOptions): array
@@ -375,17 +323,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * Similar to the function array_merge().
 	 *
-	 * @param  $it
+	 * @param  $in
 	 *
 	 * @return self
 	 */
-	public function merge($it): self
+	public function merge($in): TypedAbstract
 	{
-		$this->_massageInput($it);
+		$this->_massageInput($in);
 
 		$ret = clone $this;
 
-		foreach ($it as $k => $v) {
+		foreach ($in as $k => $v) {
 			if (is_int($k)) {
 				$ret[] = $v;
 			}
@@ -449,7 +397,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Coerces input values to be the required type.
 	 *
 	 * There are 5 basic conditions for $this->_type:
-	 * # $this->_type is null (accept any type and value, like a standard array);
+	 * # $this->_type is null (to accept any type and value, like a standard array);
 	 * # $this->_type is a scalar wrapper [bool, int, float, string];
 	 * # $this->_type is an array (check if input value is an object and has toArray);
 	 * # $this->_type is an object of type TypedAbstract (call replace());
@@ -466,35 +414,35 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * # $value is a an array (check for toArray, or cast);
 	 * # $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
-	 * @param string|int $k
-	 * @param mixed      $v
+	 * @param string|int $offset
+	 * @param mixed $value
 	 */
-	public function offsetSet($k, $v)
+	public function offsetSet($offset, $value): void
 	{
-		if (null === $k || !$this->offsetExists($k)) {
-			$v = (is_object($v) && get_class($v) === $this->_type) ? $v : new $this->_type($v);
+		if (null === $offset || !$this->offsetExists($offset)) {
+			$value = (is_object($value) && get_class($value) === $this->_type) ? $value : new $this->_type($value);
 
-			if (null === $k) {
-				$this->_container[] = $v;
+			if (null === $offset) {
+				$this->_container[] = $value;
 			}
 			else {
-				$this->_container[$k] = $v;
+				$this->_container[$offset] = $value;
 			}
 
 			return;
 		}
 
 		if (is_a($this->_type, AtomicInterface::class, true)) {
-			$this->_container[$k]->set($v);
+			$this->_container[$offset]->set($value);
 			return;
 		}
 
 		if (is_a($this->_type, TypedAbstract::class, true)) {
-			$this->_container[$k]->replace($v);
+			$this->_container[$offset]->replace($value);
 			return;
 		}
 
-		$this->_container[$k] = new $this->_type($v);
+		$this->_container[$offset] = new $this->_type($value);
 	}
 
 	/**
@@ -502,7 +450,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param string|int $offset
 	 */
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		unset($this->_container[$offset]);
 	}
@@ -561,7 +509,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	/**
 	 * @return array
 	 */
-	public function getValues()
+	public function getValues(): array
 	{
 		return array_values($this->_container);
 	}
