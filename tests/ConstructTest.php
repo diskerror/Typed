@@ -1,9 +1,10 @@
 <?php /** @noinspection ALL */
 
 use Diskerror\Typed\TypedArray;
+use PHPUnit\Framework\TestCase;
 use TestClasses\SimpleTyped;
 
-class ConstructTest extends PHPUnit\Framework\TestCase
+class ConstructTest extends TestCase
 {
 	public function testEmptyConstructor()
 	{

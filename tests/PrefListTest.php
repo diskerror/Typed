@@ -1,15 +1,16 @@
 <?php
+/** @noinspection ALL */
+/** @noinspection ALL */
 
-use TestClasses\Preferences\Item;
-use TestClasses\Preferences\ItemList;
-use TestClasses\Preferences\ListList;
+use PHPUnit\Framework\TestCase;
+use TestClasses\Preferences\{Item, ItemList, ListList};
 
-class PrefListTest extends PHPUnit\Framework\TestCase
+class PrefListTest extends TestCase
 {
 	public function testComplex()
 	{
-		$itemVals = new Item(['sort' => 'DESC']);
-		$itemListVals = new ItemList([['find'=>'the name'], ['find'=>'an address']]);
+		$itemVals     = new Item(['sort' => 'DESC']);
+		$itemListVals = new ItemList([['find' => 'the name'], ['find' => 'an address']]);
 
 		$prefListList = ListList::getDefault();
 //		jsonPrint($prefListList->toArray()); exit;

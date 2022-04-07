@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection ALL */
 /**
  * SQL statement generator.
  * Converts associative arrays and objects into partial SQL statements.
@@ -22,10 +22,7 @@ use UnexpectedValueException;
  */
 class SqlStatement
 {
-	/**
-	 * Ya don' need to make an instance of this class to use the static methods.
-	 */
-	protected function __construct()
+	protected final function __construct()
 	{
 	}
 
@@ -37,7 +34,7 @@ class SqlStatement
 	 * An empty "include" array means to use all.
 	 *
 	 * @param array|stdClass $input
-	 * @param array          $include
+	 * @param array $include
 	 *
 	 * @return string
 	 */
@@ -140,7 +137,7 @@ class SqlStatement
 	 * An empty "include" array means to use all.
 	 *
 	 * @param array|stdClass $input
-	 * @param array          $include
+	 * @param array $include
 	 *
 	 * @return string
 	 */

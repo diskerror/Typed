@@ -2,9 +2,10 @@
 
 use Diskerror\Typed\DateTime as MyDateTime;
 use Diskerror\Typed\TypedArray;
+use PHPUnit\Framework\TestCase;
 use TestClasses\SimpleTyped;
 
-class AssignTest extends PHPUnit\Framework\TestCase
+class AssignTest extends TestCase
 {
 	public function testAssignBool()
 	{
@@ -249,7 +250,7 @@ class AssignTest extends PHPUnit\Framework\TestCase
 
 		$this->assertEquals(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
 
-		$this->assertEquals(new \DateTime('2010-01-01T01:01:01.001'), $t->myDate);
+		$this->assertEquals(new DateTime('2010-01-01T01:01:01.001'), $t->myDate);
 
 		$this->assertNotSame(new MyDateTime('2010-01-01T01:01:01.001'), $t->myDate);
 

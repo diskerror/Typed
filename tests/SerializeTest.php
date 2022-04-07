@@ -1,8 +1,9 @@
-<?php
+<?php /** @noinspection ALL */
 
+use PHPUnit\Framework\TestCase;
 use TestClasses\Tweet;
 
-class SerializeTest extends PHPUnit\Framework\TestCase
+class SerializeTest extends TestCase
 {
 	public function testSerialize()
 	{

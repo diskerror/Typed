@@ -8,7 +8,7 @@ class ListList extends TypedArray
 {
 	protected $_type = ItemList::class;
 
-	public static function getDefault()
+	public static function getDefault(): self
 	{
 		$d = new self([
 			'Option Name'    => ItemList::getDefault(),

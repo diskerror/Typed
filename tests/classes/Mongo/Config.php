@@ -1,5 +1,7 @@
 <?php
 
+namespace TestClasses\Mongo;
+
 use Diskerror\Typed\TypedArray;
 use Diskerror\Typed\TypedClass;
 
