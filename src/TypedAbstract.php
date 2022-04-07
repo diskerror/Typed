@@ -24,32 +24,27 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 {
 	/**
 	 * Holds options for "toArray" customizations.
+	 * Protected for read-only access.
 	 *
 	 * @var ArrayOptions
 	 */
-	protected $_arrayOptions;
+	protected $toArrayOptions;
 
 	/**
-	 * Holds default options for "toArray" customizations.
+	 * Holds options for "__serialize" customizations.
+	 * Protected for read-only access.
 	 *
-	 * @var int
+	 * @var ArrayOptions
 	 */
-	protected $_arrayOptionDefaults = 0;
+	protected $serializeOptions;
 
 	/**
 	 * Holds options for "toArray" customizations when used by json_encode.
+	 * Protected for read-only access.
 	 *
 	 * @var ArrayOptions
 	 */
-	protected $_jsonOptions;
-
-	/**
-	 * Holds default options for "toArray" customizations when used by json_encode.
-	 *
-	 * @var int
-	 */
-	protected $_jsonOptionDefaults =
-		ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR;
+	protected $toJsonOptions;
 
 	/**
 	 * Assign.
@@ -77,7 +72,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 *
 	 * @param mixed $in
 	 *
-	 * @return called class
+	 * return called class
 	 */
 	abstract public function merge($in);
 
@@ -86,8 +81,21 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 */
 	protected function _initArrayOptions()
 	{
-		$this->_arrayOptions = new ArrayOptions($this->_arrayOptionDefaults);
-		$this->_jsonOptions  = new ArrayOptions($this->_jsonOptionDefaults);
+		$this->toArrayOptions   = new ArrayOptions();
+		$this->serializeOptions = new ArrayOptions(ArrayOptions::OMIT_RESOURCE);
+		$this->toJsonOptions    = new ArrayOptions(
+			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR);
+	}
+
+	static final protected function _isArrayOption(string $name): bool
+	{
+		switch ($name) {
+			case 'toArrayOptions':
+			case 'serializeOptions':
+			case 'toJsonOptions':
+				return true;
+		}
+		return false;
 	}
 
 	/**
@@ -97,7 +105,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _massageInput(&$in): void
+	final protected function _massageInput(&$in): void
 	{
 		switch (gettype($in)) {
 			case 'string':
@@ -151,7 +159,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 */
 	final public function toArray(): array
 	{
-		return $this->_toArray($this->_arrayOptions);
+		return $this->_toArray($this->toArrayOptions);
 	}
 
 	/**
@@ -164,28 +172,12 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	abstract protected function _toArray(ArrayOptions $arrayOptions): array;
 
 	/**
-	 * @return int
-	 */
-	public function getArrayOptions(): int
-	{
-		return $this->_arrayOptions->get();
-	}
-
-	/**
-	 * @param int $opts
-	 */
-	public function setArrayOptions(int $opts): void
-	{
-		$this->_arrayOptions->set($opts);
-	}
-
-	/**
 	 * Be sure json_encode gets our prepared array.
 	 *
 	 * @return array
 	 */
 	public function jsonSerialize(): array
 	{
-		return $this->_toArray($this->_jsonOptions);
+		return $this->_toArray($this->toJsonOptions);
 	}
 }

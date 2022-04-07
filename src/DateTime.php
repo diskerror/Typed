@@ -5,6 +5,7 @@ namespace Diskerror\Typed;
 use DateTime as DT;
 use DateTimeInterface;
 use DateTimeZone;
+use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
 use function method_exists;
@@ -35,7 +36,7 @@ class DateTime extends DT implements JsonSerializable
 	 * @param mixed $time -OPTIONAL
 	 * @param null $timezone -OPTIONAL
 	 *
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{

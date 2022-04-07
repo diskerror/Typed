@@ -123,6 +123,23 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	}
 
 	/**
+	 * Get toArray option objects.
+	 * These objects are read-only.
+	 *
+	 * @param string $k
+	 *
+	 * @return mixed
+	 */
+	public function __get(string $k)
+	{
+		//	Allow reading of array option object.
+		if (self::_isArrayOption($k)) {
+			return $this->$k;
+		}
+		return null;
+	}
+
+	/**
 	 * Copies all members into this class, removing all existing values.
 	 *
 	 * Null clears the entire contents of the typed array but not it's type.
@@ -162,26 +179,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function count(): int
 	{
 		return count($this->_container);
-	}
-
-	/**
-	 * Return an integer representing the toArray conversion options.
-	 *
-	 * @return int
-	 */
-	public function getArrayOptions(): int
-	{
-		return $this->_arrayOptions->get();
-	}
-
-	/**
-	 * Takes an integer representing the toArray conversion options.
-	 *
-	 * @param int $opts
-	 */
-	public function setArrayOptions(int $opts): void
-	{
-		$this->_arrayOptions->set($opts);
 	}
 
 	/**
@@ -228,10 +225,11 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function __serialize(): ?array
 	{
 		return [
-			'_type'         => $this->_type,
-			'_arrayOptions' => $this->_arrayOptions->get(),
-			'_jsonOptions'  => $this->_jsonOptions->get(),
-			'_container'    => $this->_container,
+			'_type'            => $this->_type,
+			'toArrayOptions'   => $this->toArrayOptions->get(),
+			'serializeOptions' => $this->serializeOptions->get(),
+			'toJsonOptions'    => $this->toJsonOptions->get(),
+			'_container'       => $this->_toArray($this->serializeOptions),
 		];
 	}
 
@@ -246,16 +244,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function __unserialize(array $data): void
 	{
-		$this->_type         = $data['_type'];
-		$this->_arrayOptions = new ArrayOptions($data['_arrayOptions']);
-		$this->_jsonOptions  = new ArrayOptions($data['_jsonOptions']);
-		$this->_container    = $data['_container'];
+		$this->_type            = $data['_type'];
+		$this->toArrayOptions   = new ArrayOptions($data['toArrayOptions']);
+		$this->serializeOptions = new ArrayOptions($data['serializeOptions']);
+		$this->toJsonOptions    = new ArrayOptions($data['toJsonOptions']);
+		$this->_container       = $data['_container'];
 	}
 
 	/**
 	 * Returns an array with all members checked for a "toArray" method so
 	 * that any member of type "Typed" will also be returned.
-	 * Use "__get" and "__set", or $var[$member] to access individual names.
+	 * Use $arr[$member] to access individual names.
 	 *
 	 * @param ArrayOptions $arrayOptions
 	 * @return array

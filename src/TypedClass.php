@@ -1,4 +1,5 @@
-<?php /** @noinspection ALL */
+<?php
+/** @noinspection ALL */
 /**
  * Provides support for class members/properties maintain their initial types.
  *
@@ -18,7 +19,6 @@ use Diskerror\Typed\Scalar\TString;
 use InvalidArgumentException;
 use Traversable;
 use TypeError;
-use function is_array;
 
 /**
  * Create a child of this class with your named properties with a visibility of
@@ -129,7 +129,7 @@ abstract class TypedClass extends TypedAbstract
 		//	First, get all class properties then remove elements with names starting with underscore, except "_id".
 		$this->_defaultValues = get_class_vars($this->_calledClass);
 		foreach ($this->_defaultValues as $k => &$v) {
-			if ($k[0] === '_' && $k !== '_id') {
+			if (($k[0] === '_' && $k !== '_id') || $this->_isArrayOption($k)) {
 				unset($this->_defaultValues[$k]);
 				continue;
 			}
@@ -200,7 +200,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return array
 	 */
-	protected function _getPublicNames()
+	public final function getPublicNames()
 	{
 		return $this->_publicNames;
 	}
@@ -283,15 +283,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __serialize(): ?array
 	{
-		$toSerialize = [
-			'_arrayOptions' => $this->_arrayOptions->get(),
-			'_jsonOptions'  => $this->_jsonOptions->get(),
-		];
-		foreach ($this->_publicNames as $k) {
-			$toSerialize[$k] = $this->_getByName($k);
-		}
-
-		return $toSerialize;
+		return $this->_toArray($this->serializeOptions);
 	}
 
 	/**
@@ -314,7 +306,7 @@ abstract class TypedClass extends TypedAbstract
 		$this->_initMetaData();
 
 		foreach ($data as $k => $v) {
-			$this->{$k} = $v;
+			$this->_setByName($k, $v);
 		}
 	}
 
@@ -475,6 +467,11 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __get(string $k)
 	{
+		//	Allow reading of array option object.
+		if ($this->_isArrayOption($k)) {
+			return $this->$k;
+		}
+
 		$this->_assertPropName($k);
 		return $this->_getByName($k);
 	}
