@@ -24,21 +24,21 @@ use JsonSerializable;
 abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerializable
 {
 	/**
-	 * Holds options for "toArray" customizations.
+	 * Holds options for "_toArray" conversion.
 	 *
 	 * @var ArrayOptions
 	 */
 	public ArrayOptions $toArrayOptions;
 
 	/**
-	 * Holds options for "toArray" customizations.
+	 * Holds options for "_toArray" conversion when used by serialize().
 	 *
 	 * @var ArrayOptions
 	 */
 	public ArrayOptions $serializeOptions;
 
 	/**
-	 * Holds options for "toArray" customizations when used by json_encode.
+	 * Holds options for "_toArray" conversion when used by json_encode().
 	 *
 	 * @var ArrayOptions
 	 */
@@ -56,7 +56,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 		$this->toArrayOptions   = new ArrayOptions();
 		$this->serializeOptions = new ArrayOptions(ArrayOptions::OMIT_RESOURCES);
 		$this->toJsonOptions    =
-			new ArrayOptions(ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCES | ArrayOptions::KEEP_JSON_EXPR);
+			new ArrayOptions(ArrayOptions::OMIT_RESOURCES | ArrayOptions::KEEP_JSON_EXPR);
 	}
 
 	/**

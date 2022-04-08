@@ -54,13 +54,6 @@ abstract class TypedClass extends TypedAbstract
 	protected array $_map = [];
 
 	/**
-	 * Holds the name of the name of the child class for method_exists and property_exists.
-	 *
-	 * @var string
-	 */
-	private string $_calledClass;
-
-	/**
 	 * Holds the names of the called class' to-be-public properties in an indexed array.
 	 *
 	 * @var array
@@ -123,8 +116,6 @@ abstract class TypedClass extends TypedAbstract
 
 	final protected function _initMetaData()
 	{
-		$this->_calledClass = get_called_class();
-
 		$ro = new ReflectionObject($this);
 
 		//	Build array of default values with converted types.

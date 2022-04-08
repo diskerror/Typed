@@ -14,8 +14,6 @@ use DateTimeInterface;
 use InvalidArgumentException;
 use LengthException;
 use Traversable;
-use function fprintf;
-use const STDERR;
 
 /**
  * Provides support for an array's elements to all have the same type.
