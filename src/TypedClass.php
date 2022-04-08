@@ -350,12 +350,12 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
-		$omitEmpty       = $this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$omitDefaults    = $this->toArrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
-		$omitResources   = $this->toArrayOptions->has(ArrayOptions::OMIT_RESOURCES);
-		$dateToString    = $this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING);
-		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
-		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+		$omitEmpty       = $arrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$omitDefaults    = $arrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
+		$omitResources   = $arrayOptions->has(ArrayOptions::OMIT_RESOURCES);
+		$dateToString    = $arrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING);
+		$objectsToString = $arrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
+		$keepJsonExpr    = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
 
 		$arrayRes = [];
 		foreach ($this->_publicNames as $k) {
