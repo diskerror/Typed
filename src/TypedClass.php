@@ -252,6 +252,19 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
+	 * String representation of PHP object.
+	 *
+	 * This omits data that is part of the class definition.
+	 *
+	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
+	 * @return ?array
+	 */
+	public function __serialize(): ?array
+	{
+		return $this->_toArray($this->serializeOptions);
+	}
+
+	/**
 	 * Assign matching values to local keys resetting unmatched local keys.
 	 *
 	 * Copies all matching property names while maintaining original types and
