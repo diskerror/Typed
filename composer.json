@@ -25,11 +25,11 @@
 	},
 	"require-dev": {
 		"ext-iconv": "*",
-		"phpunit/phpunit": "9.*",
-		"phpdocumentor/phpdocumentor": "3.*"
+		"phpunit/phpunit": "~9.5.20",
+		"phpdocumentor/phpdocumentor": "~3.1.2"
 	},
 	"suggest": {
-		"laminas/laminas-json": "^3.1.0"
+		"laminas/laminas-json": "~3.1.*"
 	},
 	"autoload": {
 		"psr-4": {
