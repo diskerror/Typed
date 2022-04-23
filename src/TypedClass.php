@@ -203,7 +203,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return array
 	 */
-	final protected function _getPublicNames()
+	final protected function _getPublicNames(): array
 	{
 		return $this->_publicNames;
 	}
@@ -249,19 +249,6 @@ abstract class TypedClass extends TypedAbstract
 				}
 			}
 		})();
-	}
-
-	/**
-	 * String representation of PHP object.
-	 *
-	 * This omits data that is part of the class definition.
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
-	 * @return ?array
-	 */
-	public function __serialize(): ?array
-	{
-		return $this->_toArray($this->serializeOptions);
 	}
 
 	/**
@@ -350,6 +337,7 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
+	 * @param ArrayOptions $arrayOptions
 	 * @return array
 	 */
 	protected function _toArray(ArrayOptions $arrayOptions): array
@@ -631,7 +619,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _assertPropName($pName)
+	protected function _assertPropName(string $pName)
 	{
 		if (!$this->_keyExists($pName)) {
 			throw new InvalidArgumentException();
@@ -645,7 +633,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return mixed
 	 */
-	protected function _getByName($pName)
+	protected function _getByName(string $pName)
 	{
 		if (is_a($this->{$pName}, AtomicInterface::class)) {
 			return $this->{$pName}->get();

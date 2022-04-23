@@ -252,17 +252,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * Similar to the function array_merge().
 	 *
-	 * @param  $it
+	 * @param  $in
 	 *
 	 * @return TypedArray
 	 */
-	public function merge($it): TypedArray
+	public function merge($in): TypedArray
 	{
-		$this->_massageInput($it);
+		$this->_massageInput($in);
 
 		$ret = clone $this;
 
-		foreach ($it as $k => $v) {
+		foreach ($in as $k => $v) {
 			if (is_int($k)) {
 				$ret[] = $v;
 			}
@@ -465,7 +465,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	/**
 	 * @return array
 	 */
-	public function values()
+	public function values(): array
 	{
 		return array_values($this->_container);
 	}
