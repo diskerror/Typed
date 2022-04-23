@@ -601,7 +601,7 @@ abstract class TypedClass extends TypedAbstract
 	protected function _assertPropName(string $k)
 	{
 		if (!$this->_keyExists($k)) {
-			throw new InvalidArgumentException();
+			throw new InvalidArgumentException($k);
 		}
 	}
 
