@@ -56,7 +56,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public final function __construct($param1 = '', $param2 = null)
+	public function __construct($param1 = '', $param2 = null)
 	{
 		$this->_initArrayOptions();
 
