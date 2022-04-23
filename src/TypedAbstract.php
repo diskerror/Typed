@@ -160,7 +160,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	{
 		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
 		if (!is_a($bt[1]['class'], TypedAbstract::class, true)) {
-			throw new BadMethodCallException();
+			throw new BadMethodCallException($name);
 		}
 
 		return $this->$name(...$args);
