@@ -50,7 +50,7 @@ The derivatives of **TypedClass** are contracted to do these things:
 
 * Member/property access will behave like any standard PHP object, even when visibility set to "protected" or "private".
 * Maintain the initial type of each member/property.
-* Silently cast data assigned to non-public properties in the most obvious way when input is of a different type.
+* Silently cast data assigned to non-public properties in the most obvious way when input member to *assign*, *replace*, or *merge* is of a different type than the corresponding local property.
 * Recognize classes inherited from **AtomicInterface** to manage their values internally.
 * Handle special cases of members/properties that are objects with an option for handling NULL assignments.
 * Implement “toArray” to return a deeply transformed standard associative array.
