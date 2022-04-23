@@ -88,7 +88,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR);
 	}
 
-	static final protected function _isArrayOption(string $name): bool
+	static protected function _isArrayOption(string $name): bool
 	{
 		switch ($name) {
 			case 'toArrayOptions':
