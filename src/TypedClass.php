@@ -409,7 +409,7 @@ abstract class TypedClass extends TypedAbstract
 		}
 
 		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
-			foreach ($arr as $k => &$v) {
+			foreach ($arr as $k => $v) {
 				if (empty($v) || (is_object($v) && empty((array) $v))) {
 					unset($arr[$k]);
 				}
@@ -466,7 +466,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __get(string $k)
 	{
-		//	Allow reading of array option object.
+		//	Allow handling of array option object.
 		if ($this->_isArrayOption($k)) {
 			return $this->$k;
 		}
@@ -601,7 +601,7 @@ abstract class TypedClass extends TypedAbstract
 	protected function _assertPropName(string $k)
 	{
 		if (!$this->_keyExists($k)) {
-			throw new InvalidArgumentException();
+			throw new InvalidArgumentException($k);
 		}
 	}
 

@@ -23,11 +23,14 @@ final class ArrayOptions extends Options
 
 	/**
 	 * Omit resources from the array that is output.
+	 * This is only meaningful for the toArray() method.
+	 * The serialization methods always omit resources.
 	 */
 	const OMIT_RESOURCE = 2;
 
 	/**
-	 * For Zend JSON encoding to JSON, these objects contain strings that should not be quoted.
+	 * For Zend/Laminas JSON encoding to JSON,
+	 * these objects contain strings that should not be quoted.
 	 */
 	const KEEP_JSON_EXPR = 4;
 }
