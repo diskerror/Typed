@@ -46,20 +46,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 
 
 	/**
-	 * @return void
-	 */
-	protected function _initToArrayOptions()
-	{
-		/**
-		 * Initialize options for when this object is converted to an array.
-		 */
-		$this->toArrayOptions   = new ArrayOptions();
-		$this->serializeOptions = new ArrayOptions(ArrayOptions::OMIT_RESOURCES);
-		$this->toJsonOptions    =
-			new ArrayOptions(ArrayOptions::OMIT_RESOURCES | ArrayOptions::KEEP_JSON_EXPR);
-	}
-
-	/**
 	 * Assign.
 	 *
 	 * Assign values from input object. Missing keys are set to their
@@ -88,6 +74,20 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 * @return TypedAbstract
 	 */
 	abstract public function merge($in): TypedAbstract;
+
+	/**
+	 * @return void
+	 */
+	protected function _initToArrayOptions()
+	{
+		/**
+		 * Initialize options for when this object is converted to an array.
+		 */
+		$this->toArrayOptions   = new ArrayOptions();
+		$this->serializeOptions = new ArrayOptions(ArrayOptions::OMIT_RESOURCES);
+		$this->toJsonOptions    =
+			new ArrayOptions(ArrayOptions::OMIT_RESOURCES | ArrayOptions::KEEP_JSON_EXPR);
+	}
 
 	/**
 	 * Check if the input data is good or needs to be massaged.
@@ -138,6 +138,24 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	}
 
 	/**
+	 * Protected and private methods will behave like a friend method as in C++.
+	 *
+	 * @param string $name
+	 * @param array $args
+	 * @return mixed
+	 */
+	public function __call(string $name, array $args)
+	{
+		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+		if (!is_a($bt[1]['class'], TypedAbstract::class, true)) {
+			throw new BadMethodCallException();
+		}
+
+		return $this->$name(...$args);
+	}
+
+
+	/**
 	 * Returns an array with all public, protected, and private properties in
 	 * object that DO NOT begin with an underscore, except "_id". This allows
 	 * protected or private properties to be treated as if they were public.
@@ -159,24 +177,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 * @return array
 	 */
 	abstract protected function _toArray(ArrayOptions $arrayOptions): array;
-
-	/**
-	 * Protected and private methods will behave like a friend method as in C++.
-	 *
-	 * @param string $name
-	 * @param array $args
-	 * @return mixed
-	 */
-	public function __call(string $name, array $args)
-	{
-		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-		if (!is_a($bt[1]['class'], TypedAbstract::class, true)) {
-			throw new BadMethodCallException();
-		}
-
-		return $this->$name(...$args);
-	}
-
 
 	/**
 	 * String representation of PHP object.
