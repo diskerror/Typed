@@ -31,16 +31,16 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * A string that specifies the type of values in the container.
 	 * A child class can override _type rather than it being set with the constructor.
 	 *
-	 * @var string|null
+	 * @var string
 	 */
-	protected $_type;
+	protected $_type = '';
 
 	/**
 	 * An array that contains the items of interest.
 	 *
 	 * @var array
 	 */
-	protected $_container;
+	protected $_container = [];
 
 	/**
 	 * Constructor.
@@ -51,19 +51,18 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * If a derived class is instantiated then the data type must be contained in
 	 * the class, ie. "protected $_type = 'integer';", and $param1 can be the initial data.
 	 *
-	 * @param mixed $param1 OPTIONAL ""
+	 * @param mixed $param1 OPTIONAL null
 	 * @param array|object|null $param2 OPTIONAL null
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct($param1 = '', $param2 = null)
+	public function __construct($param1 = null, $param2 = null)
 	{
-		$this->_initArrayOptions();
+		$this->_initToArrayOptions();
 
 		if (get_called_class() === self::class) {
-			$this->_type = (string) $param1;
-			$this->_initMetaData();
-			$this->assign($param2);
+			$this->_type = is_string($param1) ? $param1 : '';
+			$this->replace($param2);
 		}
 		else {
 			if (!isset($this->_type)) {
@@ -75,7 +74,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 
 			$this->_initMetaData();
-			$this->assign($param1);
+			$this->replace($param1);
 		}
 	}
 
@@ -146,7 +145,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param $in
 	 */
-	public function assign($in)
+	public function assign($in): void
 	{
 		$this->_massageInput($in);
 
@@ -162,7 +161,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param object|array|string|null $in
 	 */
-	public function replace($in)
+	public function replace($in): void
 	{
 		$this->_massageInput($in);
 
@@ -208,7 +207,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 
 					//	Compare whole class names.
 					//	TODO: This doesn't test enough conditions.
-					if (get_class($v) !== $this->_type) {
+					$isObj = is_object($v);
+					if (($isObj && get_class($v) !== $this->_type) || (!$isObj && gettype($v) !== $this->_type)) {
 						$this->offsetSet($k, $v);
 					}
 				}
@@ -217,20 +217,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	}
 
 	/**
-	 * String representation of object.
+	 * Automatically called by serialize().
 	 *
 	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
 	 * @return ?array
 	 */
 	public function __serialize(): ?array
 	{
-		return [
-			'_type'            => $this->_type,
-			'toArrayOptions'   => $this->toArrayOptions->get(),
-			'serializeOptions' => $this->serializeOptions->get(),
-			'toJsonOptions'    => $this->toJsonOptions->get(),
-			'_container'       => $this->_toArray($this->serializeOptions),
-		];
+		$ret               = parent::__serialize();
+		$ret['_type']      = $this->_type;
+		$ret['_container'] = $this->_container;
+		return $ret;
 	}
 
 	/**
@@ -244,11 +241,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function __unserialize(array $data): void
 	{
-		$this->_type            = $data['_type'];
-		$this->toArrayOptions   = new ArrayOptions($data['toArrayOptions']);
-		$this->serializeOptions = new ArrayOptions($data['serializeOptions']);
-		$this->toJsonOptions    = new ArrayOptions($data['toJsonOptions']);
-		$this->_container       = $data['_container'];
+		parent::__unserialize($data);
+		$this->_type      = $data['_type'];
+		$this->_container = $data['_container'];
 	}
 
 	/**
@@ -257,12 +252,12 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Use $arr[$member] to access individual names.
 	 *
 	 * @param ArrayOptions $arrayOptions
+	 *
 	 * @return array
 	 */
 	protected function _toArray(ArrayOptions $arrayOptions): array
 	{
-		$omitEmpty = $arrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$output    = [];
+		$output = [];
 
 		//	At this point all items are some type of object.
 		if (is_a($this->_type, AtomicInterface::class, true)) {
@@ -293,11 +288,11 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		else {
 			//	else this is an array of some generic objects
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v;
+				$output[$k] = (array) $v;
 			}
 		}
 
-		if ($omitEmpty) {
+		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
 			//	Is this an indexed array (not associative)?
 			$isIndexed = (array_values($output) === $output);
 
@@ -324,9 +319,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param  $in
 	 *
-	 * @return self
+	 * @return TypedArray
 	 */
-	public function merge($in): TypedAbstract
+	public function merge($in): TypedArray
 	{
 		$this->_massageInput($in);
 
@@ -353,7 +348,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function offsetExists($offset): bool
 	{
-		return array_key_exists($offset, $this->_container);
+		return $offset !== '' && $offset !== null && array_key_exists($offset, $this->_container);
 	}
 
 	/**
@@ -384,7 +379,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 
-		if ($this->_container[$offset] instanceof AtomicInterface) {
+		if (is_a($this->_type, AtomicInterface::class, true)) {
 			return $this->_container[$offset]->get();
 		}
 
@@ -396,38 +391,35 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Coerces input values to be the required type.
 	 *
 	 * There are 5 basic conditions for $this->_type:
-	 * # $this->_type is null (to accept any type and value, like a standard array);
-	 * # $this->_type is a scalar wrapper [bool, int, float, string];
-	 * # $this->_type is an array (check if input value is an object and has toArray);
-	 * # $this->_type is an object of type TypedAbstract (call replace());
-	 * # $this->_type is any other object.
+	 * * $this->_type is null (accept any type and value, like a standard array);
+	 * * $this->_type is a scalar wrapper [bool, int, float, string];
+	 * * $this->_type is an array (check if input value is an object and has toArray);
+	 * * $this->_type is an object of type TypedAbstract (call replace());
+	 * * $this->_type is any other object.
 	 *
 	 * There are 3 conditions involving $offset:
-	 * # $offset is null;
-	 * # $offset is set and does not exist (null);
-	 * # $offset is set and exists;
+	 * * $offset is null;
+	 * * $offset is set and does not exist (null);
+	 * * $offset is set and exists;
 	 *
 	 * There are 4 conditions for handling $value:
-	 * # $value is null (replace current scalar values with null, reset non-scalars);
-	 * # $value is a scalar (cast);
-	 * # $value is a an array (check for toArray, or cast);
-	 * # $value is a an object (clone if the same as _type, otherwise new _type(value) );
+	 * * $value is null (replace current scalar values with null, reset non-scalars);
+	 * * $value is a scalar (cast);
+	 * * $value is a an array (check for toArray, or cast);
+	 * * $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
 	 * @param string|int $offset
 	 * @param mixed $value
 	 */
 	public function offsetSet($offset, $value): void
 	{
-		if (null === $offset || !$this->offsetExists($offset)) {
-			$value = (is_object($value) && get_class($value) === $this->_type) ? $value : new $this->_type($value);
-
-			if (null === $offset) {
-				$this->_container[] = $value;
-			}
-			else {
+		if ('' === $this->_type) {
+			if ($this->offsetExists($offset)) {
 				$this->_container[$offset] = $value;
 			}
-
+			else {
+				$this->_container[] = $value;
+			}
 			return;
 		}
 
@@ -441,7 +433,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			return;
 		}
 
-		$this->_container[$offset] = new $this->_type($value);
+		$this->_container[$offset] = (is_object($value) && get_class($value) === $this->_type) ?
+			$value :
+			new $this->_type($value);
 	}
 
 	/**
@@ -508,7 +502,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	/**
 	 * @return array
 	 */
-	public function getValues(): array
+	public function values(): array
 	{
 		return array_values($this->_container);
 	}

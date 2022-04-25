@@ -8,7 +8,6 @@ use DateTimeZone;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
-use function method_exists;
 
 /**
  * This class adds convenience methods to the built-in DateTime.
@@ -23,8 +22,8 @@ class DateTime extends DT implements JsonSerializable
 	/**
 	 * Default MySQL datetime format.
 	 */
-	public const STRING_IO_FORMAT       = 'Y-m-d H:i:s';
-	public const STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
+	public const MYSQL_STRING_IO_FORMAT = 'Y-m-d H:i:s';
+	public const MYSQL_STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
 
 	/**
 	 * Accepts a DateTime object or;
@@ -34,21 +33,21 @@ class DateTime extends DT implements JsonSerializable
 	 * Timezone is ignored when DateTime object is passed in first param.
 	 *
 	 * @param mixed $time -OPTIONAL
-	 * @param null $timezone -OPTIONAL
+	 * @param DateTimeZone $timezone -OPTIONAL
 	 *
-	 * @throws Exception
+	 * @throws InvalidArgumentException
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
-		if (!($timezone instanceof DateTimeZone)) {
-			$timezone = new DateTimeZone(date_default_timezone_get());
-		}
+//		if (!($timezone instanceof DateTimeZone)) {
+//			$timezone = new DateTimeZone(date_default_timezone_get());
+//		}
 
 		switch (gettype($time)) {
 			case 'object':
 				if ($time instanceof DateTimeInterface) {
 					parent::__construct(
-						$time->format(self::STRING_IO_FORMAT_MICRO),
+						$time->format(self::MYSQL_STRING_IO_FORMAT_MICRO),
 						$time->getTimezone()
 					);
 					break;
@@ -232,10 +231,10 @@ class DateTime extends DT implements JsonSerializable
 	public function __toString()
 	{
 		if ($this->format('u') > 0) {
-			return rtrim($this->format(self::STRING_IO_FORMAT_MICRO), '0');    //	also remove trailing zeros
+			return $this->format(self::MYSQL_STRING_IO_FORMAT_MICRO);
 		}
 
-		return $this->format(self::STRING_IO_FORMAT);
+		return $this->format(self::MYSQL_STRING_IO_FORMAT);
 	}
 
 	/**

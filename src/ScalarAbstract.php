@@ -2,14 +2,12 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name           ScalarAbstract
+ * @name        Diskerror\Typed\ScalarAbstract
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
 namespace Diskerror\Typed;
-
-use stdClass;
 
 
 /**
@@ -17,7 +15,7 @@ use stdClass;
  *
  * @package Diskerror\Typed\ScalarAbstract
  */
-abstract class ScalarAbstract extends stdClass implements AtomicInterface
+abstract class ScalarAbstract implements AtomicInterface
 {
 	/**
 	 * Stores the scalar value.
@@ -42,7 +40,7 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	 * ScalarAbstract constructor.
 	 *
 	 * @param mixed $in A default of an empty string will cast to false or zero as needed.
-	 * @param bool  $allowNull
+	 * @param bool $allowNull
 	 */
 	public function __construct($in = '', bool $allowNull = false)
 	{
@@ -67,6 +65,11 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	}
 
 	/**
+	 * Filters the value before setting.
+	 */
+	abstract public function set($in): void;
+
+	/**
 	 * Returns true if value is not null.
 	 */
 	public function isset(): bool
@@ -83,11 +86,11 @@ abstract class ScalarAbstract extends stdClass implements AtomicInterface
 	}
 
 	/**
-	 * @param stdClass $in
+	 * @param  $in
 	 *
 	 * @return mixed
 	 */
-	protected static function _castObject(stdClass $in)
+	protected static function _castObject($in)
 	{
 		//	This could be any type
 		if ($in instanceof AtomicInterface) {

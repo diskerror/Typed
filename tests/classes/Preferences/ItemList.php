@@ -15,7 +15,7 @@ class ItemList extends TypedArray
 	 */
 	public static function getDefault(): ItemList
 	{
-		return new self([
+		return new ItemList([
 			'name'    => [],
 			'address' => [],
 			'city'    => [],

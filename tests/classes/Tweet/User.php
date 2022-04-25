@@ -46,17 +46,4 @@ class User extends TypedClass
 
 	protected $verified             = false;
 
-
-	/**
-	 * Optional method for filtering description property.
-	 *
-	 * protected $description = '';
-	 *
-	 * @param $v
-	 */
-//	protected function _set_description($v)
-//	{
-//		$this->description = preg_replace('/\s+/', ' ', \Normalizer::normalize((string)$v, \Normalizer::FORM_D));
-//	}
-
 }

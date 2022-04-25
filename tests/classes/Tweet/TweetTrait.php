@@ -43,10 +43,4 @@ trait TweetTrait {
 
 	protected $user                      = [User::class];
 
-
-	protected function _set_text($v)
-	{
-		$this->text->set(preg_replace('/\s+/', ' ', (string)$v));
-	}
-
 }

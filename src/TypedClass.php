@@ -19,6 +19,11 @@ use Diskerror\Typed\Scalar\TString;
 use InvalidArgumentException;
 use Traversable;
 use TypeError;
+use function gettype;
+use function is_a;
+use function is_object;
+use function method_exists;
+use function trim;
 
 /**
  * Create a child of this class with your named properties with a visibility of
@@ -39,10 +44,6 @@ use TypeError;
  *
  * Only properties in the original child class are allowed. This prevents erroneously
  *      adding properties on the fly.
- *
- * More elaborate filtering can be done by creating methods with this naming
- *      convention: If property is called "personName" then create a method called
- *      "_set_personName($in)". That is, prepend "_set_" to the property name.
  *
  * The ideal usage of this abstract class is as the parent class of a data set
  *      where the input to the constructor (or assign) method is an HTTP request
@@ -115,10 +116,12 @@ abstract class TypedClass extends TypedAbstract
 				throw new InvalidArgumentException('bad value to constructor');
 		}
 
-		$this->_initArrayOptions();
+		$this->_initToArrayOptions();
 		$this->_initMetaData();
 		$this->_initProperties();
-		$this->replace($in);
+		if ($in !== null) {
+			$this->replace($in);
+		}
 	}
 
 	protected function _initMetaData()
@@ -190,7 +193,7 @@ abstract class TypedClass extends TypedAbstract
 			 * Clone the default/original value back to the original property.
 			 */
 			if (is_object($v)) {
-				$this->{$k} = clone $v;
+				$this->$k = clone $v;
 			}
 		}
 	}
@@ -203,6 +206,16 @@ abstract class TypedClass extends TypedAbstract
 	public final function getPublicNames()
 	{
 		return $this->_publicNames;
+	}
+
+	/**
+	 * Required method for Countable.
+	 *
+	 * @return int
+	 */
+	final public function count(): int
+	{
+		return $this->_count;
 	}
 
 	/**
@@ -223,92 +236,13 @@ abstract class TypedClass extends TypedAbstract
 		$this->_massageInput($in);
 		$this->_massageInputArray($in);
 
-		foreach ($this->_publicNames as $publicName) {
-			$this->__unset($publicName);
-		}
-
+		$propertiesSet = [];
 		foreach ($in as $k => $v) {
 			$this->_setByName($k, $v);
 		}
 
 		$this->_checkRelatedProperties();
 	}
-
-	/**
-	 * Required method for Countable.
-	 *
-	 * @return int
-	 */
-	final public function count(): int
-	{
-		return $this->_count;
-	}
-
-	/**
-	 * Required by the IteratorAggregate interface.
-	 * Every value is checked for change during iteration.
-	 *
-	 * @return Traversable
-	 */
-	public function getIterator(): Traversable
-	{
-		return (function &() {
-			foreach ($this->_defaultValues as $k => $vDefault) {
-				if ($vDefault instanceof AtomicInterface) {
-					$v = $this->{$k}->get();
-					yield $k => $v;
-					$this->{$k}->set($v);
-				}
-				else {
-					yield $k => $this->{$k};
-
-					//	Cast if not the same type.
-					if (!is_object($this->{$k}) || get_class($this->{$k}) !== get_class($vDefault)) {
-						$this->_setByName($k, $this->{$k});
-					}
-					//	Null property types don't get checked.
-				}
-			}
-		})();
-	}
-
-	/**
-	 * String representation of PHP object.
-	 *
-	 * This omits data that is part of the class definition.
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
-	 * @return ?array
-	 */
-	public function __serialize(): ?array
-	{
-		return $this->_toArray($this->serializeOptions);
-	}
-
-	/**
-	 * Constructs the object from serialized PHP.
-	 *
-	 * This uses a faster but unsafe restore technique. It assumes that the
-	 * serialized data was created by the local serialize method and was
-	 * safely stored locally. No type checking is performed on restore. All
-	 * data structure members have been serialized so no initialization of
-	 * empty need be done.
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
-	 *
-	 * @param array $data
-	 *
-	 * @return void
-	 */
-	public function __unserialize(array $data): void
-	{
-		$this->_initMetaData();
-
-		foreach ($data as $k => $v) {
-			$this->_setByName($k, $v);
-		}
-	}
-
 
 	/**
 	 * Deep replace local values with matches from input.
@@ -332,8 +266,8 @@ abstract class TypedClass extends TypedAbstract
 
 		foreach ($in as $k => $v) {
 			if ($this->_keyExists($k)) {
-				if ($this->{$k} instanceof TypedAbstract) {
-					$this->{$k}->replace($v);
+				if ($this->$k instanceof TypedAbstract) {
+					$this->$k->replace($v);
 				}
 				else {
 					$this->_setByName($k, $v);
@@ -352,7 +286,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @param $in
 	 *
-	 * @return self
+	 * @return TypedAbstract
 	 */
 	public function merge($in): TypedAbstract
 	{
@@ -363,61 +297,310 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
+	 * Returns an array representation of the data contents of the object.
+	 *
 	 * @return array
 	 */
-	protected function _toArray(ArrayOptions $arrayOptions): array
+	public function toArray(): array
 	{
-		$keepJsonExpr = $arrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-		$ZJE_STRING   = '\\Laminas\\Json\\Expr';    //  A string here so library does not need to be included.
+		$omitEmpty       = $this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$omitDefaults    = $this->toArrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
+		$omitResources   = $this->toArrayOptions->has(ArrayOptions::OMIT_RESOURCE);
+		$dateToString    = $this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING);
+		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
+		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
 
-		$arr = [];
+		$a = [];
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
 
+			if ($omitEmpty && (empty($v) || (is_object($v) && empty((array) $v)))) {
+				continue;
+			}
+
+			if ($omitDefaults) {
+				$default = $this->_defaultValues[$k];
+
+				if (is_a($default, AtomicInterface::class, true)) {
+					$default = $default->get();
+				}
+
+				if ($v == $default) {
+					continue;
+				}
+			}
+
 			switch (gettype($v)) {
 				case 'resource':
-					if (!$arrayOptions->has(ArrayOptions::OMIT_RESOURCE)) {
-						$arr[$k] = $v;
+					if ($omitResources) {
+						continue 2;
 					}
 					break;
 
 				case 'object':
-					if ($this->{$k} instanceof TypedAbstract) {
-						$arr[$k] = $v->_toArray($arrayOptions);
-					}
-					elseif ($this->{$k} instanceof DateTimeInterface) {
-						$arr[$k] = $v;    // maintain the type
-					}
-					elseif (($this->{$k} instanceof $ZJE_STRING) && $keepJsonExpr) {
-						$arr[$k] = $v;    // maintain the type
-					}
-					elseif (method_exists($v, 'toArray')) {
-						$arr[$k] = $v->toArray();
-					}
-					elseif (method_exists($v, '__toString')) {
-						$arr[$k] = $v->__toString();
-					}
-					else {
-						$arr[$k] = $v;
+					switch (true) {
+						case is_a($v, TypedAbstract::class, true):
+							$a[$k] = $v->toArray();
+							break;
+
+						case $dateToString && is_a($v, DateTimeInterface::class, true):
+							//	remove trailing zeros, and trim spaces just in case
+							$a[$k] = trim($v->format(DateTime::MYSQL_STRING_IO_FORMAT_MICRO), '0 ');
+							break;
+
+						case $keepJsonExpr && is_a($v, '\\Laminas\\Json\\Expr', true):
+							$a[$k] = $v;    // return as \Laminas\Json\Expr
+							break;
+
+						case method_exists($v, 'toArray'):
+							$a[$k] = $v->toArray();
+							break;
+
+						case $objectsToString && method_exists($v, '__toString'):
+							$a[$k] = $v->__toString();
+							break;
+
+						default:
+							$a[$k] = $v;	//	clone?
 					}
 					break;
 
 				//	nulls, bools, ints, floats, strings, and arrays
 				default:
-					$arr[$k] = $v;
+					$a[$k] = $v;
 			}
 		}
 
-		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
-			foreach ($arr as $k => $v) {
-				if (empty($v) || (is_object($v) && empty((array) $v))) {
-					unset($arr[$k]);
+		return $a;
+	}
+
+	/**
+	 * @param ArrayOptions $arrayOptions
+	 * @return array
+	 */
+	protected function _toArray(ArrayOptions $arrayOptions): array
+	{
+	}
+
+	/**
+	 * All member objects will be deep cloned.
+	 */
+	public function __clone()
+	{
+		foreach ($this->_publicNames as $k) {
+			if (is_object($this->$k)) {
+				$this->$k = clone $this->$k;
+			}
+		}
+	}
+
+	/**
+	 * Required by the IteratorAggregate interface.
+	 * Every value is checked for change during iteration.
+	 *
+	 * @return Traversable
+	 */
+	public function getIterator(): Traversable
+	{
+		return (function &() {
+			foreach ($this->_defaultValues as $k => $vDefault) {
+				if ($vDefault instanceof AtomicInterface) {
+					$v = $this->$k->get();
+					yield $k => $v;
+					$this->$k->set($v);
+				}
+				else {
+					yield $k => $this->$k;
+
+					//	Cast if not the same type.
+					if (!is_object($this->$k) || get_class($this->$k) !== get_class($vDefault)) {
+						$this->_setByName($k, $this->$k);
+					}
+					//	Null property types don't get checked.
 				}
 			}
+		})();
+	}
+
+	/**
+	 * String representation of PHP object.
+	 *
+	 * This omits data that is part of the class definition.
+	 *
+	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
+	 * @return ?array
+	 */
+	public function __serialize(): ?array
+	{
+		$omitEmpty       = $this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$omitDefaults    = $this->toArrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
+		$omitResources   = $this->toArrayOptions->has(ArrayOptions::OMIT_RESOURCE);
+		$dateToString    = $this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING);
+		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
+		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+
+		$a = parent::__serialize();
+
+		foreach ($this->_publicNames as $k) {
+			$v = $this->$k;
+
+			if ($omitEmpty && (empty($v) || (is_object($v) && empty((array) $v)))) {
+				continue;
+			}
+
+			if ($omitDefaults) {
+				$default = $this->_defaultValues[$k];
+
+				if (is_a($default, AtomicInterface::class, true)) {
+					$default = $default->get();
+				}
+
+				if ($v == $default) {
+					continue;
+				}
+			}
+
+			switch (gettype($v)) {
+				case 'resource':
+					if ($omitResources) {
+						continue 2;
+					}
+					break;
+
+				case 'object':
+					switch (true) {
+						case is_a($v, TypedAbstract::class, true):
+							$a[$k] = $v->__serialize();
+							break;
+
+						case $dateToString && is_a($v, DateTimeInterface::class, true):
+							//	remove trailing zeros, and trim spaces just in case
+							$a[$k] = trim($v->format(DateTime::MYSQL_STRING_IO_FORMAT_MICRO), '0 ');
+							break;
+
+						case $keepJsonExpr && is_a($v, '\\Laminas\\Json\\Expr', true):
+							$a[$k] = $v;    // return as \Laminas\Json\Expr
+							break;
+
+						case method_exists($v, 'toArray'):
+							$a[$k] = $v->toArray();
+							break;
+
+						case $objectsToString && method_exists($v, '__toString'):
+							$a[$k] = $v->__toString();
+							break;
+
+						default:
+							$a[$k] = $v;
+					}
+					break;
+
+				//	nulls, bools, ints, floats, strings, and arrays
+				default:
+					$a[$k] = $v;
+			}
 		}
 
-		return $arr;
+		return $a;
 	}
+
+	public function jsonSerialize(): array
+	{
+		$omitEmpty       = $this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$omitDefaults    = $this->toArrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
+		$omitResources   = $this->toArrayOptions->has(ArrayOptions::OMIT_RESOURCE);
+		$dateToString    = $this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING);
+		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
+		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+
+		$a = parent::jsonSerialize();
+
+		foreach ($this->_publicNames as $k) {
+			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
+
+			if ($omitEmpty && (empty($v) || (is_object($v) && empty((array) $v)))) {
+				continue;
+			}
+
+			if ($omitDefaults) {
+				$default = $this->_defaultValues[$k];
+
+				if (is_a($default, AtomicInterface::class, true)) {
+					$default = $default->get();
+				}
+
+				if ($v == $default) {
+					continue;
+				}
+			}
+
+			switch (gettype($v)) {
+				case 'resource':
+					if ($omitResources) {
+						continue 2;
+					}
+					break;
+
+				case 'object':
+					switch (true) {
+						case is_a($v, TypedAbstract::class, true):
+							$a[$k] = $v->jsonSerialize();
+							break;
+
+						case $dateToString && is_a($v, DateTimeInterface::class, true):
+							//	remove trailing zeros, and trim spaces just in case
+							$a[$k] = trim($v->format(DateTime::MYSQL_STRING_IO_FORMAT_MICRO), '0 ');
+							break;
+
+						case $keepJsonExpr && is_a($v, '\\Laminas\\Json\\Expr', true):
+							$a[$k] = $v;    // return as \Laminas\Json\Expr
+							break;
+
+						case method_exists($v, 'toArray'):
+							$a[$k] = $v->toArray();
+							break;
+
+						case $objectsToString && method_exists($v, '__toString'):
+							$a[$k] = $v->__toString();
+							break;
+
+						default:
+							$a[$k] = $v;
+					}
+					break;
+
+				//	nulls, bools, ints, floats, strings, and arrays
+				default:
+					$a[$k] = $v;
+			}
+		}
+
+		return $a;
+	}
+	/**
+	 * Constructs the object from serialized PHP.
+	 *
+	 * This uses a faster but unsafe restore technique. It assumes that the
+	 * serialized data was created by the local serialize method and was
+	 * safely stored locally. No type checking is performed on restore. All
+	 * data structure members have been serialized so no initialization of
+	 * empty need be done.
+	 *
+	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
+	 *
+	 * @param array $data
+	 *
+	 * @return void
+	 */
+	public function __unserialize(array $data): void
+	{
+		$this->_initMetaData();
+		parent::__unserialize($data);
+		foreach ($data as $k => $v) {
+			$this->_setByName($k, $v);
+		}
+	}
+
 
 	protected final function _massageInputArray(&$in): void
 	{
@@ -436,56 +619,35 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
-	 * Sets a variable to its default value rather than unsetting it.
-	 *
-	 * @param string $k
-	 */
-	public function __unset(string $k)
-	{
-		$this->{$k} = clone $this->_defaultValues[$k];
-	}
-
-	/**
-	 * All member objects will be deep cloned.
-	 */
-	public function __clone()
-	{
-		foreach ($this->_publicNames as $k) {
-			if (is_object($this->{$k})) {
-				$this->{$k} = clone $this->{$k};
-			}
-		}
-	}
-
-	/**
 	 * Get variable.
 	 *
-	 * @param string $k
+	 * @param string $pName
 	 *
 	 * @return mixed
 	 */
-	public function __get(string $k)
+	public function __get(string $pName)
 	{
 		//	Allow handling of array option object.
-		if ($this->_isArrayOption($k)) {
-			return $this->$k;
+		if ($this->_isArrayOption($pName)) {
+			return $this->$pName;
 		}
 
-		$this->_assertPropName($k);
-		return $this->_getByName($k);
+		$this->_assertPropName($pName);
+		return $this->_getByName($pName);
 	}
 
 	/**
 	 * Set variable
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
-	 * @param string $k
-	 * @param mixed $v
+	 * @param string $pName
+	 * @param mixed $val
 	 */
-	public function __set($k, $v)
+	public function __set(string $pName, $val)
 	{
-		$this->_assertPropName($k);
-		$this->_setByName($k, $v);
+		$pName = $this->_getMappedName($pName);
+		$this->_assertPropName($pName);
+		$this->_setByName($pName, $val);
 		$this->_checkRelatedProperties();
 	}
 
@@ -494,67 +656,72 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * Behavior for "isset()" expects the variable (property) to exist and not be null.
 	 *
-	 * @param string $k
+	 * @param string $pName
 	 *
 	 * @return bool
 	 */
-	public function __isset(string $k): bool
+	public function __isset(string $pName): bool
 	{
-		return $this->_keyExists($k) && ($this->{$k} !== null);
+		$pName = $this->_getMappedName($pName);
+		return $this->_keyExists($pName) && ($this->$pName !== null);
+	}
+
+	/**
+	 * Sets a variable to its default value rather than unsetting it.
+	 *
+	 * @param string $pName
+	 */
+	public function __unset(string $pName)
+	{
+		$pName = $this->_getMappedName($pName);
+		$this->_assertPropName($pName);
+		$this->$pName = clone $this->_defaultValues[$pName];
+		$this->_checkRelatedProperties();
 	}
 
 	/**
 	 * Set data to named variable.
+	 * Property name must exist.
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
-	 * @param string $propName
+	 * @param string $pName
 	 * @param mixed $in
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _setByName(string $propName, $in)
+	protected function _setByName(string $pName, $in): void
 	{
-		if (array_key_exists($propName, $this->_map)) {
-			$propName = $this->_map[$propName];
-		}
-
-		if (!in_array($propName, $this->_publicNames)) {
-			return;
-		}
-
-		$setter = '_set_' . $propName;
-		if (method_exists($this->_calledClass, $setter)) {
-			$this->{$setter}($in);
+		if (!in_array($pName, $this->_publicNames)) {
 			return;
 		}
 
 		/** All properties are now handled as objects. */
-		$propertyDefaultValue = $this->_defaultValues[$propName];
+		$propertyDefaultValue = $this->_defaultValues[$pName];
 
 		//	Handle our atomic types.
 		if ($propertyDefaultValue instanceof AtomicInterface) {
-			$this->{$propName}->set($in);
+			$this->$pName->set($in);
 			return;
 		}
 
 		//	Handle our two special object types.
 		if ($propertyDefaultValue instanceof TypedAbstract) {
-			$this->{$propName}->assign($in);
+			$this->$pName->assign($in);
 			return;
 		}
 
 		//	Handler for other types of objects.
-		$propertyClassType = get_class($propertyDefaultValue);
+		$pType = get_class($propertyDefaultValue);
 		switch (gettype($in)) {
 			case 'object':
 				//	if identical types then reference the original object
-				if ($propertyClassType === get_class($in)) {
-					$this->{$propName} = $in;
+				if ($pType === get_class($in)) {
+					$this->$pName = $in;
 				}
 				else {
 					//	First try to absorb the input in its entirety,
 					try {
-						$this->{$propName} = new $propertyClassType($in);
+						$this->$pName = new $pType($in);
 					}
 						//	Then try to copy matching members by name.
 					catch (TypeError $t) {
@@ -565,12 +732,12 @@ abstract class TypedClass extends TypedAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->{$propName} = clone $propertyDefaultValue;
+				$this->$pName = clone $propertyDefaultValue;
 				break;
 
 			case 'array':
-				if ($propertyClassType === 'stdClass') {
-					$this->{$propName} = (object) $in;
+				if ($pType === 'stdClass') {
+					$this->$pName = (object) $in;
 					break;
 				}
 			//	fall through
@@ -578,7 +745,7 @@ abstract class TypedClass extends TypedAbstract
 			default:
 				//	Other classes might be able to absorb/convert other input,
 				//		like «DateTime::__construct("now")» accepts a string.
-				$this->{$propName} = new $propertyClassType($in);
+				$this->$pName = new $pType($in);
 		}
 	}
 
@@ -591,58 +758,59 @@ abstract class TypedClass extends TypedAbstract
 	{
 	}
 
+	protected function _getMappedName(string $pName): string
+	{
+		return array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
+	}
+
 	/**
 	 * Throws exception if named property does not exist.
 	 *
-	 * @param string $k
+	 * @param string $pName
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _assertPropName(string $k)
+	protected function _assertPropName(string $pName)
 	{
-		if (!$this->_keyExists($k)) {
-			throw new InvalidArgumentException($k);
+		if (!$this->_keyExists($pName)) {
+			throw new InvalidArgumentException();
 		}
 	}
 
 	/**
-	 * Get variable by name.
+	 * Get variable by name. Name must exist.
 	 *
-	 * @param string $propName
+	 * @param string $pName
 	 *
 	 * @return mixed
 	 */
-	protected function _getByName(string $propName)
+	protected function _getByName(string $pName)
 	{
-		if (array_key_exists($propName, $this->_map)) {
-			$propName = $this->_map[$propName];
+		if (is_a($this->$pName, AtomicInterface::class)) {
+			return $this->$pName->get();
 		}
 
-		if ($this->{$propName} instanceof AtomicInterface) {
-			return $this->{$propName}->get();
-		}
-
-		$getter = '_get_' . $propName;
+		$getter = '_get_' . $pName;
 		if (method_exists($this->_calledClass, $getter)) {
-			return $this->{$getter}();
+			return $this->$getter();
 		}
 
-		return $this->{$propName};
+		return $this->$pName;
 	}
 
 	/**
 	 * Returns true if key/prop name exists or is mappable.
 	 *
-	 * @param string $propName
+	 * @param string $pName
 	 *
 	 * @return bool
 	 */
-	private function _keyExists(string $propName): bool
+	private function _keyExists(string $pName): bool
 	{
-		if (array_key_exists($propName, $this->_map)) {
-			$propName = $this->_map[$propName];
+		if (array_key_exists($pName, $this->_map)) {
+			$pName = $this->_map[$pName];
 		}
 
-		return in_array($propName, $this->_publicNames);
+		return in_array($pName, $this->_publicNames);
 	}
 }

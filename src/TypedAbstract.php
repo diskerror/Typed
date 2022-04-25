@@ -24,8 +24,7 @@ use JsonSerializable;
 abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerializable
 {
 	/**
-	 * Holds options for "toArray" customizations.
-	 * Protected for read-only access.
+	 * Holds options for "toArray" conversion.
 	 *
 	 * @var ArrayOptions
 	 */
@@ -33,19 +32,18 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 
 	/**
 	 * Holds options for "__serialize" customizations.
-	 * Protected for read-only access.
 	 *
 	 * @var ArrayOptions
 	 */
 	protected $serializeOptions;
 
 	/**
-	 * Holds options for "toArray" customizations when used by json_encode.
-	 * Protected for read-only access.
+	 * Holds options for "jsonSerialize" customizations.
 	 *
 	 * @var ArrayOptions
 	 */
 	protected $toJsonOptions;
+
 
 	/**
 	 * Assign.
@@ -55,17 +53,17 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 *
 	 * @param mixed $in
 	 */
-	abstract public function assign($in);
+	abstract public function assign($in): void;
 
 	/**
 	 * Replace.
 	 *
 	 * Assign values from input object. Only named input items are copied.
-	 * Missing keys are left untouched.
+	 * Missing keys are left untouched. Deep selective copy is performed.
 	 *
 	 * @param mixed $in
 	 */
-	abstract public function replace($in);
+	abstract public function replace($in): void;
 
 	/**
 	 * Merge $this struct with $in struct and return new structure. Input
@@ -73,19 +71,21 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 *
 	 * @param mixed $in
 	 *
-	 * return called class
+	 * @return TypedAbstract
 	 */
 	abstract public function merge($in);
 
 	/**
-	 * Initialize options for when this object is converted to an array.
+	 * Initialize options for when this object is converted to an array or serialized.
+	 *
+	 * @return void
 	 */
-	protected function _initArrayOptions()
+	protected function _initToArrayOptions()
 	{
-		$this->toArrayOptions   = new ArrayOptions();
+		$this->toArrayOptions   = new ArrayOptions(ArrayOptions::OMIT_RESOURCE | ArrayOptions::DATE_OBJECT_TO_STRING);
 		$this->serializeOptions = new ArrayOptions(ArrayOptions::OMIT_RESOURCE);
 		$this->toJsonOptions    = new ArrayOptions(
-			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::KEEP_JSON_EXPR);
+			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::DATE_OBJECT_TO_STRING | ArrayOptions::KEEP_JSON_EXPR);
 	}
 
 	static protected function _isArrayOption(string $name): bool
@@ -109,6 +109,16 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	final protected function _massageInput(&$in): void
 	{
 		switch (gettype($in)) {
+			case 'array':
+			case 'object':
+				// Leave these as is.
+				break;
+
+			case 'null':
+			case 'NULL':
+				$in = [];
+				break;
+
 			case 'string':
 				if ('' === $in) {
 					$in = [];
@@ -123,16 +133,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 						);
 					}
 				}
-				break;
-
-			case 'object':
-			case 'array':
-				// Leave these as is.
-				break;
-
-			case 'null':
-			case 'NULL':
-				$in = [];
 				break;
 
 			case 'bool':
@@ -150,23 +150,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	}
 
 	/**
-	 * Protected and private methods will behave like a friend method as in C++.
-	 *
-	 * @param $name
-	 * @param $args
-	 * @return mixed
-	 */
-	public function __call($name, $args)
-	{
-		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-		if (!is_a($bt[1]['class'], TypedAbstract::class, true)) {
-			throw new BadMethodCallException($name);
-		}
-
-		return $this->$name(...$args);
-	}
-
-	/**
 	 * Returns an array with all public, protected, and private properties in
 	 * object that DO NOT begin with an underscore, except "_id". This allows
 	 * protected or private properties to be treated as if they were public.
@@ -175,10 +158,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 *
 	 * @return array
 	 */
-	final public function toArray(): array
-	{
-		return $this->_toArray($this->toArrayOptions);
-	}
+	abstract public function toArray(): array;
 
 	/**
 	 * Override to provide the actual toArray code with desired options.
@@ -190,12 +170,50 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	abstract protected function _toArray(ArrayOptions $arrayOptions): array;
 
 	/**
+	 * String representation of PHP object.
+	 *
+	 * This serialization, as opposed to JSON or BSON, does not unwrap the
+	 * structured data. It only omits data that is part of the class definition.
+	 *
+	 * @link  https://php.net/manual/en/serializable.serialize.php
+	 * @return ?array the string representation of the object or null
+	 */
+	public function __serialize(): ?array
+	{
+		$ret                     = [];
+		$ret['toArrayOptions']   = $this->toArrayOptions;
+		$ret['serializeOptions'] = $this->serializeOptions;
+		$ret['toJsonOptions']    = $this->toJsonOptions;
+
+		return $ret;
+	}
+
+	/**
+	 * Constructs the object from serialized PHP.
+	 *
+	 * This uses a faster but unsafe restore technique. It assumes that the
+	 * serialized data was created by the local serialize method and was
+	 * safely stored locally. No type checking is performed on restore. All
+	 * data structure members have been serialized so no initialization of
+	 * empty need be done.
+	 *
+	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
+	 *
+	 * @param array $data
+	 *
+	 * @return void
+	 */
+	public function __unserialize(array $data): void
+	{
+		$this->toArrayOptions   = $data['toArrayOptions'];
+		$this->serializeOptions = $data['serializeOptions'];
+		$this->toJsonOptions    = $data['toJsonOptions'];
+	}
+
+	/**
 	 * Be sure json_encode gets our prepared array.
 	 *
 	 * @return array
 	 */
-	public function jsonSerialize(): array
-	{
-		return $this->_toArray($this->toJsonOptions);
-	}
+	abstract public function jsonSerialize(): array;
 }

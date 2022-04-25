@@ -106,7 +106,7 @@ class SqlStatement
 
 				case 'object':
 					if ($v instanceof DateTime) {
-						$sqlStrs[] = $kEq . '"' . $v . '"';
+						$sqlStrs[] = $kEq . '"' . rtrim($v, '0') . '"';
 						break;
 					}
 				//	other objects fall through

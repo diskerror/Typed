@@ -9,26 +9,26 @@
     <testsuite name="construct">
       <file>tests/ConstructTest.php</file>
     </testsuite>
-    <testsuite name="class">
-      <file>tests/ClassTest.php</file>
-    </testsuite>
-    <testsuite name="assign">
-      <file>tests/AssignTest.php</file>
-    </testsuite>
-    <testsuite name="list">
-      <file>tests/PrefListTest.php</file>
-    </testsuite>
-    <testsuite name="sql">
-      <file>tests/SqlTest.php</file>
-    </testsuite>
-    <testsuite name="array">
-      <file>tests/ArrayTest.php</file>
-    </testsuite>
-    <testsuite name="serialize">
-      <file>tests/SerializeTest.php</file>
-    </testsuite>
-    <testsuite name="config">
-      <file>tests/ConfigTest.php</file>
-    </testsuite>
+<!--    <testsuite name="class">-->
+<!--      <file>tests/ClassTest.php</file>-->
+<!--    </testsuite>-->
+<!--    <testsuite name="assign">-->
+<!--      <file>tests/AssignTest.php</file>-->
+<!--    </testsuite>-->
+<!--    <testsuite name="list">-->
+<!--      <file>tests/PrefListTest.php</file>-->
+<!--    </testsuite>-->
+<!--    <testsuite name="sql">-->
+<!--      <file>tests/SqlTest.php</file>-->
+<!--    </testsuite>-->
+<!--    <testsuite name="array">-->
+<!--      <file>tests/ArrayTest.php</file>-->
+<!--    </testsuite>-->
+<!--    <testsuite name="serialize">-->
+<!--      <file>tests/SerializeTest.php</file>-->
+<!--    </testsuite>-->
+<!--    <testsuite name="config">-->
+<!--      <file>tests/ConfigTest.php</file>-->
+<!--    </testsuite>-->
   </testsuites>
 </phpunit>
