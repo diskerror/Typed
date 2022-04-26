@@ -335,8 +335,8 @@ abstract class TypedClass extends TypedAbstract
 							$arr[$k] = $v->toArray();
 							break;
 
-						case $dateToString && is_a($v, DateTimeInterface::class, true):
-							if (is_a($v, DateTime::class, true)) {
+						case $dateToString && $v instanceof DateTimeInterface:
+							if ($v instanceof DateTime) {
 								$arr[$k] = $v->__toString();    //	This is without timezone for MySQL.
 							}
 							else {
@@ -368,8 +368,9 @@ abstract class TypedClass extends TypedAbstract
 		$omitDefaults    = $this->toArrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
 		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
 		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+		$ZJE             = '\\Laminas\\Json\\Expr';
 
-		$a = [];
+		$arr = [];
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
 
@@ -389,37 +390,37 @@ abstract class TypedClass extends TypedAbstract
 				case 'object':
 					switch (true) {
 						case method_exists($v, 'jsonSerialize'):
-							$a[$k] = $v->jsonSerialize();
+							$arr[$k] = $v->jsonSerialize();
 							break;
 
 						case method_exists($v, 'toArray'):
-							$a[$k] = $v->toArray();
+							$arr[$k] = $v->toArray();
 							break;
 
-						case is_a($v, DateTimeInterface::class, true):
-							$a[$k] = $v->format(DateTime::ISO8601); // always this format for JSON
+						case $v instanceof DateTimeInterface:
+							$arr[$k] = $v->format(DateTime::ISO8601); // always this format for JSON
 							break;
 
-						case $keepJsonExpr && is_a($v, '\\Laminas\\Json\\Expr', true):
-							$a[$k] = $v;    // return as \Laminas\Json\Expr
+						case $keepJsonExpr && $v instanceof $ZJE:
+							$arr[$k] = $v;    // return as \Laminas\Json\Expr
 							break;
 
 						case $objectsToString && method_exists($v, '__toString'):
-							$a[$k] = $v->__toString();
+							$arr[$k] = $v->__toString();
 							break;
 
 						default:
-							$a[$k] = $v;
+							$arr[$k] = $v;
 					}
 					break;
 
 				//	nulls, bools, ints, floats, strings, and arrays
 				default:
-					$a[$k] = $v;
+					$arr[$k] = $v;
 			}
 		}
 
-		return $a;
+		return $arr;
 	}
 
 	/**
@@ -567,7 +568,7 @@ abstract class TypedClass extends TypedAbstract
 
 		//	Handle our two special object types.
 		if ($propertyDefaultValue instanceof TypedAbstract) {
-			$this->$pName->assign($in);
+			$this->$pName->replace($in);
 			return;
 		}
 
@@ -647,7 +648,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	protected function _getByName(string $pName)
 	{
-		if (is_a($this->$pName, AtomicInterface::class)) {
+		if ($this->$pName instanceof AtomicInterface) {
 			return $this->$pName->get();
 		}
 
