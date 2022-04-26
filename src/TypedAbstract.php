@@ -9,7 +9,6 @@
 
 namespace Diskerror\Typed;
 
-use BadMethodCallException;
 use Countable;
 use InvalidArgumentException;
 use IteratorAggregate;
@@ -29,13 +28,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 * @var ArrayOptions
 	 */
 	protected $toArrayOptions;
-
-	/**
-	 * Holds options for "__serialize" customizations.
-	 *
-	 * @var ArrayOptions
-	 */
-	protected $serializeOptions;
 
 	/**
 	 * Holds options for "jsonSerialize" customizations.
@@ -83,7 +75,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	protected function _initToArrayOptions()
 	{
 		$this->toArrayOptions   = new ArrayOptions(ArrayOptions::OMIT_RESOURCE | ArrayOptions::DATE_OBJECT_TO_STRING);
-		$this->serializeOptions = new ArrayOptions(ArrayOptions::OMIT_RESOURCE);
 		$this->toJsonOptions    = new ArrayOptions(
 			ArrayOptions::OMIT_EMPTY | ArrayOptions::OMIT_RESOURCE | ArrayOptions::DATE_OBJECT_TO_STRING | ArrayOptions::KEEP_JSON_EXPR);
 	}
@@ -92,7 +83,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	{
 		switch ($name) {
 			case 'toArrayOptions':
-			case 'serializeOptions':
 			case 'toJsonOptions':
 				return true;
 		}
@@ -161,16 +151,9 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	abstract public function toArray(): array;
 
 	/**
-	 * Override to provide the actual toArray code with desired options.
+	 * JsonSerializable::jsonSerialize()
 	 *
-	 * @param ArrayOptions $arrayOptions
-	 *
-	 * @return array
-	 */
-	abstract protected function _toArray(ArrayOptions $arrayOptions): array;
-
-	/**
-	 * Be sure json_encode gets our prepared array.
+	 * Called automatically when object is passed to json_encode().
 	 *
 	 * @return array
 	 */

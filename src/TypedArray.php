@@ -221,33 +221,75 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * that any member of type "Typed" will also be returned.
 	 * Use $arr[$member] to access individual names.
 	 *
-	 * @param ArrayOptions $arrayOptions
+	 * @return array
+	 */
+	public function toArray(): array
+	{
+		//	At this point all items are some type of object.
+		if (method_exists($this->_type, 'toArray')) {
+			$output = [];
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->toArray();
+			}
+		}
+		else {
+			$output = $this->_simplifyCommon($this->toArrayOptions);
+		}
+
+		if ($this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
+			self::_removeEmpty($output);
+		}
+
+		return $output;
+	}
+
+	/**
+	 * JsonSerializable::jsonSerialize()
+	 *
+	 * Called automatically when object is passed to json_encode().
 	 *
 	 * @return array
 	 */
-	protected function _toArray(ArrayOptions $arrayOptions): array
+	public function jsonSerialize(): array
+	{
+		$ao = $this->toJsonOptions;
+
+		//	At this point all items are some type of object.
+		if (method_exists($this->_type, 'jsonSerialize')) {
+			$output = [];
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->jsonSerialize();
+			}
+		}
+		elseif (method_exists($this->_type, 'toArray')) {
+			$output = [];
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->toArray();
+			}
+		}
+		else {
+			$output = $this->_simplifyCommon($this->toJsonOptions);
+		}
+
+		if ($this->toJsonOptions->has(ArrayOptions::OMIT_EMPTY)) {
+			self::_removeEmpty($output);
+		}
+
+		return $output;
+	}
+
+	final private function _simplifyCommon(ArrayOptions $ao): array
 	{
 		$output = [];
 
-		//	At this point all items are some type of object.
 		if (is_a($this->_type, AtomicInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->get();
 			}
 		}
-		elseif (is_a($this->_type, TypedAbstract::class, true)) {
-			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v->_toArray($arrayOptions);
-			}
-		}
 		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
-			}
-		}
-		elseif (method_exists($this->_type, 'toArray')) {
-			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v->toArray();
 			}
 		}
 		elseif (method_exists($this->_type, '__toString')) {
@@ -262,24 +304,25 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 
-		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
-			//	Is this an indexed array (not associative)?
-			$isIndexed = (array_values($output) === $output);
+		return $output;
+	}
 
-			//	Remove empty items.
-			foreach ($output as $k => $v) {
-				if (empty($v) || (is_object($v) && empty((array) $v))) {
-					unset($output[$k]);
-				}
-			}
+	final private static function _removeEmpty(&$arr): void
+	{
+		//	Is this an indexed array (not associative)?
+		$isIndexed = (array_values($arr) === $arr);
 
-			//	If it's an indexed array then fix the indexes.
-			if ($isIndexed) {
-				$output = array_values($output);
+		//	Remove empty items.
+		foreach ($arr as $k => $v) {
+			if (empty($v) || (is_object($v) && empty((array) $v))) {
+				unset($arr[$k]);
 			}
 		}
 
-		return $output;
+		//	If it's an indexed array then fix the indexes.
+		if ($isIndexed) {
+			$arr = array_values($arr);
+		}
 	}
 
 	/**

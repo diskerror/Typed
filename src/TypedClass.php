@@ -19,11 +19,6 @@ use Diskerror\Typed\Scalar\TString;
 use InvalidArgumentException;
 use Traversable;
 use TypeError;
-use function gettype;
-use function is_a;
-use function is_object;
-use function method_exists;
-use function trim;
 
 /**
  * Create a child of this class with your named properties with a visibility of
@@ -308,26 +303,23 @@ abstract class TypedClass extends TypedAbstract
 		$omitResources   = $this->toArrayOptions->has(ArrayOptions::OMIT_RESOURCE);
 		$dateToString    = $this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING);
 		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
-		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
 
-		$a = [];
+		$arr = [];
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
 
-			if ($omitEmpty && (empty($v) || (is_object($v) && empty((array) $v)))) {
-				continue;
+			if ($omitEmpty) {
+				switch (true) {
+					case is_null($v):
+					case is_string($v) && empty($v):
+					case is_array($v) && empty($v):
+					case is_object($v) && empty((array) $v):
+						continue 2;
+				}
 			}
 
-			if ($omitDefaults) {
-				$default = $this->_defaultValues[$k];
-
-				if (is_a($default, AtomicInterface::class, true)) {
-					$default = $default->get();
-				}
-
-				if ($v == $default) {
-					continue;
-				}
+			if ($omitDefaults && $this->$k == $this->_defaultValues[$k]) {
+				continue;
 			}
 
 			switch (gettype($v)) {
@@ -339,21 +331,77 @@ abstract class TypedClass extends TypedAbstract
 
 				case 'object':
 					switch (true) {
-						case is_a($v, TypedAbstract::class, true):
-							$a[$k] = $v->toArray();
+						case method_exists($v, 'toArray'):
+							$arr[$k] = $v->toArray();
 							break;
 
 						case $dateToString && is_a($v, DateTimeInterface::class, true):
-							//	remove trailing zeros, and trim spaces just in case
-							$a[$k] = trim($v->format(DateTime::MYSQL_STRING_IO_FORMAT_MICRO), '0 ');
+							if (is_a($v, DateTime::class, true)) {
+								$arr[$k] = $v->__toString();    //	This is without timezone for MySQL.
+							}
+							else {
+								$arr[$k] = $v->format(DateTime::ISO8601);
+							}
 							break;
 
-						case $keepJsonExpr && is_a($v, '\\Laminas\\Json\\Expr', true):
-							$a[$k] = $v;    // return as \Laminas\Json\Expr
+						case $objectsToString && method_exists($v, '__toString'):
+							$arr[$k] = $v->__toString();
+							break;
+
+						default:
+							$arr[$k] = $v;
+					}
+					break;
+
+				//	nulls, bools, ints, floats, strings, and arrays
+				default:
+					$arr[$k] = $v;
+			}
+		}
+
+		return $arr;
+	}
+
+	public function jsonSerialize(): array
+	{
+		$omitEmpty       = $this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY);
+		$omitDefaults    = $this->toArrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
+		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
+		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+
+		$a = [];
+		foreach ($this->_publicNames as $k) {
+			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
+
+			if ($omitEmpty && (empty($v) || (is_object($v) && empty((array) $v)))) {
+				continue;
+			}
+
+			if ($omitDefaults && $this->$k == $this->_defaultValues[$k]) {
+				continue;
+			}
+
+			switch (gettype($v)) {
+				case 'resource':
+					continue 2;
+					break;
+
+				case 'object':
+					switch (true) {
+						case method_exists($v, 'jsonSerialize'):
+							$a[$k] = $v->jsonSerialize();
 							break;
 
 						case method_exists($v, 'toArray'):
 							$a[$k] = $v->toArray();
+							break;
+
+						case is_a($v, DateTimeInterface::class, true):
+							$a[$k] = $v->format(DateTime::ISO8601); // always this format for JSON
+							break;
+
+						case $keepJsonExpr && is_a($v, '\\Laminas\\Json\\Expr', true):
+							$a[$k] = $v;    // return as \Laminas\Json\Expr
 							break;
 
 						case $objectsToString && method_exists($v, '__toString'):
@@ -361,7 +409,7 @@ abstract class TypedClass extends TypedAbstract
 							break;
 
 						default:
-							$a[$k] = $v;	//	clone?
+							$a[$k] = $v;
 					}
 					break;
 
@@ -372,14 +420,6 @@ abstract class TypedClass extends TypedAbstract
 		}
 
 		return $a;
-	}
-
-	/**
-	 * @param ArrayOptions $arrayOptions
-	 * @return array
-	 */
-	protected function _toArray(ArrayOptions $arrayOptions): array
-	{
 	}
 
 	/**
@@ -420,80 +460,6 @@ abstract class TypedClass extends TypedAbstract
 				}
 			}
 		})();
-	}
-
-	public function jsonSerialize(): array
-	{
-		$omitEmpty       = $this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$omitDefaults    = $this->toArrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
-		$omitResources   = $this->toArrayOptions->has(ArrayOptions::OMIT_RESOURCE);
-		$dateToString    = $this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING);
-		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
-		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-
-		$a = parent::jsonSerialize();
-
-		foreach ($this->_publicNames as $k) {
-			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
-
-			if ($omitEmpty && (empty($v) || (is_object($v) && empty((array) $v)))) {
-				continue;
-			}
-
-			if ($omitDefaults) {
-				$default = $this->_defaultValues[$k];
-
-				if (is_a($default, AtomicInterface::class, true)) {
-					$default = $default->get();
-				}
-
-				if ($v == $default) {
-					continue;
-				}
-			}
-
-			switch (gettype($v)) {
-				case 'resource':
-					if ($omitResources) {
-						continue 2;
-					}
-					break;
-
-				case 'object':
-					switch (true) {
-						case is_a($v, TypedAbstract::class, true):
-							$a[$k] = $v->jsonSerialize();
-							break;
-
-						case $dateToString && is_a($v, DateTimeInterface::class, true):
-							//	remove trailing zeros, and trim spaces just in case
-							$a[$k] = trim($v->format(DateTime::MYSQL_STRING_IO_FORMAT_MICRO), '0 ');
-							break;
-
-						case $keepJsonExpr && is_a($v, '\\Laminas\\Json\\Expr', true):
-							$a[$k] = $v;    // return as \Laminas\Json\Expr
-							break;
-
-						case method_exists($v, 'toArray'):
-							$a[$k] = $v->toArray();
-							break;
-
-						case $objectsToString && method_exists($v, '__toString'):
-							$a[$k] = $v->__toString();
-							break;
-
-						default:
-							$a[$k] = $v;
-					}
-					break;
-
-				//	nulls, bools, ints, floats, strings, and arrays
-				default:
-					$a[$k] = $v;
-			}
-		}
-
-		return $a;
 	}
 
 
@@ -683,11 +649,6 @@ abstract class TypedClass extends TypedAbstract
 	{
 		if (is_a($this->$pName, AtomicInterface::class)) {
 			return $this->$pName->get();
-		}
-
-		$getter = '_get_' . $pName;
-		if (method_exists($this->_calledClass, $getter)) {
-			return $this->$getter();
 		}
 
 		return $this->$pName;
