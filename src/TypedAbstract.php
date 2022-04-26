@@ -170,47 +170,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	abstract protected function _toArray(ArrayOptions $arrayOptions): array;
 
 	/**
-	 * String representation of PHP object.
-	 *
-	 * This serialization, as opposed to JSON or BSON, does not unwrap the
-	 * structured data. It only omits data that is part of the class definition.
-	 *
-	 * @link  https://php.net/manual/en/serializable.serialize.php
-	 * @return ?array the string representation of the object or null
-	 */
-	public function __serialize(): ?array
-	{
-		$ret                     = [];
-		$ret['toArrayOptions']   = $this->toArrayOptions;
-		$ret['serializeOptions'] = $this->serializeOptions;
-		$ret['toJsonOptions']    = $this->toJsonOptions;
-
-		return $ret;
-	}
-
-	/**
-	 * Constructs the object from serialized PHP.
-	 *
-	 * This uses a faster but unsafe restore technique. It assumes that the
-	 * serialized data was created by the local serialize method and was
-	 * safely stored locally. No type checking is performed on restore. All
-	 * data structure members have been serialized so no initialization of
-	 * empty need be done.
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
-	 *
-	 * @param array $data
-	 *
-	 * @return void
-	 */
-	public function __unserialize(array $data): void
-	{
-		$this->toArrayOptions   = $data['toArrayOptions'];
-		$this->serializeOptions = $data['serializeOptions'];
-		$this->toJsonOptions    = $data['toJsonOptions'];
-	}
-
-	/**
 	 * Be sure json_encode gets our prepared array.
 	 *
 	 * @return array

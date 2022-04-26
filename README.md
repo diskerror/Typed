@@ -24,9 +24,9 @@ Returns an associative array of this object with only the appropriate members. A
 * OMIT\_RESOURCE: resource IDs are meaningless for transmitted data.
 * KEEP\_JSON\_EXPR: objects of type *Zend\Json\Expr* remain untouched.
 
-### Serialization
+### jsonSerialize
 
-The *__serialize* function and *JsonSerializable* interface methods are coded to store the minimum data required to fully rebuild the data classes, and make use of extensive self-checking in the *Typed* classes. Many of the housekeeping properties are not serialized.
+The  *JsonSerializable* interface methods are coded to store the minimum data required to fully rebuild the data classes, and make use of extensive self-checking in the *Typed* classes. Object meta-data and housekeeping properties are not serialized.
 
 ## TypedClass
 The derivatives of *TypedClass* are contracted to do these things:

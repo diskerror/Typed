@@ -217,36 +217,6 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	}
 
 	/**
-	 * Automatically called by serialize().
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
-	 * @return ?array
-	 */
-	public function __serialize(): ?array
-	{
-		$ret               = parent::__serialize();
-		$ret['_type']      = $this->_type;
-		$ret['_container'] = $this->_container;
-		return $ret;
-	}
-
-	/**
-	 * Constructs the object
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
-	 *
-	 * @param array $data
-	 *
-	 * @return void
-	 */
-	public function __unserialize(array $data): void
-	{
-		parent::__unserialize($data);
-		$this->_type      = $data['_type'];
-		$this->_container = $data['_container'];
-	}
-
-	/**
 	 * Returns an array with all members checked for a "toArray" method so
 	 * that any member of type "Typed" will also be returned.
 	 * Use $arr[$member] to access individual names.

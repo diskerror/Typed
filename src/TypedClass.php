@@ -422,88 +422,6 @@ abstract class TypedClass extends TypedAbstract
 		})();
 	}
 
-	/**
-	 * String representation of PHP object.
-	 *
-	 * This omits data that is part of the class definition.
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
-	 * @return ?array
-	 */
-	public function __serialize(): ?array
-	{
-		$omitEmpty       = $this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$omitDefaults    = $this->toArrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
-		$omitResources   = $this->toArrayOptions->has(ArrayOptions::OMIT_RESOURCE);
-		$dateToString    = $this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING);
-		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
-		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
-
-		$a = parent::__serialize();
-
-		foreach ($this->_publicNames as $k) {
-			$v = $this->$k;
-
-			if ($omitEmpty && (empty($v) || (is_object($v) && empty((array) $v)))) {
-				continue;
-			}
-
-			if ($omitDefaults) {
-				$default = $this->_defaultValues[$k];
-
-				if (is_a($default, AtomicInterface::class, true)) {
-					$default = $default->get();
-				}
-
-				if ($v == $default) {
-					continue;
-				}
-			}
-
-			switch (gettype($v)) {
-				case 'resource':
-					if ($omitResources) {
-						continue 2;
-					}
-					break;
-
-				case 'object':
-					switch (true) {
-						case is_a($v, TypedAbstract::class, true):
-							$a[$k] = $v->__serialize();
-							break;
-
-						case $dateToString && is_a($v, DateTimeInterface::class, true):
-							//	remove trailing zeros, and trim spaces just in case
-							$a[$k] = trim($v->format(DateTime::MYSQL_STRING_IO_FORMAT_MICRO), '0 ');
-							break;
-
-						case $keepJsonExpr && is_a($v, '\\Laminas\\Json\\Expr', true):
-							$a[$k] = $v;    // return as \Laminas\Json\Expr
-							break;
-
-						case method_exists($v, 'toArray'):
-							$a[$k] = $v->toArray();
-							break;
-
-						case $objectsToString && method_exists($v, '__toString'):
-							$a[$k] = $v->__toString();
-							break;
-
-						default:
-							$a[$k] = $v;
-					}
-					break;
-
-				//	nulls, bools, ints, floats, strings, and arrays
-				default:
-					$a[$k] = $v;
-			}
-		}
-
-		return $a;
-	}
-
 	public function jsonSerialize(): array
 	{
 		$omitEmpty       = $this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY);
@@ -576,29 +494,6 @@ abstract class TypedClass extends TypedAbstract
 		}
 
 		return $a;
-	}
-	/**
-	 * Constructs the object from serialized PHP.
-	 *
-	 * This uses a faster but unsafe restore technique. It assumes that the
-	 * serialized data was created by the local serialize method and was
-	 * safely stored locally. No type checking is performed on restore. All
-	 * data structure members have been serialized so no initialization of
-	 * empty need be done.
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
-	 *
-	 * @param array $data
-	 *
-	 * @return void
-	 */
-	public function __unserialize(array $data): void
-	{
-		$this->_initMetaData();
-		parent::__unserialize($data);
-		foreach ($data as $k => $v) {
-			$this->_setByName($k, $v);
-		}
 	}
 
 
