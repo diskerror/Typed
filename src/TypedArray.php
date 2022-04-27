@@ -239,7 +239,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 		else {
-			$output = $this->_simplifyCommon($this->toArrayOptions);
+			$output = $this->_simplifyCommon();
 		}
 
 		if ($this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
@@ -280,17 +280,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 		else {
-			$output = $this->_simplifyCommon($this->toJsonOptions);
+			$output = $this->_simplifyCommon();
 		}
 
-		if ($this->toJsonOptions->has(ArrayOptions::OMIT_EMPTY)) {
+		if ($this->toJsonOptions->has(JsonOptions::OMIT_EMPTY)) {
 			self::_removeEmpty($output);
 		}
 
 		return $output;
 	}
 
-	final private function _simplifyCommon(ArrayOptions $ao): array
+	final private function _simplifyCommon(): array
 	{
 		$output = [];
 

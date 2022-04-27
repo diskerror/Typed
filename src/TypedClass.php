@@ -229,7 +229,6 @@ abstract class TypedClass extends TypedAbstract
 	public function assign($in): void
 	{
 		$this->_massageInput($in);
-		$this->_massageInputArray($in);
 
 		$propertiesSet = [];
 		foreach ($in as $k => $v) {
@@ -257,18 +256,9 @@ abstract class TypedClass extends TypedAbstract
 	public function replace($in): void
 	{
 		$this->_massageInput($in);
-		$this->_massageInputArray($in);
 
 		foreach ($in as $k => $v) {
-			$k = $this->_getMappedName($k);
-			if ($this->_keyExists($k)) {
-				if ($this->$k instanceof TypedAbstract) {
-					$this->$k->replace($v);
-				}
-				else {
-					$this->_setByName($k, $v);
-				}
-			}
+			$this->_setByName($this->_getMappedName($k), $v);
 		}
 
 		$this->_checkRelatedProperties();
@@ -366,10 +356,10 @@ abstract class TypedClass extends TypedAbstract
 
 	public function jsonSerialize(): array
 	{
-		$omitEmpty       = $this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY);
-		$omitDefaults    = $this->toArrayOptions->has(ArrayOptions::OMIT_DEFAULTS);
-		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
-		$keepJsonExpr    = $this->toArrayOptions->has(ArrayOptions::KEEP_JSON_EXPR);
+		$omitEmpty       = $this->toJsonOptions->has(JsonOptions::OMIT_EMPTY);
+		$omitDefaults    = $this->toJsonOptions->has(JsonOptions::OMIT_DEFAULTS);
+		$objectsToString = $this->toJsonOptions->has(JsonOptions::ALL_OBJECTS_TO_STRING);
+		$keepJsonExpr    = $this->toJsonOptions->has(JsonOptions::KEEP_JSON_EXPR);
 		$ZJE             = '\\Laminas\\Json\\Expr';
 
 		$arr = [];
@@ -399,7 +389,7 @@ abstract class TypedClass extends TypedAbstract
 							$arr[$k] = $v->toArray();
 							break;
 
-						case $v instanceof DateTimeInterface:
+						case $v instanceof DateTimeInterface && !($v instanceof Date):
 							$arr[$k] = $v->format(DateTime::ISO8601); // always this format for JSON
 							break;
 
@@ -408,7 +398,7 @@ abstract class TypedClass extends TypedAbstract
 							break;
 
 						case $objectsToString && method_exists($v, '__toString'):
-							$arr[$k] = $v->__toString();
+							$arr[$k] = $v->__toString();	//	For Date object "Y-m-d"
 							break;
 
 						default:
@@ -466,8 +456,10 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 
-	protected final function _massageInputArray(&$in): void
+	protected final function _massageInput(&$in): void
 	{
+		parent::_massageInput($in);
+
 		//	Test to see if it's an indexed or an associative array.
 		//	Leave associative array as is.
 		//	Copy indexed array by position to a named array
