@@ -46,12 +46,18 @@ abstract class ScalarAbstract implements AtomicInterface
 	{
 		$this->_allowNull = $allowNull;
 
+		if (is_object($in) && $in instanceof ScalarAbstract) {
+			$in = $in->get();
+		}
+
 		if ($allowNull && null === $in) {
-			$this->_value        = null;
-			$this->_defaultValue = null;
+			$this->_value = null;
 		}
 		else {
 			$this->set(null === $in ? '' : $in);
+		}
+
+		if (!isset($this->_defaultValue)) {
 			$this->_defaultValue = $this->_value;
 		}
 	}

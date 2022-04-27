@@ -62,7 +62,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 
 		if (get_called_class() === self::class) {
 			$this->_type = is_string($param1) ? $param1 : '';
-			$this->replace($param2);
+			$param1      = $param2;
 		}
 		else {
 			if (!isset($this->_type)) {
@@ -72,10 +72,10 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			if (null !== $param2) {
 				throw new InvalidArgumentException('Only the first parameter can be set when using a derived class.');
 			}
-
-			$this->_initMetaData();
-			$this->replace($param1);
 		}
+
+		$this->_initMetaData();
+		$this->replace($param1);
 	}
 
 	protected function _initMetaData()
@@ -226,7 +226,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function toArray(): array
 	{
 		//	At this point all items are some type of object.
-		if (method_exists($this->_type, 'toArray')) {
+		if (is_a($this->_type, AtomicInterface::class, true)) {
+			$output = [];
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->get();
+			}
+		}
+		elseif (method_exists($this->_type, 'toArray')) {
 			$output = [];
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->toArray();
@@ -255,7 +261,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		$ao = $this->toJsonOptions;
 
 		//	At this point all items are some type of object.
-		if (method_exists($this->_type, 'jsonSerialize')) {
+		if (is_a($this->_type, AtomicInterface::class, true)) {
+			$output = [];
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->get();
+			}
+		}
+		elseif (method_exists($this->_type, 'jsonSerialize')) {
 			$output = [];
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->jsonSerialize();
@@ -282,12 +294,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	{
 		$output = [];
 
-		if (is_a($this->_type, AtomicInterface::class, true)) {
-			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v->get();
-			}
-		}
-		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
+		if (is_a($this->_type, DateTimeInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}
@@ -421,34 +428,41 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * * $value is a an array (check for toArray, or cast);
 	 * * $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
-	 * @param string|int $offset
+	 * @param ?string|int $offset
 	 * @param mixed $value
 	 */
 	public function offsetSet($offset, $value): void
 	{
-		if ('' === $this->_type) {
-			if ($this->offsetExists($offset)) {
+		$valType = is_object($value) ? get_class($value) : gettype($value);
+
+		if (is_null($offset)) {
+			$this->_container[] = ($valType === $this->_type) ?
+				$value :
+				new $this->_type($value);
+		}
+		elseif ($this->offsetExists($offset)) {
+			if ($valType === $this->_type) {
 				$this->_container[$offset] = $value;
+				return;
 			}
-			else {
-				$this->_container[] = $value;
+
+			if (is_a($this->_type, AtomicInterface::class, true)) {
+				$this->_container[$offset]->set($value);
+				return;
 			}
-			return;
-		}
 
-		if (is_a($this->_type, AtomicInterface::class, true)) {
-			$this->_container[$offset]->set($value);
-			return;
-		}
+			if (is_a($this->_type, TypedAbstract::class, true)) {
+				$this->_container[$offset]->replace($value);
+				return;
+			}
 
-		if (is_a($this->_type, TypedAbstract::class, true)) {
-			$this->_container[$offset]->replace($value);
-			return;
+			$this->_container[$offset] = new $this->_type($value);
 		}
-
-		$this->_container[$offset] = (is_object($value) && get_class($value) === $this->_type) ?
-			$value :
-			new $this->_type($value);
+		else {
+			$this->_container[$offset] = ($valType === $this->_type) ?
+				$value :
+				new $this->_type($value);
+		}
 	}
 
 	/**

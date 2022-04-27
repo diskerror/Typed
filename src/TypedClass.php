@@ -233,7 +233,7 @@ abstract class TypedClass extends TypedAbstract
 
 		$propertiesSet = [];
 		foreach ($in as $k => $v) {
-			$this->_setByName($k, $v);
+			$this->_setByName($this->_getMappedName($k), $v);
 		}
 
 		$this->_checkRelatedProperties();
@@ -260,6 +260,7 @@ abstract class TypedClass extends TypedAbstract
 		$this->_massageInputArray($in);
 
 		foreach ($in as $k => $v) {
+			$k = $this->_getMappedName($k);
 			if ($this->_keyExists($k)) {
 				if ($this->$k instanceof TypedAbstract) {
 					$this->$k->replace($v);
@@ -337,7 +338,8 @@ abstract class TypedClass extends TypedAbstract
 
 						case $dateToString && $v instanceof DateTimeInterface:
 							if ($v instanceof DateTime) {
-								$arr[$k] = $v->__toString();    //	This is without timezone for MySQL.
+								// This is without timezone for MySQL.
+								$arr[$k] = rtrim($v->__toString(), '0 ');
 							}
 							else {
 								$arr[$k] = $v->format(DateTime::ISO8601);
@@ -558,22 +560,27 @@ abstract class TypedClass extends TypedAbstract
 		}
 
 		/** All properties are now handled as objects. */
-		$propertyDefaultValue = $this->_defaultValues[$pName];
+		$propDefaultValue = $this->_defaultValues[$pName];
 
 		//	Handle our atomic types.
-		if ($propertyDefaultValue instanceof AtomicInterface) {
+		if ($propDefaultValue instanceof AtomicInterface) {
 			$this->$pName->set($in);
 			return;
 		}
 
 		//	Handle our two special object types.
-		if ($propertyDefaultValue instanceof TypedAbstract) {
+		if ($propDefaultValue instanceof TypedClass) {
 			$this->$pName->replace($in);
 			return;
 		}
 
+		if ($propDefaultValue instanceof TypedArray) {
+			$this->$pName->assign($in);
+			return;
+		}
+
 		//	Handler for other types of objects.
-		$pType = get_class($propertyDefaultValue);
+		$pType = get_class($propDefaultValue);
 		switch (gettype($in)) {
 			case 'object':
 				//	if identical types then reference the original object
@@ -594,7 +601,7 @@ abstract class TypedClass extends TypedAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->$pName = clone $propertyDefaultValue;
+				$this->$pName = clone $propDefaultValue;
 				break;
 
 			case 'array':

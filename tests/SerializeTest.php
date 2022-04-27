@@ -21,10 +21,10 @@ class SerializeTest extends TestCase
 	{
 		$tweetString = file_get_contents(__DIR__ . '/data/tweet.json');
 		$tweet       = new Tweet($tweetString);
-//		jsonPrint($tweet->toArray());
+//		jsonPrint($tweet->toArray());exit();
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetnew.json',
-			json_encode($tweet->toArray()),
+			json_encode($tweet),
 			'New tweet with initial data.'
 		);
 	}
@@ -34,10 +34,10 @@ class SerializeTest extends TestCase
 		$tweetString = file_get_contents(__DIR__ . '/data/tweet.json');
 		$tweet       = new Tweet();
 		$tweet->assign($tweetString);
-//		jsonPrint($tweet->toArray());
+//		jsonPrint($tweet);
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetnew.json',
-			json_encode($tweet->toArray()),
+			json_encode($tweet),
 			'Tweet with assigned data.'
 		);
 	}
@@ -47,10 +47,10 @@ class SerializeTest extends TestCase
 		$tweetString = file_get_contents(__DIR__ . '/data/tweet2.json');
 		$tweet       = new Tweet();
 		$tweet->replace($tweetString);
-//		jsonPrint($tweet->toArray());
+//		jsonPrint($tweet);
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetreplace.json',
-			json_encode($tweet->toArray()),
+			json_encode($tweet),
 			'Tweet with replacement data.'
 		);
 	}
@@ -60,7 +60,7 @@ class SerializeTest extends TestCase
 
 //		jsonPrint($dt->__tostring());exit;
 		$this->assertEquals(
-			$dt->format(\Diskerror\Typed\DateTime::STRING_IO_FORMAT_MICRO),
+			$dt->format(\Diskerror\Typed\DateTime::MYSQL_STRING_IO_FORMAT_MICRO),
 			'2019-06-25 03:04:11.340000'
 		);
 	}
