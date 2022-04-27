@@ -3,8 +3,5 @@
 	"myInt": 3,
 	"myFloat": 3.14,
 	"myString": "234445",
-	"myArray": [],
-	"myObj": {},
-	"myDate": "2010-01-01T01:01:01.001+00:00",
-	"myTypedArray": []
+	"myDate": "2010-01-01T01:01:01.001+00:00"
 }

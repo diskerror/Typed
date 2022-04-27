@@ -5,7 +5,6 @@ namespace Diskerror\Typed;
 use DateTime as DT;
 use DateTimeInterface;
 use DateTimeZone;
-use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
 
@@ -231,7 +230,7 @@ class DateTime extends DT implements JsonSerializable
 	public function __toString()
 	{
 		if ($this->format('u') > 0) {
-			return $this->format(self::MYSQL_STRING_IO_FORMAT_MICRO);
+			return rtrim($this->format(self::MYSQL_STRING_IO_FORMAT_MICRO), '0');
 		}
 
 		return $this->format(self::MYSQL_STRING_IO_FORMAT);

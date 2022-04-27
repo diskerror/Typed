@@ -299,16 +299,6 @@ abstract class TypedClass extends TypedAbstract
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
 
-			if ($omitEmpty) {
-				switch (true) {
-					case is_null($v):
-					case is_string($v) && empty($v):
-					case is_array($v) && empty($v):
-					case is_object($v) && empty((array) $v):
-						continue 2;
-				}
-			}
-
 			if ($omitDefaults && $this->$k == $this->_defaultValues[$k]) {
 				continue;
 			}
@@ -323,32 +313,32 @@ abstract class TypedClass extends TypedAbstract
 				case 'object':
 					switch (true) {
 						case method_exists($v, 'toArray'):
-							$arr[$k] = $v->toArray();
+							$v = $v->toArray();
 							break;
 
 						case $dateToString && $v instanceof DateTimeInterface:
-							if ($v instanceof DateTime) {
-								// This is without timezone for MySQL.
-								$arr[$k] = rtrim($v->__toString(), '0 ');
-							}
-							else {
-								$arr[$k] = $v->format(DateTime::ISO8601);
-							}
+							// This is without timezone for MySQL.
+							$v = $v->__toString();
 							break;
 
 						case $objectsToString && method_exists($v, '__toString'):
-							$arr[$k] = $v->__toString();
+							$v = $v->__toString();
 							break;
 
 						default:
-							$arr[$k] = $v;
 					}
 					break;
 
 				//	nulls, bools, ints, floats, strings, and arrays
 				default:
-					$arr[$k] = $v;
+					// Just copy it.
 			}
+
+			if ($omitEmpty && self::_isEmpty($v)) {
+				continue;
+			}
+
+			$arr[$k] = $v;
 		}
 
 		return $arr;
@@ -366,10 +356,6 @@ abstract class TypedClass extends TypedAbstract
 		foreach ($this->_publicNames as $k) {
 			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
 
-			if ($omitEmpty && (empty($v) || (is_object($v) && empty((array) $v)))) {
-				continue;
-			}
-
 			if ($omitDefaults && $this->$k == $this->_defaultValues[$k]) {
 				continue;
 			}
@@ -382,37 +368,70 @@ abstract class TypedClass extends TypedAbstract
 				case 'object':
 					switch (true) {
 						case method_exists($v, 'jsonSerialize'):
-							$arr[$k] = $v->jsonSerialize();
+							$v = $v->jsonSerialize();
 							break;
 
 						case method_exists($v, 'toArray'):
-							$arr[$k] = $v->toArray();
+							$v = $v->toArray();
 							break;
 
 						case $v instanceof DateTimeInterface && !($v instanceof Date):
-							$arr[$k] = $v->format(DateTime::ISO8601); // always this format for JSON
+							$v = $v->format(DateTime::ATOM); // always this format for JSON
 							break;
 
 						case $keepJsonExpr && $v instanceof $ZJE:
-							$arr[$k] = $v;    // return as \Laminas\Json\Expr
+							// return as \Laminas\Json\Expr
 							break;
 
 						case $objectsToString && method_exists($v, '__toString'):
-							$arr[$k] = $v->__toString();	//	For Date object "Y-m-d"
+							$v = $v->__toString();    //	For Date object "Y-m-d"
 							break;
 
 						default:
-							$arr[$k] = $v;
 					}
 					break;
 
 				//	nulls, bools, ints, floats, strings, and arrays
 				default:
-					$arr[$k] = $v;
+					// Just copy it.
 			}
+
+			if ($omitEmpty && self::_isEmpty($v)) {
+				continue;
+			}
+
+			$arr[$k] = $v;
 		}
 
 		return $arr;
+	}
+
+	protected static function _isEmpty($v): bool
+	{
+		switch (gettype($v)) {
+			case 'object':
+				return empty((array) $v);
+
+			case 'array':
+				return $v === [];
+
+			case 'string':
+				return $v === '';
+
+			case 'bool':
+			case 'boolean':
+			case 'int':
+			case 'integer':
+			case 'float':
+			case 'double':
+			case 'real':
+				return empty($v);
+
+			case 'null':
+			case 'NULL':
+				return true;
+		}
+		return false;
 	}
 
 	/**
@@ -420,9 +439,9 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __clone()
 	{
-		foreach ($this->_publicNames as $k) {
-			if (is_object($this->$k)) {
-				$this->$k = clone $this->$k;
+		foreach ($this as $k => $v) {
+			if (is_object($v)) {
+				$this->$k = clone $v;
 			}
 		}
 	}
