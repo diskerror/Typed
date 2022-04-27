@@ -204,13 +204,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			return (function &() {
 				foreach ($this->_container as $k => $v) {
 					yield $k => $v;
-
-					//	Compare whole class names.
-					//	TODO: This doesn't test enough conditions.
-					$isObj = is_object($v);
-					if (($isObj && get_class($v) !== $this->_type) || (!$isObj && gettype($v) !== $this->_type)) {
-						$this->offsetSet($k, $v);
-					}
+					$this->offsetSet($k, $v);
 				}
 			})();
 		}
@@ -225,21 +219,44 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function toArray(): array
 	{
+		$output = [];
+
 		//	At this point all items are some type of object.
 		if (is_a($this->_type, AtomicInterface::class, true)) {
-			$output = [];
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->get();
 			}
 		}
 		elseif (method_exists($this->_type, 'toArray')) {
-			$output = [];
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->toArray();
 			}
 		}
+		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
+			if ($this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING)) {
+				foreach ($this->_container as $k => $v) {
+					$output[$k] = $v->__toString();
+				}
+			}
+			else {
+				foreach ($this->_container as $k => $v) {
+					$output[$k] = $v;
+				}
+			}
+		}
+		elseif (
+			$this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING) &&
+			method_exists($this->_type, '__toString')
+		) {
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->__toString();
+			}
+		}
 		else {
-			$output = $this->_simplifyCommon();
+			//	else this is an array of some generic objects
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = (array) $v;
+			}
 		}
 
 		if ($this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
@@ -258,45 +275,27 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function jsonSerialize(): array
 	{
-		$ao = $this->toJsonOptions;
+		$output = [];
 
 		//	At this point all items are some type of object.
 		if (is_a($this->_type, AtomicInterface::class, true)) {
-			$output = [];
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->get();
 			}
 		}
 		elseif (method_exists($this->_type, 'jsonSerialize')) {
-			$output = [];
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->jsonSerialize();
 			}
 		}
 		elseif (method_exists($this->_type, 'toArray')) {
-			$output = [];
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->toArray();
 			}
 		}
-		else {
-			$output = $this->_simplifyCommon();
-		}
-
-		if ($this->toJsonOptions->has(JsonOptions::OMIT_EMPTY)) {
-			self::_removeEmpty($output);
-		}
-
-		return $output;
-	}
-
-	final private function _simplifyCommon(): array
-	{
-		$output = [];
-
-		if (is_a($this->_type, DateTimeInterface::class, true)) {
+		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v;
+				$output[$k] = $v->format('Y-m-d\TH:i:sP'); // explicit for 7.1 compatibility
 			}
 		}
 		elseif (method_exists($this->_type, '__toString')) {
@@ -311,6 +310,10 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 
+		if ($this->toJsonOptions->has(JsonOptions::OMIT_EMPTY)) {
+			self::_removeEmpty($output);
+		}
+
 		return $output;
 	}
 
@@ -321,7 +324,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 
 		//	Remove empty items.
 		foreach ($arr as $k => $v) {
-			if (empty($v) || (is_object($v) && empty((array) $v))) {
+			if (self::_isEmpty($v)) {
 				unset($arr[$k]);
 			}
 		}
@@ -433,33 +436,27 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function offsetSet($offset, $value): void
 	{
-		$valType = is_object($value) ? get_class($value) : gettype($value);
-
 		if (is_null($offset)) {
-			$this->_container[] = ($valType === $this->_type) ?
+			$this->_container[] = (self::_uniGetType($value) === $this->_type) ?
 				$value :
 				new $this->_type($value);
 		}
 		elseif ($this->offsetExists($offset)) {
-			if ($valType === $this->_type) {
+			if (self::_uniGetType($value) === $this->_type) {
 				$this->_container[$offset] = $value;
-				return;
 			}
-
-			if (is_a($this->_type, AtomicInterface::class, true)) {
+			elseif (is_a($this->_type, AtomicInterface::class, true)) {
 				$this->_container[$offset]->set($value);
-				return;
 			}
-
-			if (is_a($this->_type, TypedAbstract::class, true)) {
+			elseif (is_a($this->_type, TypedAbstract::class, true)) {
 				$this->_container[$offset]->replace($value);
-				return;
 			}
-
-			$this->_container[$offset] = new $this->_type($value);
+			else {
+				$this->_container[$offset] = new $this->_type($value);
+			}
 		}
 		else {
-			$this->_container[$offset] = ($valType === $this->_type) ?
+			$this->_container[$offset] = (self::_uniGetType($value) === $this->_type) ?
 				$value :
 				new $this->_type($value);
 		}

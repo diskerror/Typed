@@ -125,13 +125,9 @@ abstract class TypedClass extends TypedAbstract
 
 		//	Build array of default values with converted types.
 		//	First, get all class properties then remove elements with names starting with underscore, except "_id".
-		$this->_defaultValues = get_class_vars($this->_calledClass);
+		$this->_defaultValues =
+			array_diff_key(get_class_vars($this->_calledClass), get_class_vars(__CLASS__));
 		foreach ($this->_defaultValues as $k => &$v) {
-			if (($k[0] === '_' && $k !== '_id') || $this->_isArrayOption($k)) {
-				unset($this->_defaultValues[$k]);
-				continue;
-			}
-
 			switch (gettype($v)) {
 				case 'null':
 				case 'NULL':
@@ -404,34 +400,6 @@ abstract class TypedClass extends TypedAbstract
 		}
 
 		return $arr;
-	}
-
-	protected static function _isEmpty($v): bool
-	{
-		switch (gettype($v)) {
-			case 'object':
-				return empty((array) $v);
-
-			case 'array':
-				return $v === [];
-
-			case 'string':
-				return $v === '';
-
-			case 'bool':
-			case 'boolean':
-			case 'int':
-			case 'integer':
-			case 'float':
-			case 'double':
-			case 'real':
-				return empty($v);
-
-			case 'null':
-			case 'NULL':
-				return true;
-		}
-		return false;
 	}
 
 	/**

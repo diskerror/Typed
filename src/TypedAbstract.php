@@ -82,6 +82,10 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 		);
 	}
 
+	/**
+	 * @param string $name
+	 * @return bool
+	 */
 	static protected function _isArrayOption(string $name): bool
 	{
 		switch ($name) {
@@ -161,4 +165,40 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 * @return array
 	 */
 	abstract public function jsonSerialize(): array;
+
+	/**
+	 * Our gettype()/get_class() method.
+	 *
+	 * @param mixed $value
+	 * @return string
+	 */
+	protected static function _uniGetType($value): string
+	{
+		return strtolower(
+			is_object($value) ?
+				get_class($value) :
+				gettype($value)
+		);
+	}
+
+	/**
+	 * Our version of what should be considered empty.
+	 *
+	 * @return bool
+	 */
+	protected static function _isEmpty($v): bool
+	{
+		switch (gettype($v)) {
+			case 'object':
+				return empty((array) $v);
+
+			case 'array':
+				return $v === [];
+
+			case 'string':
+				return $v === '';
+		}
+
+		return empty($v);
+	}
 }
