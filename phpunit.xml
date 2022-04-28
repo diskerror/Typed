@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <phpunit colors="true" processIsolation="true" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true" bootstrap="tests/bootstrap.php">
-  <coverage processUncoveredFiles="true">
-    <include>
-      <directory suffix=".php">src</directory>
-    </include>
-  </coverage>
+<!--  <coverage processUncoveredFiles="true">-->
+<!--    <include>-->
+<!--      <directory suffix=".php">src</directory>-->
+<!--    </include>-->
+<!--  </coverage>-->
   <testsuites>
     <testsuite name="construct">
       <file>tests/ConstructTest.php</file>
