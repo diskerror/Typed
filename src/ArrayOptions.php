@@ -14,7 +14,7 @@ namespace Diskerror\Typed;
  *
  * @package Diskerror\Typed
  */
-final class ArrayOptions extends Options
+class ArrayOptions extends Options
 {
 	/**
 	 * Omit empty properties from the array that is output.
