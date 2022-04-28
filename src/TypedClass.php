@@ -207,6 +207,16 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
+	 * Return array of sudo public property names.
+	 *
+	 * @return array
+	 */
+	protected final function _getDefaults()
+	{
+		return $this->_defaultValues;
+	}
+
+	/**
 	 * Required method for Countable.
 	 *
 	 * @return int
