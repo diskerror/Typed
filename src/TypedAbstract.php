@@ -36,6 +36,13 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 */
 	protected $toJsonOptions;
 
+	/**
+	 * Holds list of option instances to be made read-only accessible.
+	 *
+	 * @var array
+	 */
+	protected $_optionList;
+
 
 	/**
 	 * Assign.
@@ -74,26 +81,14 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 */
 	protected function _initToArrayOptions()
 	{
+		$this->_optionList = ['toArrayOptions', 'toJsonOptions'];
+
 		$this->toArrayOptions = new ArrayOptions(
 			ArrayOptions::OMIT_RESOURCE | ArrayOptions::DATE_OBJECT_TO_STRING
 		);
 		$this->toJsonOptions  = new JsonOptions(
 			JsonOptions::OMIT_EMPTY | JsonOptions::KEEP_JSON_EXPR
 		);
-	}
-
-	/**
-	 * @param string $name
-	 * @return bool
-	 */
-	static protected function _isArrayOption(string $name): bool
-	{
-		switch ($name) {
-			case 'toArrayOptions':
-			case 'toJsonOptions':
-				return true;
-		}
-		return false;
 	}
 
 	/**

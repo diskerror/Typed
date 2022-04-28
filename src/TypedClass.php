@@ -125,8 +125,15 @@ abstract class TypedClass extends TypedAbstract
 
 		//	Build array of default values with converted types.
 		//	First, get all class properties then remove elements with names starting with underscore, except "_id".
+		$prClass = get_parent_class($this->_calledClass);
+		while (substr($prClass, -10) !== 'TypedClass') {
+			//	We're looking for Typed\TypedClass or TypedBSON\TypedClass.
+			$prClass = get_parent_class($prClass);
+		}
+
 		$this->_defaultValues =
-			array_diff_key(get_class_vars($this->_calledClass), get_class_vars(__CLASS__));
+			array_diff_key(get_class_vars($this->_calledClass), get_class_vars($prClass));
+
 		foreach ($this->_defaultValues as $k => &$v) {
 			switch (gettype($v)) {
 				case 'null':
@@ -359,7 +366,6 @@ abstract class TypedClass extends TypedAbstract
 			switch (gettype($v)) {
 				case 'resource':
 					continue 2;
-					break;
 
 				case 'object':
 					switch (true) {
@@ -372,7 +378,7 @@ abstract class TypedClass extends TypedAbstract
 							break;
 
 						case $v instanceof DateTimeInterface && !($v instanceof Date):
-							$v = $v->format(DateTime::ATOM); // always this format for JSON
+							$v = $v->format('Y-m-d\TH:i:sP'); // always this format for JSON
 							break;
 
 						case $keepJsonExpr && $v instanceof $ZJE:
@@ -471,7 +477,7 @@ abstract class TypedClass extends TypedAbstract
 	public function __get(string $pName)
 	{
 		//	Allow handling of array option object.
-		if ($this->_isArrayOption($pName)) {
+		if (in_array($pName, $this->_optionList)) {
 			return $this->$pName;
 		}
 

@@ -132,7 +132,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function __get(string $k)
 	{
 		//	Allow reading of array option object.
-		if (self::_isArrayOption($k)) {
+		if (in_array($k, $this->_optionList)) {
 			return $this->$k;
 		}
 		return null;
