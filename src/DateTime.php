@@ -21,7 +21,7 @@ class DateTime extends DT implements JsonSerializable
 	/**
 	 * Default MySQL datetime format.
 	 */
-	public const MYSQL_STRING_IO_FORMAT = 'Y-m-d H:i:s';
+	public const MYSQL_STRING_IO_FORMAT       = 'Y-m-d H:i:s';
 	public const MYSQL_STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
 
 	/**
@@ -104,8 +104,8 @@ class DateTime extends DT implements JsonSerializable
 	 *      "month" and "mon" and will cause confusion here.
 	 *
 	 * @param object|array|int $year
-	 * @param int              $month -DEFAULT 1
-	 * @param int              $day   -DEFAULT 1
+	 * @param int $month -DEFAULT 1
+	 * @param int $day -DEFAULT 1
 	 */
 	public function setDate($year, $month = 1, $day = 1)
 	{
@@ -162,9 +162,9 @@ class DateTime extends DT implements JsonSerializable
 	 * Requires one object, one associative array, or 4 integer parameters.
 	 *
 	 * @param object|array|int $hour
-	 * @param int              $minute
-	 * @param int              $second
-	 * @param int              $mcs Microseconds
+	 * @param int $minute
+	 * @param int $second
+	 * @param int $mcs Microseconds
 	 */
 	public function setTime($hour, $minute = 0, $second = 0, $mcs = 0)
 	{
@@ -261,6 +261,6 @@ class DateTime extends DT implements JsonSerializable
 	 */
 	public function jsonSerialize(): string
 	{
-		return $this->format(self::RFC3339_EXTENDED);
+		return $this->format('Y-m-d\TH:i:s.vP');
 	}
 }

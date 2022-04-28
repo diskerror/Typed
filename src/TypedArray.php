@@ -317,7 +317,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		return $output;
 	}
 
-	final private static function _removeEmpty(&$arr): void
+	private static function _removeEmpty(&$arr): void
 	{
 		//	Is this an indexed array (not associative)?
 		$isIndexed = (array_values($arr) === $arr);

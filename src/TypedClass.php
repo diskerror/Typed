@@ -300,11 +300,11 @@ abstract class TypedClass extends TypedAbstract
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
-			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
-
 			if ($omitDefaults && $this->$k == $this->_defaultValues[$k]) {
 				continue;
 			}
+
+			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
 
 			switch (gettype($v)) {
 				case 'resource':
@@ -357,11 +357,11 @@ abstract class TypedClass extends TypedAbstract
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
-			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
-
 			if ($omitDefaults && $this->$k == $this->_defaultValues[$k]) {
 				continue;
 			}
+
+			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
 
 			switch (gettype($v)) {
 				case 'resource':
@@ -377,16 +377,12 @@ abstract class TypedClass extends TypedAbstract
 							$v = $v->toArray();
 							break;
 
-						case $v instanceof DateTimeInterface && !($v instanceof Date):
-							$v = $v->format('Y-m-d\TH:i:sP'); // always this format for JSON
-							break;
-
 						case $keepJsonExpr && $v instanceof $ZJE:
 							// return as \Laminas\Json\Expr
 							break;
 
 						case $objectsToString && method_exists($v, '__toString'):
-							$v = $v->__toString();    //	For Date object "Y-m-d"
+							$v = $v->__toString();
 							break;
 
 						default:
@@ -449,7 +445,7 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 
-	protected final function _massageInput(&$in): void
+	protected function _massageInput(&$in): void
 	{
 		parent::_massageInput($in);
 
