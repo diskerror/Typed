@@ -210,6 +210,26 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		}
 	}
 
+	public function setArrayOptionsToNested(): void
+	{
+		if (is_a($this->_type, TypedAbstract::class, true)) {
+			foreach ($this->_container as $v) {
+				$v->toArrayOptions->set($this->toArrayOptions->get());
+				$v->setArrayOptionsToNested();
+			}
+		}
+	}
+
+	public function setJsonOptionsToNested(): void
+	{
+		if (is_a($this->_type, TypedAbstract::class, true)) {
+			foreach ($this->_container as $v) {
+				$v->toJsonOptions->set($this->toJsonOptions->get());
+				$v->setJsonOptionsToNested();
+			}
+		}
+	}
+
 	/**
 	 * Returns an array with all members checked for a "toArray" method so
 	 * that any member of type "Typed" will also be returned.
@@ -295,7 +315,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		}
 		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v->format('Y-m-d\TH:i:sP'); // explicit for 7.1 compatibility
+				$output[$k] = $v->format(DateTimeInterface::ATOM);
 			}
 		}
 		elseif (method_exists($this->_type, '__toString')) {
@@ -317,7 +337,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		return $output;
 	}
 
-	private static function _removeEmpty(&$arr): void
+	protected static function _removeEmpty(&$arr): void
 	{
 		//	Is this an indexed array (not associative)?
 		$isIndexed = (array_values($arr) === $arr);

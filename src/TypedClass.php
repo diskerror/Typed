@@ -294,6 +294,25 @@ abstract class TypedClass extends TypedAbstract
 
 		return $clone;
 	}
+	public function setArrayOptionsToNested(): void
+	{
+		foreach ($this->_publicNames as $k) {
+			if($this->$k instanceof TypedAbstract){
+				$this->$k->toArrayOptions->set($this->toArrayOptions->get());
+				$this->$k->setArrayOptionsToNested();
+			}
+		}
+	}
+
+	public function setJsonOptionsToNested(): void
+	{
+		foreach ($this->_publicNames as $k) {
+			if ($this->$k instanceof TypedAbstract) {
+				$this->$k->toJsonOptions->set($this->toJsonOptions->get());
+				$this->$k->setJsonOptionsToNested();
+			}
+		}
+	}
 
 	/**
 	 * Returns an array representation of the data contents of the object.
@@ -310,21 +329,19 @@ abstract class TypedClass extends TypedAbstract
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
-			if ($omitDefaults && $this->$k == $this->_defaultValues[$k]) {
+			$v = $this->$k;
+
+			if ($omitDefaults && $v == $this->_defaultValues[$k]) {
 				continue;
 			}
 
-			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
-
 			switch (gettype($v)) {
-				case 'resource':
-					if ($omitResources) {
-						continue 2;
-					}
-					break;
-
 				case 'object':
 					switch (true) {
+						case $v instanceof AtomicInterface:
+							$v = $v->get();
+							break;
+
 						case method_exists($v, 'toArray'):
 							$v = $v->toArray();
 							break;
@@ -337,8 +354,12 @@ abstract class TypedClass extends TypedAbstract
 						case $objectsToString && method_exists($v, '__toString'):
 							$v = $v->__toString();
 							break;
+					}
+					break;
 
-						default:
+				case 'resource':
+					if ($omitResources) {
+						continue 2;
 					}
 					break;
 
@@ -347,6 +368,7 @@ abstract class TypedClass extends TypedAbstract
 					// Just copy it.
 			}
 
+			//	Testing for empty must happen after nested objects have been reduced.
 			if ($omitEmpty && self::_isEmpty($v)) {
 				continue;
 			}
@@ -367,18 +389,19 @@ abstract class TypedClass extends TypedAbstract
 
 		$arr = [];
 		foreach ($this->_publicNames as $k) {
-			if ($omitDefaults && $this->$k == $this->_defaultValues[$k]) {
+			$v = $this->$k;
+
+			if ($omitDefaults && $v == $this->_defaultValues[$k]) {
 				continue;
 			}
 
-			$v = $this->_getByName($k);    //  AtomicInterface objects are returned as scalars.
-
 			switch (gettype($v)) {
-				case 'resource':
-					continue 2;
-
 				case 'object':
 					switch (true) {
+						case $v instanceof AtomicInterface:
+							$v = $v->get();
+							break;
+
 						case method_exists($v, 'jsonSerialize'):
 							$v = $v->jsonSerialize();
 							break;
@@ -398,6 +421,9 @@ abstract class TypedClass extends TypedAbstract
 						default:
 					}
 					break;
+
+				case 'resource':
+					continue 2;
 
 				//	nulls, bools, ints, floats, strings, and arrays
 				default:

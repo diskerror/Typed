@@ -91,6 +91,10 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 		);
 	}
 
+	abstract public function setArrayOptionsToNested(): void;
+
+	abstract public function setJsonOptionsToNested(): void;
+
 	/**
 	 * Check if the input data is good or needs to be massaged.
 	 *
