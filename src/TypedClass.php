@@ -346,11 +346,8 @@ abstract class TypedClass extends TypedAbstract
 							$v = $v->toArray();
 							break;
 
-						case $dateToString && $v instanceof DateTimeInterface:
+						case $dateToString && $v instanceof DateTime:
 							// This is without timezone for MySQL.
-							$v = $v->__toString();
-							break;
-
 						case $objectsToString && method_exists($v, '__toString'):
 							$v = $v->__toString();
 							break;
