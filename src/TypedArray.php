@@ -252,21 +252,11 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				$output[$k] = $v->toArray();
 			}
 		}
-		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
-			if ($this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING)) {
-				foreach ($this->_container as $k => $v) {
-					$output[$k] = $v->__toString();
-				}
-			}
-			else {
-				foreach ($this->_container as $k => $v) {
-					$output[$k] = $v;
-				}
-			}
-		}
 		elseif (
-			$this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING) &&
-			method_exists($this->_type, '__toString')
+			($this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING) &&
+			 is_a($this->_type, DateTime::class, true)) ||
+			($this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING) &&
+			 method_exists($this->_type, '__toString'))
 		) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->__toString();
@@ -318,7 +308,10 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				$output[$k] = $v->format(DateTimeInterface::ATOM);
 			}
 		}
-		elseif (method_exists($this->_type, '__toString')) {
+		elseif (
+			$this->toJsonOptions->has(JsonOptions::ALL_OBJECTS_TO_STRING) &&
+			method_exists($this->_type, '__toString')
+		) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->__toString();
 			}

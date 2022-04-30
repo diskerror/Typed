@@ -243,9 +243,16 @@ abstract class TypedClass extends TypedAbstract
 	{
 		$this->_massageInput($in);
 
-		$propertiesSet = [];
+		$pChecklist = $this->getPublicNames();
 		foreach ($in as $k => $v) {
 			$this->_setByName($this->_getMappedName($k), $v);
+			if (($k = array_search($v, $pChecklist)) !== false) {
+				unset($pChecklist[$k]);
+			}
+		}
+
+		foreach ($pChecklist as $pName) {
+			$this->_setByName($k, null);
 		}
 
 		$this->_checkRelatedProperties();
@@ -297,7 +304,7 @@ abstract class TypedClass extends TypedAbstract
 	public function setArrayOptionsToNested(): void
 	{
 		foreach ($this->_publicNames as $k) {
-			if($this->$k instanceof TypedAbstract){
+			if ($this->$k instanceof TypedAbstract) {
 				$this->$k->toArrayOptions->set($this->toArrayOptions->get());
 				$this->$k->setArrayOptionsToNested();
 			}
@@ -346,11 +353,8 @@ abstract class TypedClass extends TypedAbstract
 							$v = $v->toArray();
 							break;
 
-						case $dateToString && $v instanceof DateTimeInterface:
+						case $dateToString && $v instanceof DateTime:
 							// This is without timezone for MySQL.
-							$v = $v->__toString();
-							break;
-
 						case $objectsToString && method_exists($v, '__toString'):
 							$v = $v->__toString();
 							break;

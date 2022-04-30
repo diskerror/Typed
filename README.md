@@ -1,7 +1,7 @@
 # Typed
 PHP classes to strictly define member structure, to control their data types, and to add convenience methods. The master branch is considered to be in constant development. Once stability is achieved it is then tagged.
 
-This branch, named *php73* will never go beyond tag version 0.8. The master branch continues by integrating type declaration ability of PHP 7.4 and upward.
+This branch, named *php73* will never go beyond tag version 0.8. There will be bug fixes. The master branch continues by integrating type declaration ability of PHP 7.4 and upward.
 
 ## TypedAbstract
 This declares the convenience methods that are to be implemented in the classes below.
