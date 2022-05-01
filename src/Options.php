@@ -36,6 +36,14 @@ class Options
 	}
 
 	/**
+	 * @param int $opts
+	 */
+	public function add(int $opts)
+	{
+		$this->_options |= $opts;
+	}
+
+	/**
 	 * @param int $opt
 	 *
 	 * @return bool
