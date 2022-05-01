@@ -55,13 +55,6 @@ abstract class TypedClass extends TypedAbstract
 	protected $_map = [];
 
 	/**
-	 * Holds the name of the name of the child class for method_exists and property_exists.
-	 *
-	 * @var string
-	 */
-	private $_calledClass;
-
-	/**
 	 * Holds the default values of the called class to-be-public properties in associative array.
 	 *
 	 * @var array
@@ -121,18 +114,18 @@ abstract class TypedClass extends TypedAbstract
 
 	protected function _initMetaData()
 	{
-		$this->_calledClass = get_called_class();
+		$calledClass = get_called_class();
 
 		//	Build array of default values with converted types.
 		//	First, get all class properties then remove elements with names starting with underscore, except "_id".
-		$prClass = get_parent_class($this->_calledClass);
+		$prClass = get_parent_class($calledClass);
 		while (substr($prClass, -10) !== 'TypedClass') {
 			//	We're looking for Typed\TypedClass or TypedBSON\TypedClass.
 			$prClass = get_parent_class($prClass);
 		}
 
 		$this->_defaultValues =
-			array_diff_key(get_class_vars($this->_calledClass), get_class_vars($prClass));
+			array_diff_key(get_class_vars($calledClass), get_class_vars($prClass));
 
 		foreach ($this->_defaultValues as $k => &$v) {
 			switch (gettype($v)) {
