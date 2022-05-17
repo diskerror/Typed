@@ -31,7 +31,7 @@ class User extends TypedClass
 
 	protected function _initializeObjects()
 	{
-		$this->created_at = new DateTime('2018-07-18 17:10:28', new DateTimeZone('UTC'));
+		$this->created_at = new DateTime('2018-07-18 17:10:28');
 	}
 
 }

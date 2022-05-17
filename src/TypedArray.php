@@ -46,7 +46,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * If a derived class is instantiated then the data type must be contained in
 	 * the class, ie. "protected $_type = 'integer';", and $param1 can be the initial data.
 	 *
-	 * @param mixed $param1 OPTIONAL ""
+	 * @param mixed $param1 OPTIONAL null
 	 * @param array|object|null $param2 OPTIONAL null
 	 *
 	 * @throws InvalidArgumentException
@@ -57,15 +57,19 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 
 		if (get_called_class() === self::class) {
 			$this->_type = is_string($param1) ? $param1 : '';
-			$this->replace($param2);
+			$param1      = $param2;
 		}
 		else {
+			if (!isset($this->_type)) {
+				throw new InvalidArgumentException('$this->_type must be set in child class.');
+			}
+
 			if (null !== $param2) {
 				throw new InvalidArgumentException('Only the first parameter can be set when using a derived class.');
 			}
-
-			$this->replace($param1);
 		}
+
+		$this->replace($param1);
 	}
 
 	/**
@@ -147,67 +151,45 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	}
 
 	/**
-	 * Get string representation of object.
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.serialize
-	 * @return ?array the string representation of the object or null
+	 * @return void
 	 */
-	public function __serialize(): ?array
+	public function setArrayOptionsToNested(): void
 	{
-		$ret               = parent::__serialize();
-		$ret['_type']      = $this->_type;
-		$ret['_container'] = $this->_container;
-		return $ret;
+		if (is_a($this->_type, TypedAbstract::class, true)) {
+			foreach ($this->_container as $v) {
+				$v->toArrayOptions->set($this->toArrayOptions->get());
+				$v->setArrayOptionsToNested();
+			}
+		}
 	}
 
 	/**
-	 * Constructs the object
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
-	 *
-	 * @param array $data
-	 *
 	 * @return void
 	 */
-	public function __unserialize(array $data): void
+	public function setJsonOptionsToNested(): void
 	{
-		parent::__unserialize($data);
-		$this->_type      = $data['_type'];
-		$this->_container = $data['_container'];
+		if (is_a($this->_type, TypedAbstract::class, true)) {
+			foreach ($this->_container as $v) {
+				$v->toJsonOptions->set($this->toJsonOptions->get());
+				$v->setJsonOptionsToNested();
+			}
+		}
 	}
 
 	/**
 	 * Returns an array with all members checked for a "toArray" method so
 	 * that any member of type "Typed" will also be returned.
-	 * Use "__get" and "__set", or $var[$member] to access individual names.
-	 *
-	 * @param ArrayOptions $arrayOptions
+	 * Use $arr[$member] to access individual names.
 	 *
 	 * @return array
 	 */
-	protected function _toArray(ArrayOptions $arrayOptions): array
+	public function toArray(): array
 	{
 		$output = [];
 
-		//	TODO: check special case for empty type
-		if ($this->_type === '' || self::_isNonObject($this->_type)) {
-			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v;
-			}
-		}
-		elseif (is_a($this->_type, AtomicInterface::class, true)) {
+		if (is_a($this->_type, AtomicInterface::class, true)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->get();
-			}
-		}
-		elseif (is_a($this->_type, TypedAbstract::class, true)) {
-			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v->_toArray($arrayOptions);    //	can this happen? no...?
-			}
-		}
-		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
-			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v->format(DateTime::MYSQL_STRING_IO_FORMAT_MICRO);
 			}
 		}
 		elseif (method_exists($this->_type, 'toArray')) {
@@ -215,36 +197,118 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				$output[$k] = $v->toArray();
 			}
 		}
-		elseif (method_exists($this->_type, '__toString')) {
+		elseif (
+			($this->toArrayOptions->has(ArrayOptions::DATE_OBJECT_TO_STRING) &&
+			 is_a($this->_type, DateTime::class, true)) ||
+			($this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING) &&
+			 method_exists($this->_type, '__toString'))
+		) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->__toString();
 			}
 		}
-		else {
+		elseif (!self::_isAssignable($this->_type)) {
 			//	else this is an array of some generic objects
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = (array) $v;
 			}
 		}
-
-		if ($arrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
-			//	Is this an indexed array (not associative)?
-			$isIndexed = (array_values($output) === $output);
-
-			//	Remove empty items.
-			foreach ($output as $k => $v) {
-				if (empty($v)) {
-					unset($output[$k]);
-				}
-			}
-
-			//	If it's an indexed array then fix the indexes.
-			if ($isIndexed) {
-				$output = array_values($output);
+		else {
+			//	else this is an array of some generic objects
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v;
 			}
 		}
 
+		if ($this->toArrayOptions->has(ArrayOptions::OMIT_EMPTY)) {
+			self::_removeEmpty($output);
+		}
+
 		return $output;
+	}
+
+	/**
+	 * JsonSerializable::jsonSerialize()
+	 *
+	 * Called automatically when object is passed to json_encode().
+	 *
+	 * @return array
+	 */
+	public function jsonSerialize(): array
+	{
+		$output = [];
+
+		if (is_a($this->_type, AtomicInterface::class, true)) {
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->get();
+			}
+		}
+		elseif (method_exists($this->_type, 'jsonSerialize')) {
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->jsonSerialize();
+			}
+		}
+		elseif (method_exists($this->_type, 'toArray')) {
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->toArray();
+			}
+		}
+		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->format(DateTimeInterface::ATOM);
+			}
+		}
+		elseif (!(self::_isAssignable($this->_type) || '' === $this->_type)) {
+			if (
+				$this->toJsonOptions->has(JsonOptions::ALL_OBJECTS_TO_STRING) &&
+				method_exists($this->_type, '__toString')
+			) {
+				foreach ($this->_container as $k => $v) {
+					$output[$k] = $v->__toString();
+				}
+			}
+			else {
+				//	else this is an array of some generic objects
+				foreach ($this->_container as $k => $v) {
+					$output[$k] = (array) $v;
+				}
+			}
+		}
+		else {
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v;
+			}
+		}
+
+		if ($this->toJsonOptions->has(JsonOptions::OMIT_EMPTY)) {
+			self::_removeEmpty($output);
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Removes empty items from referenced array.
+	 *
+	 * @param array $arr
+	 * @return void
+	 */
+	protected static function _removeEmpty(array &$arr): void
+	{
+		//	Is this an indexed array (not associative)?
+		$isIndexed = (array_values($arr) === $arr);
+
+		//	Remove empty items.
+		foreach ($arr as $k => $v) {
+			if (self::_isEmpty($v)) {
+				unset($arr[$k]);
+			}
+		}
+
+		//	If it's an indexed array then fix the indexes.
+		if ($isIndexed) {
+			$arr = array_values($arr);
+		}
 	}
 
 	/**
@@ -283,7 +347,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 */
 	public function offsetExists($offset): bool
 	{
-		return array_key_exists($offset, $this->_container);
+		return $offset !== '' && $offset !== null && array_key_exists($offset, $this->_container);
 	}
 
 	/**
@@ -349,7 +413,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	public function offsetSet($k, $v): void
 	{
 		if (self::_setBasicTypeAndConfirm($v, $this->_type)) {
-			$this->_offsetSet($k, $v);
+			$this->_container[$k] = $v;
 			return;
 		}
 
@@ -382,6 +446,11 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		$this->_offsetSet($k, new $this->_type($v));
 	}
 
+	/**
+	 * @param $k
+	 * @param $v
+	 * @return void
+	 */
 	private function _offsetSet($k, $v)
 	{
 		if (null === $k) {
@@ -415,7 +484,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				}
 			}
 		}
-		elseif (!self::_isNonObject($this->_type)) {
+		elseif (!self::_isAssignable($this->_type)) {
 			// If not assignable then these must all already be objects.
 			foreach ($this->_container as &$v) {
 				$v = clone $v;

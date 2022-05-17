@@ -2,11 +2,7 @@
 
 namespace TestClasses;
 
-use TestClasses\Config\Caches;
-use TestClasses\Config\Mongo;
-use TestClasses\Config\Process;
-use TestClasses\Config\Twitter;
-use TestClasses\Config\WordStats;
+use TestClasses\Config\{Caches, Mongo, Process, Twitter, WordStats};
 use Diskerror\Typed\Scalar\TString;
 use Diskerror\Typed\TypedClass;
 

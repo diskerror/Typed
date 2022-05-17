@@ -66,38 +66,38 @@
 	"caches": {
 		"index": {
 			"front": {
-				"lifetime": null,
+				"lifetime": 600,
 				"adapter": "data"
 			},
 			"back": {
-				"directory": "",
-				"prefix": "",
+				"directory": "\/run\/shm\/twitter_digester\/",
+				"prefix": "index",
 				"frontend": null,
-				"adapter": ""
+				"adapter": "file"
 			}
 		},
 		"tag_cloud": {
 			"front": {
-				"lifetime": null,
+				"lifetime": 2,
 				"adapter": "data"
 			},
 			"back": {
-				"directory": "",
-				"prefix": "",
+				"directory": "\/run\/shm\/twitter_digester\/",
+				"prefix": "tag_cloud",
 				"frontend": null,
-				"adapter": ""
+				"adapter": "file"
 			}
 		},
 		"summary": {
 			"front": {
-				"lifetime": null,
+				"lifetime": 6,
 				"adapter": "data"
 			},
 			"back": {
-				"directory": "",
-				"prefix": "",
+				"directory": "\/run\/shm\/twitter_digester\/",
+				"prefix": "summary",
 				"frontend": null,
-				"adapter": ""
+				"adapter": "file"
 			}
 		}
 	}

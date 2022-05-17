@@ -13,20 +13,15 @@ use Diskerror\Typed\ScalarAbstract;
 
 class TFloat extends ScalarAbstract
 {
-	public function set($in)
+	public function set($in): void
 	{
 		$in = self::_castIfObject($in);
 
 		switch (gettype($in)) {
-			case 'null':
-			case 'NULL':
-				$this->unset();
-				break;
-
 			case 'string':
 				$in = trim(strtolower($in), "\x00..\x20\x7F");
 				if ($in === '' || $in === 'null' || $in === 'nan') {
-					$this->unset();
+					$this->_value = $this->_allowNull ? null : 0.0;
 					break;
 				}
 
@@ -47,7 +42,14 @@ class TFloat extends ScalarAbstract
 				elseif ($comaPos !== false) {
 					$in = str_replace(',', '.', $in);
 				}
-			//	fall through
+
+				$this->_value = (float) $in;
+				break;
+
+			case 'null':
+			case 'NULL':
+				$this->_value = $this->_allowNull ? null : 0.0;
+				break;
 
 			default:
 				$this->_value = (float) $in;

@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        Diskerror\Typed\ScalarAbstract
+ * @name        ScalarAbstract
  * @copyright   Copyright (c) 2018 Reid Woodbury Jr
  * @license     http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -17,6 +17,8 @@ namespace Diskerror\Typed;
  */
 abstract class ScalarAbstract implements AtomicInterface
 {
+	use SetTypeTrait;
+
 	/**
 	 * Stores the scalar value.
 	 *
@@ -29,30 +31,23 @@ abstract class ScalarAbstract implements AtomicInterface
 	 *
 	 * @var bool
 	 */
-	private $_allowNull;
-
-	/**
-	 * @var mixed
-	 */
-	private $_defaultValue;
+	protected bool $_allowNull;
 
 	/**
 	 * ScalarAbstract constructor.
 	 *
-	 * @param mixed $in A default of an empty string will cast to false or zero as needed.
+	 * @param mixed $in A initValue of an empty string will cast to false or zero as needed.
 	 * @param bool $allowNull
 	 */
 	public function __construct($in = '', bool $allowNull = false)
 	{
 		$this->_allowNull = $allowNull;
 
-		if ($allowNull && null === $in) {
-			$this->_value        = null;
-			$this->_defaultValue = null;
+		if ($in instanceof AtomicInterface) {
+			$this->set($in->get());
 		}
 		else {
 			$this->set($in);
-			$this->_defaultValue = $this->_value;
 		}
 	}
 
@@ -67,7 +62,7 @@ abstract class ScalarAbstract implements AtomicInterface
 	/**
 	 * Filters the value before setting.
 	 */
-	abstract public function set($in);
+	abstract public function set($in): void;
 
 	/**
 	 * Returns true if value is not null.
@@ -78,11 +73,11 @@ abstract class ScalarAbstract implements AtomicInterface
 	}
 
 	/**
-	 * Sets a null or the default value.
+	 * Sets a null or empty value.
 	 */
-	public function unset()
+	public function unset(): void
 	{
-		$this->_value = $this->_allowNull ? null : $this->_defaultValue;
+		$this->_value = $this->_allowNull ? null : self::setType('', gettype($this->_value));
 	}
 
 	/**
@@ -92,9 +87,10 @@ abstract class ScalarAbstract implements AtomicInterface
 	 */
 	protected static function _castIfObject($in)
 	{
+		//	This could be any type
 		if (is_object($in)) {
 			switch (true) {
-				case is_a($in, AtomicInterface::class):
+				case $in instanceof AtomicInterface:
 					return $in->get();
 
 				case method_exists($in, '__toString'):
@@ -105,13 +101,11 @@ abstract class ScalarAbstract implements AtomicInterface
 
 				case method_exists($in, 'toArray'):
 					return $in->toArray();
-
-				default:
-					return (array) $in;
 			}
+
+			return (array) $in;
 		}
-		else {
-			return $in;
-		}
+
+		return $in;
 	}
 }

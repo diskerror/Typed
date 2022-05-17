@@ -1,11 +1,12 @@
 <?php
+/** @noinspection ALL */
+/** @noinspection ALL */
+/** @noinspection ALL */
 
 namespace TestClasses\Preferences;
 
 use Diskerror\Typed\TypedClass;
-use TestClasses\Preferences\Item\Compare;
-use TestClasses\Preferences\Item\Operator;
-use TestClasses\Preferences\Item\Sort;
+use TestClasses\Preferences\Item\{Compare, Operator, Sort};
 
 class Item extends TypedClass
 {

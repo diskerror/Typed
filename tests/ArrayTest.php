@@ -1,17 +1,14 @@
 <?php
 
-use Diskerror\Typed\Scalar\TString;
 use Diskerror\Typed\TypedArray;
+use PHPUnit\Framework\TestCase;
 
-class ArrayTest extends PHPUnit\Framework\TestCase
+class ArrayTest extends TestCase
 {
-	/**
-	 * @expectedException	PHPUnit\Framework\Error\Warning
-	 */
 	public function testWalk()
 	{
-		$walk = new TypedArray(TString::class, ['1', 2, '3', 'z', 5]);
-//		jsonPrint($walk->toArray());exit;
+		$walk = new TypedArray('string', ['1', 2, '3', 'z', 5]);
+//		tprint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array1.json',
 			json_encode($walk->toArray()),
@@ -19,9 +16,9 @@ class ArrayTest extends PHPUnit\Framework\TestCase
 		);
 
 		foreach ($walk as &$w) {
-			$w = ((integer) $w) * 2;
+			$w = (integer) $w * 2;
 		}
-//		jsonPrint($walk->toArray());exit;
+//		tprint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array2.json',
 			json_encode($walk->toArray()),
@@ -31,7 +28,7 @@ class ArrayTest extends PHPUnit\Framework\TestCase
 		foreach ($walk as &$w) {
 			$w = [$w, "elephant"];
 		}
-//		jsonPrint($walk->toArray());exit;
+//		tprint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array3.json',
 			json_encode($walk->toArray()),

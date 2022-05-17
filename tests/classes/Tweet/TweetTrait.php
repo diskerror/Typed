@@ -10,7 +10,7 @@ trait TweetTrait
 {
 
 	protected DateTime         $created_at;
-	protected string          $contributors              = '';
+	protected string           $contributors              = '';
 	protected Entity           $entities;
 	protected ExtendedEntities $extended_entities;
 	protected int              $favorite_count            = 0;

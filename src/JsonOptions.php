@@ -24,17 +24,12 @@ class JsonOptions extends Options
 	const OMIT_EMPTY = 1;
 
 	/**
-	 * Omit properties that match their default values.
-	 */
-	const OMIT_DEFAULTS = 2;
-
-	/**
 	 * Convert all other objects to string, if possible.
 	 */
-	const ALL_OBJECTS_TO_STRING = 4;
+	const ALL_OBJECTS_TO_STRING = 2;
 
 	/**
 	 * For Zend JSON encoding to JSON, these objects contain strings that should not be quoted.
 	 */
-	const KEEP_JSON_EXPR = 8;
+	const KEEP_JSON_EXPR = 4;
 }

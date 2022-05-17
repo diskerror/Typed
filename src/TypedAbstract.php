@@ -9,7 +9,6 @@
 
 namespace Diskerror\Typed;
 
-use BadMethodCallException;
 use Countable;
 use InvalidArgumentException;
 use IteratorAggregate;
@@ -17,39 +16,39 @@ use JsonSerializable;
 
 /**
  * Class TypedAbstract
- * Provides common interface TypedClass and TypedArray.
+ * Provides common interface and core methods for TypedClass and TypedArray.
  *
  * @package Diskerror\Typed
  */
 abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerializable
 {
 	/**
-	 * Holds options for "_toArray" conversion.
+	 * Holds options for "toArray" conversion.
 	 *
 	 * @var ArrayOptions
 	 */
-	public ArrayOptions $toArrayOptions;
+	protected ArrayOptions $toArrayOptions;
 
 	/**
-	 * Holds options for "_toArray" conversion when used by serialize().
+	 * Holds options for "jsonSerialize" customizations.
 	 *
-	 * @var ArrayOptions
+	 * @var JsonOptions
 	 */
-	public ArrayOptions $serializeOptions;
+	protected JsonOptions $toJsonOptions;
 
 	/**
-	 * Holds options for "_toArray" conversion when used by json_encode().
+	 * Holds list of option instance names to be made read-only accessible.
 	 *
-	 * @var ArrayOptions
+	 * @var array
 	 */
-	public ArrayOptions $toJsonOptions;
+	protected array $_optionList;
 
 
 	/**
 	 * Assign.
 	 *
 	 * Assign values from input object. Missing keys are set to their
-	 * default values.
+	 * initValue values.
 	 *
 	 * @param mixed $in
 	 */
@@ -76,25 +75,40 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	abstract public function merge($in): TypedAbstract;
 
 	/**
+	 * Initialize options for when this object is converted to an array or serialized.
+	 *
 	 * @return void
 	 */
 	protected function _initToArrayOptions()
 	{
-		/**
-		 * Initialize options for when this object is converted to an array.
-		 */
-		$this->toArrayOptions   = new ArrayOptions();
-		$this->serializeOptions = new ArrayOptions(ArrayOptions::OMIT_RESOURCES);
-		$this->toJsonOptions    =
-			new ArrayOptions(ArrayOptions::OMIT_RESOURCES | ArrayOptions::KEEP_JSON_EXPR);
+		$this->_optionList = ['toArrayOptions', 'toJsonOptions'];
+
+		$this->toArrayOptions = new ArrayOptions(
+			ArrayOptions::OMIT_RESOURCE | ArrayOptions::DATE_OBJECT_TO_STRING
+		);
+		$this->toJsonOptions  = new JsonOptions(
+			JsonOptions::OMIT_EMPTY | JsonOptions::KEEP_JSON_EXPR
+		);
 	}
+
+	/**
+	 * @return void
+	 */
+	abstract public function setArrayOptionsToNested(): void;
+
+	/**
+	 * @return void
+	 */
+	abstract public function setJsonOptionsToNested(): void;
 
 	/**
 	 * Check if the input data is good or needs to be massaged.
 	 *
 	 * @param $in
+	 *
+	 * @throws InvalidArgumentException
 	 */
-	final protected function _massageInput(&$in): void
+	protected function _massageInput(&$in): void
 	{
 		switch (gettype($in)) {
 			case 'array':
@@ -108,11 +122,11 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 				break;
 
 			case 'string':
-				if ($in === '') {
+				if ('' === $in) {
 					$in = [];
 				}
 				else {
-					$in        = json_decode($in);
+					$in        = json_decode($in, JSON_OBJECT_AS_ARRAY);
 					$lastError = json_last_error();
 					if ($lastError !== JSON_ERROR_NONE) {
 						throw new InvalidArgumentException(
@@ -138,24 +152,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	}
 
 	/**
-	 * Protected and private methods will behave like a friend method as in C++.
-	 *
-	 * @param string $name
-	 * @param array $args
-	 * @return mixed
-	 */
-	public function __call(string $name, array $args)
-	{
-		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-		if (!is_a($bt[1]['class'], TypedAbstract::class, true)) {
-			throw new BadMethodCallException();
-		}
-
-		return $this->$name(...$args);
-	}
-
-
-	/**
 	 * Returns an array with all public, protected, and private properties in
 	 * object that DO NOT begin with an underscore, except "_id". This allows
 	 * protected or private properties to be treated as if they were public.
@@ -164,91 +160,67 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 *
 	 * @return array
 	 */
-	final public function toArray(): array
-	{
-		return $this->_toArray($this->toArrayOptions);
-	}
+	abstract public function toArray(): array;
 
 	/**
-	 * Override to provide the actual toArray code with desired options.
+	 * JsonSerializable::jsonSerialize()
 	 *
-	 * @param ArrayOptions $arrayOptions
+	 * Called automatically when object is passed to json_encode().
 	 *
 	 * @return array
 	 */
-	abstract protected function _toArray(ArrayOptions $arrayOptions): array;
+	abstract public function jsonSerialize(): array;
 
 	/**
-	 * String representation of PHP object.
+	 * Assignable types can be simply assigned, as in $a = $b.
+	 * The remainders would be objects which often need to be cloned.
 	 *
-	 * This serialization, as opposed to JSON or BSON, does not unwrap the
-	 * structured data. It only omits data that is part of the class definition.
-	 *
-	 * @link  https://php.net/manual/en/serializable.serialize.php
-	 * @return ?array the string representation of the object or null
-	 */
-	public function __serialize(): ?array
-	{
-		$ret                     = [];
-		$ret['toArrayOptions']   = $this->toArrayOptions->get();
-		$ret['serializeOptions'] = $this->serializeOptions->get();
-		$ret['toJsonOptions']    = $this->toJsonOptions->get();
-
-		return $ret;
-	}
-
-	/**
-	 * Constructs the object from serialized PHP.
-	 *
-	 * This uses a faster but unsafe restore technique. It assumes that the
-	 * serialized data was created by the local serialize method and was
-	 * safely stored locally. No type checking is performed on restore. All
-	 * data structure members have been serialized so no initialization of
-	 * empty need be done.
-	 *
-	 * @link  https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize
-	 *
-	 * @param array $data
-	 *
-	 * @return void
-	 */
-	public function __unserialize(array $data): void
-	{
-		$this->toArrayOptions   = new ArrayOptions($data['toArrayOptions']);
-		$this->serializeOptions = new ArrayOptions($data['serializeOptions']);
-		$this->toJsonOptions    = new ArrayOptions($data['toJsonOptions']);
-	}
-
-	/**
-	 * Be sure json_encode gets our prepared array.
-	 *
-	 * @return array
-	 */
-	final public function jsonSerialize(): array
-	{
-		return $this->_toArray($this->toJsonOptions);
-	}
-
-	/**
 	 * @param string $type
 	 * @return bool
 	 */
-	final protected static function _isNonObject(string $type): bool
+	final protected static function _isAssignable(string $type): bool
 	{
-		static $assignableTypes;
-		if (!isset($assignableTypes)) {
-			$assignableTypes = [
-				'string',
-				'int', 'integer',
-				'float', 'double', 'real',
-				'numeric',
-				'bool', 'boolean',
-				'null', 'NULL',
-				'array',
-			];
+		if (self::_isScalar($type)) {
+			return true;
 		}
 
-		return in_array($type, $assignableTypes, true);
+		switch ($type) {
+			case 'array':
+			case 'resource':
+			case 'callable':
+				return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Assignable types can be simply assigned, as in $a = $b.
+	 * The remainders would be objects which often need to be cloned.
+	 *
+	 * @param string $type
+	 * @return bool
+	 */
+	final protected static function _isScalar(string $type): bool
+	{
+		switch ($type) {
+			case 'scalar':
+			case 'string':
+			case 'int':
+			case 'integer':
+			case 'long':
+			case 'float':
+			case 'double':
+			case 'real':
+			case 'numeric':
+			case 'bool':
+			case 'boolean':
+			case 'null':
+			case 'NULL':
+				return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -262,6 +234,8 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	{
 		switch ($type) {
 			case '':
+			case 'resource':
+			case 'callable':
 				break;
 
 			case 'string':
@@ -342,5 +316,26 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 				return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Our version of what should be considered empty.
+	 *
+	 * @return bool
+	 */
+	protected static function _isEmpty($v): bool
+	{
+		switch (gettype($v)) {
+			case 'object':
+				return empty((array) $v);
+
+			case 'array':
+				return $v === [];
+
+			case 'string':
+				return $v === '';
+		}
+
+		return empty($v);
 	}
 }

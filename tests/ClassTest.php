@@ -15,11 +15,6 @@ final class ClassTest extends TestCase
 		$this->assertEquals(new DateTime('Feb 1, 2015'), $d->date);
 	}
 
-	/**
-	 * @expectedException            Exception
-	 * @expectedExceptionMessage    DateTime::__construct(): Failed to parse time string (77) at position 0 (7):
-	 *                              Unexpected character
-	 */
 	public function testBadDateValue()
 	{
 		$this->expectException(Exception::class);
@@ -29,10 +24,6 @@ final class ClassTest extends TestCase
 		$d->date = 77;
 	}
 
-//	/**
-//	 * @expectedException            TypeError
-//	 * @expectedExceptionMessage       DateTime::__construct() expects parameter 1 to be string, object given
-//	 */
 //	public function testBadDateClass()
 //	{
 //		$d          = new TypedDate();
@@ -85,7 +76,7 @@ class Nested extends TypedClass
 
 }
 
-class DateRange extends \Diskerror\Typed\TypedClass
+class DateRange extends TypedClass
 {
 	protected DateTime $start;
 

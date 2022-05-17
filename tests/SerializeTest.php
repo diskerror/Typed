@@ -1,10 +1,9 @@
 <?php
 
-require_once __DIR__ . '/bootstrap.php';
-
+use PHPUnit\Framework\TestCase;
 use TestClasses\Tweet;
 
-class SerializeTest extends PHPUnit\Framework\TestCase
+class SerializeTest extends TestCase
 {
 	public function testSerialize()
 	{
@@ -14,8 +13,8 @@ class SerializeTest extends PHPUnit\Framework\TestCase
 
 		$unserialized = unserialize($serialized);
 
-//		jsonPrint($tweet);
-//		jsonPrint($unserialized);
+//		tprint($tweet);
+//		tprint($unserialized);
 
 		$this->assertTrue($tweet == $unserialized);
 		$this->assertFalse($tweet === $unserialized);
@@ -23,9 +22,9 @@ class SerializeTest extends PHPUnit\Framework\TestCase
 
 	public function testNewTweet()
 	{
-		$tweetString = file_get_contents(__DIR__ . '/data/tweet.json');
-		$tweet       = new Tweet($tweetString);
-//		jsonPrint($tweet->toArray());exit;
+		$tweet       = new Tweet();
+		$tweet->replace(file_get_contents(__DIR__ . '/data/tweet.json'));
+//		tprint($tweet);exit();
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetnew.json',
 			json_encode($tweet),
@@ -38,10 +37,10 @@ class SerializeTest extends PHPUnit\Framework\TestCase
 		$tweetString = file_get_contents(__DIR__ . '/data/tweet.json');
 		$tweet       = new Tweet();
 		$tweet->assign($tweetString);
-//		jsonPrint($tweet->toArray());
+//		tprint($tweet);exit();
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetnew.json',
-			json_encode($tweet->toArray()),
+			json_encode($tweet),
 			'Tweet with assigned data.'
 		);
 	}
@@ -51,10 +50,10 @@ class SerializeTest extends PHPUnit\Framework\TestCase
 		$tweetString = file_get_contents(__DIR__ . '/data/tweet2.json');
 		$tweet       = new Tweet();
 		$tweet->replace($tweetString);
-//		jsonPrint($tweet->toArray());
+//		tprint($tweet);
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetreplace.json',
-			json_encode($tweet->toArray()),
+			json_encode($tweet),
 			'Tweet with replacement data.'
 		);
 	}
@@ -62,10 +61,10 @@ class SerializeTest extends PHPUnit\Framework\TestCase
 	public function testDate(){
 		$dt = new \Diskerror\Typed\DateTime(1561431851.34);
 
-//		jsonPrint($dt->__tostring());exit;
+//		tprint($dt->__tostring());exit;
 		$this->assertEquals(
-			'2019-06-25 03:04:11.340000',
-			$dt->format(\Diskerror\Typed\DateTime::MYSQL_STRING_IO_FORMAT_MICRO)
+			$dt->format(\Diskerror\Typed\DateTime::MYSQL_STRING_IO_FORMAT_MICRO),
+			'2019-06-25 03:04:11.340000'
 		);
 	}
 

@@ -21,7 +21,7 @@ class DateTime extends DT implements JsonSerializable
 	/**
 	 * Default MySQL datetime format.
 	 */
-	public const MYSQL_STRING_IO_FORMAT = 'Y-m-d H:i:s';
+	public const MYSQL_STRING_IO_FORMAT       = 'Y-m-d H:i:s';
 	public const MYSQL_STRING_IO_FORMAT_MICRO = 'Y-m-d H:i:s.u';
 
 	/**
@@ -31,17 +31,13 @@ class DateTime extends DT implements JsonSerializable
 	 * See setTime and setDate for more information.
 	 * Timezone is ignored when DateTime object is passed in first param.
 	 *
-	 * @param mixed        $time     -OPTIONAL
+	 * @param mixed $time -OPTIONAL
 	 * @param DateTimeZone $timezone -OPTIONAL
 	 *
 	 * @throws InvalidArgumentException
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
-		if (!($timezone instanceof DateTimeZone)) {
-			$timezone = new DateTimeZone(date_default_timezone_get());
-		}
-
 		switch (gettype($time)) {
 			case 'object':
 				if ($time instanceof DateTimeInterface) {
@@ -63,9 +59,9 @@ class DateTime extends DT implements JsonSerializable
 					parent::__construct('now', $timezone);
 				}
 				//	remove AD extra data
-				elseif (substr($time, -3) === '.0Z') {
-					parent::__construct(substr($time, 0, -3), $timezone);
-				}
+//				elseif (substr($time, -3) === '.0Z') {
+//					parent::__construct(substr($time, 0, -3), $timezone);
+//				}
 				elseif ($time[0] === '@') {
 					//	if this possibly contains fractional seconds, fixed formatting
 					parent::__construct(sprintf('@%f', substr($time, 1)), $timezone);
@@ -104,14 +100,14 @@ class DateTime extends DT implements JsonSerializable
 	 *      "month" and "mon" and will cause confusion here.
 	 *
 	 * @param object|array|int $year
-	 * @param int              $month -DEFAULT 1
-	 * @param int              $day   -DEFAULT 1
+	 * @param int $month -DEFAULT 1
+	 * @param int $day -DEFAULT 1
 	 */
 	public function setDate($year, $month = 1, $day = 1)
 	{
 		switch (gettype($year)) {
 			case 'object':
-				if ($time instanceof DateTimeInterface) {
+				if ($year instanceof DateTimeInterface) {
 					$day   = $year->format('j');
 					$month = $year->format('n');
 					$year  = $year->format('Y');
@@ -162,15 +158,15 @@ class DateTime extends DT implements JsonSerializable
 	 * Requires one object, one associative array, or 4 integer parameters.
 	 *
 	 * @param object|array|int $hour
-	 * @param int              $minute
-	 * @param int              $second
-	 * @param int              $mcs Microseconds
+	 * @param int $minute
+	 * @param int $second
+	 * @param int $mcs Microseconds
 	 */
 	public function setTime($hour, $minute = 0, $second = 0, $mcs = 0)
 	{
 		switch (gettype($hour)) {
 			case 'object':
-				if ($time instanceof DateTimeInterface) {
+				if ($hour instanceof DateTimeInterface) {
 					$second = $hour->format('j');
 					$minute = $hour->format('n');
 					$hour   = $hour->format('Y');
@@ -222,7 +218,7 @@ class DateTime extends DT implements JsonSerializable
 	}
 
 	/**
-	 * Returns MySQL default formatted date-time string.
+	 * Returns MySQL initValue formatted date-time string.
 	 * If a custom formatting is desired use DateTime::format($format).
 	 *
 	 * @return string
@@ -230,7 +226,7 @@ class DateTime extends DT implements JsonSerializable
 	public function __toString()
 	{
 		if ($this->format('u') > 0) {
-			return $this->format(self::MYSQL_STRING_IO_FORMAT_MICRO);
+			return rtrim($this->format(self::MYSQL_STRING_IO_FORMAT_MICRO), '0');
 		}
 
 		return $this->format(self::MYSQL_STRING_IO_FORMAT);
@@ -261,6 +257,6 @@ class DateTime extends DT implements JsonSerializable
 	 */
 	public function jsonSerialize(): string
 	{
-		return $this->format(self::RFC3339_EXTENDED);
+		return $this->format('Y-m-d\TH:i:s.vP');
 	}
 }

@@ -23,11 +23,11 @@ class IndexSort extends TInteger
 		parent::__construct($in, $allowNull);
 	}
 
-	public function set($in)
+	public function set($in): void
 	{
 		parent::set($in);
 
-		$this->_value = $this->_value >= 0 ? 1 : -1;
+		$this->_value = $this->_value > 0 ? 1 : -1;
 	}
 
 }

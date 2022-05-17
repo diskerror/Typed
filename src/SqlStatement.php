@@ -22,10 +22,7 @@ use UnexpectedValueException;
  */
 class SqlStatement
 {
-	/**
-	 * Ya don' need to make an instance of this class to use the static methods.
-	 */
-	protected function __construct()
+	protected final function __construct()
 	{
 	}
 
@@ -41,7 +38,7 @@ class SqlStatement
 	 *
 	 * @return string
 	 */
-	public static function toInsert($input, array $include = [])
+	public static function toInsert($input, array $include = []): string
 	{
 		if (is_object($input)) {
 			if (method_exists($input, 'toArray')) {
@@ -144,7 +141,7 @@ class SqlStatement
 	 *
 	 * @return string
 	 */
-	public static function toValues($input, array $include = [])
+	public static function toValues($input, array $include = []): string
 	{
 		if (!is_array($input) && !is_object($input)) {
 			throw new InvalidArgumentException('input must be an associative array or traversable object');

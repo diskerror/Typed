@@ -2,7 +2,7 @@
 /**
  * Provides support for class members/properties maintain their initial types.
  *
- * @name        Diskerror\Typed\Scalar\TBoolean
+ * @name           TBoolean
  * @copyright      Copyright (c) 2018 Reid Woodbury Jr
  * @license        http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
@@ -13,15 +13,20 @@ use Diskerror\Typed\ScalarAbstract;
 
 class TBoolean extends ScalarAbstract
 {
-	public function set($in)
+	public function set($in): void
 	{
-		$in = self::_castIfObject($in);
+		switch (gettype($in)) {
+			case 'object':
+				$this->_value = (bool) self::_castIfObject($in);
+				break;
 
-		if ($in === null) {
-			$this->unset();
-		}
-		else {
-			$this->_value = is_array($in) ? !empty($in) : (bool) $in;
+			case 'null':
+			case 'NULL':
+				$this->_value = $this->_allowNull ? null : false;
+				break;
+
+			default:
+				$this->_value = (bool) $in;
 		}
 	}
 }

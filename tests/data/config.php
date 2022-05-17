@@ -92,6 +92,45 @@ return [
 		'procDir' => '/proc/'    //	location of actual PID
 	],
 
+	'caches' => [
+		'index'     => [
+			'front' => [
+				'lifetime' => 600,
+				'adapter'  => 'data',
+			],
+			'back'  => [
+				'directory' => '/run/shm/twitter_digester/',
+				'prefix'    => 'index',
+				'frontend'  => null,
+				'adapter'   => 'file',
+			],
+		],
+		'tag_cloud' => [
+			'front' => [
+				'lifetime' => 2,
+				'adapter'  => 'data',
+			],
+			'back'  => [
+				'directory' => '/run/shm/twitter_digester/',
+				'prefix'    => 'tag_cloud',
+				'frontend'  => null,
+				'adapter'   => 'file',
+			],
+		],
+		'summary'   => [
+			'front' => [
+				'lifetime' => 6,
+				'adapter'  => 'data',
+			],
+			'back'  => [
+				'directory' => '/run/shm/twitter_digester/',
+				'prefix'    => 'summary',
+				'frontend'  => null,
+				'adapter'   => 'file',
+			],
+		],
+	],
+
 	'index_cache' => [
 		'front' => [
 			'lifetime' => 600,    //	ten minutes

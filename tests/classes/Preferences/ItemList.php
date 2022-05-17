@@ -8,10 +8,8 @@ class ItemList extends TypedArray
 {
 	protected string $_type = Item::class;
 
-
-
 	/**
-	 * Return new default set of fields with each call.
+	 * Return new initValue set of fields with each call.
 	 *
 	 * @return ItemList
 	 */

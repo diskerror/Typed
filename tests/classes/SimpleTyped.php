@@ -25,10 +25,10 @@ class SimpleTyped extends TypedClass
 {
 	protected array $_map = ['myDouble' => 'myFloat'];
 
-	protected bool       $myBool   = true;
+	protected ?bool      $myBool = true;
 	protected TInteger   $myInt;
 	protected TFloat     $myFloat;
-	protected string     $myString = '';
+	protected string     $myString;
 	protected TypedArray $myArray;
 	protected stdClass   $myObj;
 	protected MyDateTime $myDate;
@@ -49,5 +49,5 @@ class SimpleTyped extends TypedClass
 
 class JRandom extends TypedClass
 {
-	protected $jRandomVar = '';
+	protected $jRandomVar = 0;
 }

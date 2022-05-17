@@ -10,9 +10,9 @@ Object properties with public visibility will only use the built-in PHP type che
 
 ### assign
 
-Child class will copy all matching members by name while maintaining original types and doing a deep copy where appropriate. This method will silently ignore extra properties in the input object, return unset properties in the current class to their default values or null value, if allowed, and will skip names starting with an underscore (per Zend Framework coding style). EXCEPT: the property name "_id" is allowed for use with MongoDB.
+Child class will copy all matching members by name while maintaining original types and doing a deep copy where appropriate. This method will silently ignore extra properties in the input object, return unset properties in the current class to their initValue values or null value, if allowed, and will skip names starting with an underscore (per Zend Framework coding style). EXCEPT: the property name "_id" is allowed for use with MongoDB.
 
-Input can be an object or an array, null, or false. A null or false will set the **TypedAbstract** object to its default values.
+Input can be an object or an array, null, or false. A null or false will set the **TypedAbstract** object to its initValue values.
 
 ### replace
 
@@ -22,19 +22,11 @@ This method is similar to the *assign* method except that unmatched keys from th
 
 This method is similar to *replace* above except that it clones the current object and then replaces matching values with the input values and returns the new **TypedAbstract** object.
 
-### _toArray
-
-This does the actual work converting the current object to an array.
-
 ## Implemented Methods
 
 ### toArray
 
 Returns an associative array of this object with only the appropriate members, according to the *toArrayOptions*setting. A deep copy/conversion to an associative array from objects is also performed.
-
-### __serialize
-
-This method will return an array when *serialize* is called on the object with the minimum data necessary to fully reconstitute our **Diskerror\Typed** object when *unserialize* is called.
 
 ### jsonSerialize
 
@@ -59,7 +51,7 @@ The derivatives of **TypedClass** are contracted to do these things:
     * Copy each field or property item by item.
     * Copy indexed array by position.
     * Map alternate names to proper names.
-    * Reset single property or entire object's members to their default values.
+    * Reset single property or entire object's members to their initValue values.
 
 The users' class properties must be declared as "protected" or "private" for this contract to work. The names for the properties must follow the naming convention that the intended "public" members must not start with an underscore. This borrows from the Zend Framework property naming convention of protected and private property names starting with an underscore.
 
@@ -79,7 +71,7 @@ The instances or derivatives of **TypedArray** are contracted to do these things
 
 # DateTime and Date
 
-These classes add convenience methods to the built-in PHP **DateTime** class. This includes the *__toString* method that returns a date-time string formatted for the default MySQL date-time format.
+These classes add convenience methods to the built-in PHP **DateTime** class. This includes the *__toString* method that returns a date-time string formatted for the initValue MySQL date-time format.
 
 # SqlStatement
 

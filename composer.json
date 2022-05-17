@@ -24,7 +24,6 @@
 		"ext-intl": "*"
 	},
 	"require-dev": {
-		"ext-iconv": "*",
 		"phpunit/phpunit": "~9.5.20",
 		"phpdocumentor/phpdocumentor": "~3.1.2"
 	},
