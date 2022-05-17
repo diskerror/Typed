@@ -38,10 +38,6 @@ class DateTime extends DT implements JsonSerializable
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
-//		if (!($timezone instanceof DateTimeZone)) {
-//			$timezone = new DateTimeZone(date_default_timezone_get());
-//		}
-
 		switch (gettype($time)) {
 			case 'object':
 				if ($time instanceof DateTimeInterface) {
@@ -63,9 +59,9 @@ class DateTime extends DT implements JsonSerializable
 					parent::__construct('now', $timezone);
 				}
 				//	remove AD extra data
-				elseif (substr($time, -3) === '.0Z') {
-					parent::__construct(substr($time, 0, -3), $timezone);
-				}
+//				elseif (substr($time, -3) === '.0Z') {
+//					parent::__construct(substr($time, 0, -3), $timezone);
+//				}
 				elseif ($time[0] === '@') {
 					//	if this possibly contains fractional seconds, fixed formatting
 					parent::__construct(sprintf('@%f', substr($time, 1)), $timezone);
@@ -222,7 +218,7 @@ class DateTime extends DT implements JsonSerializable
 	}
 
 	/**
-	 * Returns MySQL default formatted date-time string.
+	 * Returns MySQL initValue formatted date-time string.
 	 * If a custom formatting is desired use DateTime::format($format).
 	 *
 	 * @return string

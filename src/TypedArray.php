@@ -22,7 +22,7 @@ use Traversable;
 
 /**
  * Provides support for an array's elements to all have the same type.
- * If type is defined as null, then any element can have any type but
+ * If type is defined as null then any element can have any type but
  *      deep copying of objects is always available.
  */
 class TypedArray extends TypedAbstract implements ArrayAccess
@@ -210,6 +210,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		}
 	}
 
+	/**
+	 * @return void
+	 */
 	public function setArrayOptionsToNested(): void
 	{
 		if (is_a($this->_type, TypedAbstract::class, true)) {
@@ -220,6 +223,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		}
 	}
 
+	/**
+	 * @return void
+	 */
 	public function setJsonOptionsToNested(): void
 	{
 		if (is_a($this->_type, TypedAbstract::class, true)) {
@@ -330,7 +336,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		return $output;
 	}
 
-	protected static function _removeEmpty(&$arr): void
+	/**
+	 * Removes empty items from referenced array.
+	 *
+	 * @param array $arr
+	 * @return void
+	 */
+	protected static function _removeEmpty(array &$arr): void
 	{
 		//	Is this an indexed array (not associative)?
 		$isIndexed = (array_values($arr) === $arr);

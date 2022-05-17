@@ -16,7 +16,7 @@ use JsonSerializable;
 
 /**
  * Class TypedAbstract
- * Provides common interface TypedClass and TypedArray.
+ * Provides common interface and core methods for TypedClass and TypedArray.
  *
  * @package Diskerror\Typed
  */
@@ -48,7 +48,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 * Assign.
 	 *
 	 * Assign values from input object. Missing keys are set to their
-	 * default values.
+	 * initValue values.
 	 *
 	 * @param mixed $in
 	 */
@@ -72,7 +72,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 *
 	 * @return TypedAbstract
 	 */
-	abstract public function merge($in);
+	abstract public function merge($in): TypedAbstract;
 
 	/**
 	 * Initialize options for when this object is converted to an array or serialized.
@@ -91,8 +91,14 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 		);
 	}
 
+	/**
+	 * @return void
+	 */
 	abstract public function setArrayOptionsToNested(): void;
 
+	/**
+	 * @return void
+	 */
 	abstract public function setJsonOptionsToNested(): void;
 
 	/**
@@ -120,7 +126,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 					$in = [];
 				}
 				else {
-					$in        = json_decode($in);
+					$in        = json_decode($in, JSON_OBJECT_AS_ARRAY);
 					$lastError = json_last_error();
 					if ($lastError !== JSON_ERROR_NONE) {
 						throw new InvalidArgumentException(

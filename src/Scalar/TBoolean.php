@@ -9,7 +9,6 @@
 
 namespace Diskerror\Typed\Scalar;
 
-
 use Diskerror\Typed\ScalarAbstract;
 
 class TBoolean extends ScalarAbstract
@@ -18,12 +17,12 @@ class TBoolean extends ScalarAbstract
 	{
 		switch (gettype($in)) {
 			case 'object':
-				$this->_value = (bool) self::_castObject($in);
+				$this->_value = (bool) self::_castIfObject($in);
 				break;
 
 			case 'null':
 			case 'NULL':
-				$this->unset();
+				$this->_value = $this->_allowNull ? null : false;
 				break;
 
 			default:

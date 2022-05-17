@@ -16,7 +16,7 @@ class TIntegerUnsigned extends TInteger
 		parent::set($in);
 
 		//	If null was set in parent it casts to zero so null stays null.
-		if ($this->_value < 0) {
+		if ($this->_value <= -1) {
 			$this->_value = 0;
 		}
 	}

@@ -16,10 +16,7 @@ class TString extends ScalarAbstract
 {
 	public function set($in): void
 	{
-		if (is_object($in)) {
-			// Every object is converted to an array or a string.
-			$in = self::_castObject($in);
-		}
+		$in = self::_castIfObject($in);
 
 		switch (gettype($in)) {
 			case 'array':
@@ -33,7 +30,7 @@ class TString extends ScalarAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->unset();
+				$this->_value = $this->_allowNull ? null : '';
 				break;
 
 			case 'resource':

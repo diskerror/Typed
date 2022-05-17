@@ -22,7 +22,7 @@ use TypeError;
 
 /**
  * Create a child of this class with your named properties with a visibility of
- *      protected or private, and default values of the desired type. Property
+ *      protected or private, and initValue values of the desired type. Property
  *      names CANNOT begin with an underscore. This maintains the Zend Framework
  *      convention that protected and private property names should begin with an
  *      underscore. This abstract class will expose all members whose name don't
@@ -42,11 +42,13 @@ use TypeError;
  *
  * The ideal usage of this abstract class is as the parent class of a data set
  *      where the input to the constructor (or assign) method is an HTTP request
- *      object. It will help with filtering and insuring the existence of default
+ *      object. It will help with filtering and insuring the existence of initValue
  *      values for missing input parameters.
  */
 abstract class TypedClass extends TypedAbstract
 {
+	use SetTypeTrait;
+
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
 	 *
@@ -112,6 +114,11 @@ abstract class TypedClass extends TypedAbstract
 		}
 	}
 
+	/**
+	 * Initialize meta data.
+	 *
+	 * @return void
+	 */
 	protected function _initMetaData()
 	{
 		$calledClass = get_called_class();
@@ -194,7 +201,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return array
 	 */
-	public final function getPublicNames()
+	final public function getPublicNames(): array
 	{
 		return $this->_publicNames;
 	}
@@ -262,8 +269,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * Input can be an object, or an indexed or associative array.
 	 *
-	 * @param $in
-	 *
+	 * @param array|object $in
 	 * @return void
 	 */
 	public function replace($in): void
@@ -283,8 +289,7 @@ abstract class TypedClass extends TypedAbstract
 	 * This method clones $this then replaces matching keys from $in
 	 *     and returns the new object.
 	 *
-	 * @param $in
-	 *
+	 * @param array|object $in
 	 * @return TypedAbstract
 	 */
 	public function merge($in): TypedAbstract
@@ -294,6 +299,10 @@ abstract class TypedClass extends TypedAbstract
 
 		return $clone;
 	}
+
+	/**
+	 * @return void
+	 */
 	public function setArrayOptionsToNested(): void
 	{
 		foreach ($this->_publicNames as $k) {
@@ -304,6 +313,9 @@ abstract class TypedClass extends TypedAbstract
 		}
 	}
 
+	/**
+	 * @return void
+	 */
 	public function setJsonOptionsToNested(): void
 	{
 		foreach ($this->_publicNames as $k) {
@@ -376,6 +388,9 @@ abstract class TypedClass extends TypedAbstract
 		return $arr;
 	}
 
+	/**
+	 * @return array
+	 */
 	public function jsonSerialize(): array
 	{
 		$omitEmpty       = $this->toJsonOptions->has(JsonOptions::OMIT_EMPTY);
@@ -477,7 +492,10 @@ abstract class TypedClass extends TypedAbstract
 		})();
 	}
 
-
+	/**
+	 * @param $in
+	 * @return void
+	 */
 	protected function _massageInput(&$in): void
 	{
 		parent::_massageInput($in);
@@ -494,13 +512,13 @@ abstract class TypedClass extends TypedAbstract
 
 			$in = $newArr;
 		}
+		//	else leave as is
 	}
 
 	/**
 	 * Get variable.
 	 *
 	 * @param string $pName
-	 *
 	 * @return mixed
 	 */
 	public function __get(string $pName)
@@ -641,6 +659,10 @@ abstract class TypedClass extends TypedAbstract
 	{
 	}
 
+	/**
+	 * @param string $pName
+	 * @return void
+	 */
 	protected function _getMappedName(string $pName): string
 	{
 		return array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;

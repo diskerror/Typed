@@ -29,7 +29,7 @@ class AssignTest extends TestCase
 		$this->assertFalse($t->myBool);
 
 		$t->myBool = null;
-		$this->assertTrue($t->myBool);
+		$this->assertFalse($t->myBool);
 
 		$t->myBool = [];
 		$this->assertFalse($t->myBool);
@@ -123,7 +123,7 @@ class AssignTest extends TestCase
 		$this->assertTrue($t->myFloat === 0.0);
 
 		$t->myFloat = null;
-		$this->assertEquals(3.14, $t->myFloat);
+		$this->assertEquals(0.0, $t->myFloat);
 
 		$t->myFloat = [];
 		$this->assertTrue($t->myFloat === 0.0);

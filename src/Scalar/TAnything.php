@@ -12,7 +12,7 @@ namespace Diskerror\Typed\Scalar;
 use Diskerror\Typed\ScalarAbstract;
 
 /**
- * Class SAAnything
+ * Class TAnything
  *
  * This class allows input to be any scalar.
  * Some objects and arrays will be cast to a string.
@@ -23,11 +23,6 @@ class TAnything extends ScalarAbstract
 {
 	public function set($in): void
 	{
-		if (null === $in) {
-			$this->unset();
-		}
-		else {
-			$this->_value = $in;
-		}
+		$this->_value = $in;
 	}
 }

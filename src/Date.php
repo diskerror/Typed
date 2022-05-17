@@ -66,7 +66,7 @@ class Date extends DateTime
 	}
 
 	/**
-	 * Returns string suitable for default MySQL date format.
+	 * Returns string suitable for initValue MySQL date format.
 	 *
 	 * @return string
 	 */

@@ -1,5 +1,4 @@
 <?php
-/** @noinspection ALL */
 /**
  * SQL statement generator.
  * Converts associative arrays and objects into partial SQL statements.

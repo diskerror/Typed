@@ -9,27 +9,24 @@
 
 namespace Diskerror\Typed\Scalar;
 
-
 use Diskerror\Typed\ScalarAbstract;
 
 class TFloat extends ScalarAbstract
 {
 	public function set($in): void
 	{
-		if (is_object($in)) {
-			$in = self::_castObject($in);
-		}
+		$in = self::_castIfObject($in);
 
 		switch (gettype($in)) {
 			case 'string':
 				$in = trim(strtolower($in), "\x00..\x20\x7F");
 				if ($in === '' || $in === 'null' || $in === 'nan') {
-					$this->unset();
+					$this->_value = $this->_allowNull ? null : 0.0;
 					break;
 				}
 
 				$in = str_replace(['\'', '"', '“', '”', '‘', '’', ' '], '', $in);
-				$in = preg_replace('/^([-+0-9.,]*).*?$/', '$1', $in);
+				$in = preg_replace('/^([-+\d.,]*).*?$/', '$1', $in);
 
 				$comaPos = strpos($in, ',');
 				$dotPos  = strpos($in, '.');
@@ -51,7 +48,7 @@ class TFloat extends ScalarAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->unset();
+				$this->_value = $this->_allowNull ? null : 0.0;
 				break;
 
 			default:
