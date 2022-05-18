@@ -13,7 +13,7 @@ class PrefListTest extends TestCase
 		$itemListVals = new ItemList([['find' => 'the name'], ['find' => 'an address']]);
 
 		$prefListList = ListList::getDefault();
-//		jsonPrint($prefListList->toArray()); exit;
+//		tprint($prefListList->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/prefone.json',
 			json_encode($prefListList->toArray()),
@@ -21,7 +21,7 @@ class PrefListTest extends TestCase
 		);
 
 		$prefListList['Option ZIP']['name'] = ['sort' => 'desc'];
-//		jsonPrint($prefListList['Option ZIP']->toArray()); exit;
+//		tprint($prefListList['Option ZIP']->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/prefoptname.json',
 			json_encode($prefListList['Option ZIP']->toArray()),
@@ -30,7 +30,7 @@ class PrefListTest extends TestCase
 
 
 		$prefListList['Option ZIP']->replace(['state' => ['included' => 1], 'name' => ['compare' => '!=']]);
-//		jsonPrint($prefListList->toArray()); exit;
+//		tprint($prefListList->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/preftwo.json',
 			json_encode($prefListList->toArray()),
@@ -45,7 +45,7 @@ class PrefListTest extends TestCase
 		foreach ($order as $o) {
 			$prefListList['Option ZIP'][$o] = $oldOrder[$o];
 		}
-//		jsonPrint($prefListList['Option ZIP']->toArray()); exit;
+//		tprint($prefListList['Option ZIP']->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/preforder.json',
 			json_encode($prefListList['Option ZIP']->toArray()),

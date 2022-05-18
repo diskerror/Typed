@@ -1,4 +1,5 @@
-<?php /** @noinspection ALL */
+<?php
+/** @noinspection ALL */
 
 use Diskerror\Typed\TypedArray;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,8 @@ class ConstructTest extends TestCase
 		 * The method "toArray" is used in the function "json_encode" so as to
 		 * not invoke the method "jsonSerialize".
 		 */
-// 		jsonPrint($simp); exit;
+// 		tprint($simp); exit;
+//		fprintf(STDERR, var_export($simp));exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-15.json',
 			json_encode($simp->toArray())
@@ -40,7 +42,7 @@ class ConstructTest extends TestCase
 		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
 		$this->assertInstanceOf('stdClass', $simp->myObj);
 
-//		jsonPrint($simp->toArray());exit;
+//		tprint($simp->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-32.json',
 			json_encode($simp->toArray())
@@ -59,7 +61,7 @@ class ConstructTest extends TestCase
 		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
 		$this->assertInstanceOf('stdClass', $simp->myObj);
 
-//		jsonPrint($simp); exit;
+//		tprint($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp2-48.json',
 			json_encode($simp)
@@ -78,7 +80,7 @@ class ConstructTest extends TestCase
 		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
 		$this->assertInstanceOf('stdClass', $simp->myObj);
 
-//		jsonPrint($simp); exit;
+//		tprint($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp3-65.json',
 			json_encode($simp)
@@ -109,7 +111,7 @@ class ConstructTest extends TestCase
 		$simp->myInt    = null;
 		$simp->myInt    = 2.54;
 
-//		jsonPrint($simp->toArray()); exit;
+//		tprint($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp4-93.json',
 			json_encode($simp)

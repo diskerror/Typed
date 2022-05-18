@@ -119,7 +119,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return void
 	 */
-	protected function _initMetaData()
+	final protected function _initMetaData()
 	{
 		$calledClass = get_called_class();
 
@@ -237,7 +237,9 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * Input can be an object, or an indexed or associative array.
 	 *
-	 * @param $in
+	 * @param array|object $in
+	 *
+	 * @return void
 	 */
 	public function assign($in): void
 	{
@@ -270,6 +272,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Input can be an object, or an indexed or associative array.
 	 *
 	 * @param array|object $in
+	 *
 	 * @return void
 	 */
 	public function replace($in): void
@@ -290,6 +293,7 @@ abstract class TypedClass extends TypedAbstract
 	 *     and returns the new object.
 	 *
 	 * @param array|object $in
+	 *
 	 * @return TypedAbstract
 	 */
 	public function merge($in): TypedAbstract
@@ -494,6 +498,7 @@ abstract class TypedClass extends TypedAbstract
 
 	/**
 	 * @param $in
+	 *
 	 * @return void
 	 */
 	protected function _massageInput(&$in): void
@@ -519,6 +524,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Get variable.
 	 *
 	 * @param string $pName
+	 *
 	 * @return mixed
 	 */
 	public function __get(string $pName)
@@ -537,7 +543,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
 	 * @param string $pName
-	 * @param mixed $val
+	 * @param mixed  $val
 	 */
 	public function __set(string $pName, $val)
 	{
@@ -581,7 +587,8 @@ abstract class TypedClass extends TypedAbstract
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
 	 * @param string $pName
-	 * @param mixed $in
+	 * @param mixed  $in
+	 * @param bool   $deepCopy -OPTIONAL
 	 *
 	 * @throws InvalidArgumentException
 	 */
@@ -661,6 +668,7 @@ abstract class TypedClass extends TypedAbstract
 
 	/**
 	 * @param string $pName
+	 *
 	 * @return void
 	 */
 	protected function _getMappedName(string $pName): string

@@ -13,6 +13,9 @@ class SerializeTest extends TestCase
 
 		$unserialized = unserialize($serialized);
 
+//		tprint($tweet);
+//		tprint($unserialized);
+
 		$this->assertTrue($tweet == $unserialized);
 		$this->assertFalse($tweet === $unserialized);
 	}
@@ -34,7 +37,7 @@ class SerializeTest extends TestCase
 		$tweetString = file_get_contents(__DIR__ . '/data/tweet.json');
 		$tweet       = new Tweet();
 		$tweet->assign($tweetString);
-//		jsonPrint($tweet);
+//		tprint($tweet);exit();
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetnew.json',
 			json_encode($tweet),
@@ -47,7 +50,7 @@ class SerializeTest extends TestCase
 		$tweetString = file_get_contents(__DIR__ . '/data/tweet2.json');
 		$tweet       = new Tweet();
 		$tweet->replace($tweetString);
-//		jsonPrint($tweet);
+//		tprint($tweet);
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetreplace.json',
 			json_encode($tweet),
@@ -58,7 +61,7 @@ class SerializeTest extends TestCase
 	public function testDate(){
 		$dt = new \Diskerror\Typed\DateTime(1561431851.34);
 
-//		jsonPrint($dt->__tostring());exit;
+//		tprint($dt->__tostring());exit;
 		$this->assertEquals(
 			$dt->format(\Diskerror\Typed\DateTime::MYSQL_STRING_IO_FORMAT_MICRO),
 			'2019-06-25 03:04:11.340000'

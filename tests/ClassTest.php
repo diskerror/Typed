@@ -1,4 +1,5 @@
-<?php /** @noinspection ALL */
+<?php
+/** @noinspection ALL */
 declare(strict_types = 1);
 
 use Diskerror\Typed\TypedClass;

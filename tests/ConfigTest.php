@@ -8,7 +8,7 @@ class ConfigTest extends TestCase
 {
 	public function testBuild()
 	{
-		//	Always open this configuration file with its default values.
+		//	Always open this configuration file with its initValue values.
 		$configFile = __DIR__ . '/data/config.php';
 		$config     = new Config(require $configFile);
 
@@ -20,7 +20,7 @@ class ConfigTest extends TestCase
 			}
 		}
 
-//		jsonPrint($config->toArray());exit;
+//		tprint($config->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/config.json',
 			json_encode($config->toArray())

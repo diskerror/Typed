@@ -340,6 +340,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Removes empty items from referenced array.
 	 *
 	 * @param array $arr
+	 *
 	 * @return void
 	 */
 	protected static function _removeEmpty(array &$arr): void
@@ -456,8 +457,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * * $value is a an array (check for toArray, or cast);
 	 * * $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
-	 * @param ?string|int $offset
-	 * @param mixed $value
+	 * @param string|int $offset
+	 * @param mixed      $value
 	 */
 	public function offsetSet($offset, $value): void
 	{

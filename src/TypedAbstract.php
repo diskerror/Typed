@@ -37,7 +37,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	protected $toJsonOptions;
 
 	/**
-	 * Holds list of option instances to be made read-only accessible.
+	 * Holds list of option instance names to be made read-only accessible.
 	 *
 	 * @var array
 	 */

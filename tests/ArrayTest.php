@@ -1,13 +1,14 @@
 <?php
 
+use Diskerror\Typed\TypedArray;
 use PHPUnit\Framework\TestCase;
 
 class ArrayTest extends TestCase
 {
 	public function testWalk()
 	{
-		$walk = new Diskerror\Typed\TypedArray('string', ['1', 2, '3', 'z', 5]);
-//		jsonPrint($walk->toArray());exit;
+		$walk = new TypedArray('string', ['1', 2, '3', 'z', 5]);
+//		tprint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array1.json',
 			json_encode($walk->toArray()),
@@ -17,7 +18,7 @@ class ArrayTest extends TestCase
 		foreach ($walk as &$w) {
 			$w = (integer) $w * 2;
 		}
-//		jsonPrint($walk->toArray());exit;
+//		tprint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array2.json',
 			json_encode($walk->toArray()),
@@ -27,7 +28,7 @@ class ArrayTest extends TestCase
 		foreach ($walk as &$w) {
 			$w = [$w, "elephant"];
 		}
-//		jsonPrint($walk->toArray());exit;
+//		tprint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array3.json',
 			json_encode($walk->toArray()),
