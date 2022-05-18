@@ -33,8 +33,8 @@ class SqlStatement
 	 * an array where the values are the names of the desired keys.
 	 * An empty "include" array means to use all.
 	 *
-	 * @param array|stdClass $input
-	 * @param array          $include
+	 * @param array|object $input
+	 * @param array        $include
 	 *
 	 * @return string
 	 */

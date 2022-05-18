@@ -318,6 +318,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 			default:
 				return false;
 		}
+
 		return true;
 	}
 

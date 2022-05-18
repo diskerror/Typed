@@ -85,7 +85,7 @@ class Date extends DateTime
 	 *
 	 * @throws LogicException
 	 */
-	public function setTime($hou, $min = 0, $sec = 0, $mic = 0)
+	public function setTime($hour, $minute = 0, $second = 0, $mcs = 0)
 	{
 		throw new LogicException('method not available in Date class');
 	}

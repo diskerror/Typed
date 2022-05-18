@@ -201,16 +201,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				$output[$k] = $v->__toString();
 			}
 		}
-		elseif (!self::_isAssignable($this->_type)) {
-			//	else this is an array of some generic objects
-			foreach ($this->_container as $k => $v) {
-				$output[$k] = (array) $v;
-			}
-		}
 		else {
-			//	else this is an array of some generic objects
 			foreach ($this->_container as $k => $v) {
-				$output[$k] = $v;
+				$output[$k] = is_object($v) ? (array) $v : $v;
 			}
 		}
 

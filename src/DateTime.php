@@ -162,7 +162,7 @@ class DateTime extends DT implements JsonSerializable
 	 * @param int              $second
 	 * @param int              $mcs Microseconds
 	 */
-	public function setTime($hour, $minute = 0, $second = 0, $mcs = 0)
+	public function setTime($hour, $minute = 0, $second = 0, $microsecond = 0)
 	{
 		switch (gettype($hour)) {
 			case 'object':

@@ -573,15 +573,6 @@ abstract class TypedClass extends TypedAbstract
 				return;
 
 
-			case self::_setBasicTypeAndConfirm($in, $pType):
-				$this->$pName = $in;
-				return;
-
-			case is_a($pType, AtomicInterface::class, true):
-				$this->_setPropertyIfNotSet($pName);
-				$this->$pName->set($in);
-				return;
-
 			case is_a($pType, TypedAbstract::class, true):
 				if ($deepCopy) {
 					$this->_setPropertyIfNotSet($pName);
@@ -605,6 +596,15 @@ abstract class TypedClass extends TypedAbstract
 						}
 					}
 				}
+				return;
+
+			case self::_setBasicTypeAndConfirm($in, $pType):
+				$this->$pName = $in;
+				return;
+
+			case is_a($pType, AtomicInterface::class, true):
+				$this->_setPropertyIfNotSet($pName);
+				$this->$pName->set($in);
 				return;
 
 			case is_object($in):
