@@ -9,8 +9,6 @@
 
 namespace Diskerror\Typed;
 
-use Diskerror\Typed\ArrayOptions;
-
 /**
  * Class ArrayOptions
  *

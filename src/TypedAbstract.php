@@ -176,6 +176,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 * The remainders would be objects which often need to be cloned.
 	 *
 	 * @param string $type
+	 *
 	 * @return bool
 	 */
 	final protected static function _isAssignable(string $type): bool
@@ -199,6 +200,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 * The remainders would be objects which often need to be cloned.
 	 *
 	 * @param string $type
+	 *
 	 * @return bool
 	 */
 	final protected static function _isScalar(string $type): bool
@@ -226,8 +228,9 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	/**
 	 * The function settype() may return different values than type casting.
 	 *
-	 * @param $val
+	 * @param        $val
 	 * @param string $type
+	 *
 	 * @return bool
 	 */
 	final protected static function _setBasicTypeAndConfirm(&$val, string $type): bool

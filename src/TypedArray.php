@@ -46,7 +46,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * If a derived class is instantiated then the data type must be contained in
 	 * the class, ie. "protected $_type = 'integer';", and $param1 can be the initial data.
 	 *
-	 * @param mixed $param1 OPTIONAL null
+	 * @param mixed             $param1 OPTIONAL null
 	 * @param array|object|null $param2 OPTIONAL null
 	 *
 	 * @throws InvalidArgumentException
@@ -138,13 +138,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			return (function &() {
 				foreach ($this->_container as $k => $v) {
 					yield $k => $v;
-
-					//	Compare whole class names.
-					//	TODO: This doesn't test enough conditions.
-					$isObj = is_object($v);
-					if (($isObj && get_class($v) !== $this->_type) || (!$isObj && gettype($v) !== $this->_type)) {
-						$this->offsetSet($k, $v);
-					}
+					$this->offsetSet($k, $v);
 				}
 			})();
 		}
@@ -291,6 +285,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * Removes empty items from referenced array.
 	 *
 	 * @param array $arr
+	 *
 	 * @return void
 	 */
 	protected static function _removeEmpty(array &$arr): void
@@ -407,57 +402,58 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * * $value is a an array (check for toArray, or cast);
 	 * * $value is a an object (clone if the same as _type, otherwise new _type(value) );
 	 *
-	 * @param string|int $k
-	 * @param mixed $v
+	 * @param string|int $offset
+	 * @param mixed      $value
 	 */
-	public function offsetSet($k, $v): void
+	public function offsetSet($offset, $value): void
 	{
-		if (self::_setBasicTypeAndConfirm($v, $this->_type)) {
-			$this->_container[$k] = $v;
+		if (self::_setBasicTypeAndConfirm($value, $this->_type)) {
+			$this->_container[$offset] = $value;
 			return;
 		}
 
 		if (is_a($this->_type, AtomicInterface::class, true)) {
-			if (!isset($this->_container[$k])) {
-				$this->_container[$k] = new $this->_type($v);
+			if (!isset($this->_container[$offset])) {
+				$this->_container[$offset] = new $this->_type($value);
 			}
 			else {
-				$this->_container[$k]->set($v);
+				$this->_container[$offset]->set($value);
 			}
 			return;
 		}
 
 		if (is_a($this->_type, TypedAbstract::class, true)) {
-			if (!isset($this->_container[$k])) {
-				$this->_container[$k] = new $this->_type($v);
+			if (!isset($this->_container[$offset])) {
+				$this->_container[$offset] = new $this->_type($value);
 			}
 			else {
-				$this->_container[$k]->replace($v);
+				$this->_container[$offset]->replace($value);
 			}
 			return;
 		}
 
 		// if the object types match then
-		if (is_object($v) && get_class($v) === $this->_type) {
-			$this->_offsetSet($k, $v);
+		if (is_object($value) && get_class($value) === $this->_type) {
+			$this->_offsetSet($offset, $value);
 			return;
 		}
 
-		$this->_offsetSet($k, new $this->_type($v));
+		$this->_offsetSet($offset, new $this->_type($value));
 	}
 
 	/**
-	 * @param $k
-	 * @param $v
+	 * @param $offset
+	 * @param $value
+	 *
 	 * @return void
 	 */
-	private function _offsetSet($k, $v)
+	private function _offsetSet($offset, $value)
 	{
-		if (null === $k) {
-			$this->_container[] = $v;
+		if (null === $offset) {
+			$this->_container[] = $value;
 		}
 		else {
-			$this->_container[$k] = $v;
+			$this->_container[$offset] = $value;
 		}
 	}
 

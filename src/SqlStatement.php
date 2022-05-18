@@ -34,7 +34,7 @@ class SqlStatement
 	 * An empty "include" array means to use all.
 	 *
 	 * @param array|stdClass $input
-	 * @param array $include
+	 * @param array          $include
 	 *
 	 * @return string
 	 */
@@ -137,7 +137,7 @@ class SqlStatement
 	 * An empty "include" array means to use all.
 	 *
 	 * @param array|stdClass $input
-	 * @param array $include
+	 * @param array          $include
 	 *
 	 * @return string
 	 */

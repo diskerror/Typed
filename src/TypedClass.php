@@ -89,7 +89,6 @@ abstract class TypedClass extends TypedAbstract
 	 * Initialize meta data.
 	 *
 	 * @return void
-	 * @throws \ErrorException
 	 */
 	final protected function _initMetaData()
 	{
@@ -182,6 +181,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Input can be an object, or an indexed or associative array.
 	 *
 	 * @param array|object $in
+	 *
 	 * @return void
 	 */
 	public function assign($in): void
@@ -216,6 +216,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Input can be an object, or an indexed or associative array.
 	 *
 	 * @param array|object $in
+	 *
 	 * @return void
 	 */
 	public function replace($in): void
@@ -240,6 +241,7 @@ abstract class TypedClass extends TypedAbstract
 	 *     and returns the new object.
 	 *
 	 * @param array|object $in
+	 *
 	 * @return TypedAbstract
 	 */
 	public function merge($in): TypedAbstract
@@ -252,6 +254,7 @@ abstract class TypedClass extends TypedAbstract
 
 	/**
 	 * @param array $namesToOmit -OPTIONAL
+	 *
 	 * @return void
 	 */
 	public function restoreInitialValues(array $namesToOmit = [])
@@ -448,6 +451,7 @@ abstract class TypedClass extends TypedAbstract
 
 	/**
 	 * @param $in
+	 *
 	 * @return void
 	 */
 	protected function _massageInputArray(&$in)
@@ -471,6 +475,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Get variable.
 	 *
 	 * @param string $pName
+	 *
 	 * @return mixed
 	 */
 	public function __get(string $pName)
@@ -490,7 +495,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
 	 * @param string $pName
-	 * @param mixed $val
+	 * @param mixed  $val
 	 */
 	public function __set(string $pName, $val)
 	{
@@ -534,8 +539,9 @@ abstract class TypedClass extends TypedAbstract
 	 * Casts the incoming data ($v) to the same type as the named ($k) property.
 	 *
 	 * @param string $pName
-	 * @param mixed $in
-	 * @param bool $deepCopy -OPTIONAL
+	 * @param mixed  $in
+	 * @param bool   $deepCopy -OPTIONAL
+	 *
 	 * @throws InvalidArgumentException
 	 */
 	protected function _setByName(string $pName, $in, bool $deepCopy = true): void
@@ -647,6 +653,7 @@ abstract class TypedClass extends TypedAbstract
 
 	/**
 	 * @param string $pName
+	 *
 	 * @return void
 	 */
 	private function _setPropertyIfNotSet(string $pName): void
@@ -661,6 +668,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Throws exception if named property does not exist.
 	 *
 	 * @param string $pName
+	 *
 	 * @throws InvalidArgumentException
 	 */
 	protected function _assertPropName(string $pName)
@@ -674,6 +682,7 @@ abstract class TypedClass extends TypedAbstract
 	 * Returns true if key/prop name exists or is mappable.
 	 *
 	 * @param string $pName
+	 *
 	 * @return bool
 	 */
 	private function _keyExists(string $pName): bool

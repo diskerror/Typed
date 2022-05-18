@@ -8,9 +8,9 @@ use ErrorException;
  * class PropertyMetaData
  *
  * @property string $type
- * @property bool $isObject
- * @property bool $isNullable
- * @property mixed $initValue
+ * @property bool   $isObject
+ * @property bool   $isNullable
+ * @property mixed  $initValue
  */
 final class PropertyMetaData
 {
