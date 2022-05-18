@@ -4,6 +4,9 @@
 namespace Diskerror\Typed;
 
 
+/**
+ * Defines behavior for getting and setting bitwise values.
+ */
 class Options
 {
 	/**

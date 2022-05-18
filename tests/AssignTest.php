@@ -44,7 +44,7 @@ class AssignTest extends TestCase
 		$this->assertTrue($t->myBool);
 
 		unset($t->myBool);
-		$this->assertTrue($t->myBool);
+		$this->assertFalse($t->myBool);
 	}
 
 	public function testAssignInt()
@@ -138,7 +138,7 @@ class AssignTest extends TestCase
 		$this->assertTrue($t->myFloat === 1.0);
 
 		unset($t->myFloat);
-		$this->assertEquals(3.14, $t->myFloat);
+		$this->assertEquals(0, $t->myFloat);
 	}
 
 	public function testAssignString()
@@ -184,19 +184,19 @@ class AssignTest extends TestCase
 
 		////////////////////////////////////////////////////////////////////////
 		//	Array.
-		$this->assertEquals(new TypedArray(), $t->myArray);
+		$this->assertIsArray($t->myArray->toArray());
 
 		$t->myArray = [77];
-		$this->assertEquals(new TypedArray('', [77]), $t->myArray);
+		$this->assertEquals([77], $t->myArray->toArray());
 
 		$t->myArray = [3.14150];
-		$this->assertEquals(new TypedArray('', [3.1415]), $t->myArray);
+		$this->assertEquals([3.1415], $t->myArray->toArray());
 
 		$t->myArray = [true];
-		$this->assertEquals(new TypedArray('', [true]), $t->myArray);
+		$this->assertEquals([true], $t->myArray->toArray());
 
 		$t->myArray = null;
-		$this->assertEquals(new TypedArray(), $t->myArray);
+		$this->assertEquals([], $t->myArray->toArray());
 		$this->assertTrue(is_object($t->myArray));
 
 		$t->myArray = ['a', 'b'];

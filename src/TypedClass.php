@@ -63,20 +63,6 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	private $_defaultValues;
 
-	/**
-	 * Holds the names of the called class' to-be-public properties in an indexed array.
-	 *
-	 * @var array
-	 */
-	private $_publicNames;
-
-	/**
-	 * Holds the count of the to-be-public properties.
-	 *
-	 * @var int
-	 */
-	private $_count;
-
 
 	/**
 	 * Constructor.
@@ -175,9 +161,6 @@ abstract class TypedClass extends TypedAbstract
 					//	Do nothing. Don't try to cast.
 			}
 		}
-
-		$this->_publicNames = array_keys($this->_defaultValues);
-		$this->_count       = count($this->_defaultValues);
 	}
 
 	/**
@@ -203,7 +186,11 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	final public function getPublicNames(): array
 	{
-		return $this->_publicNames;
+		static $pNames;
+		if (!isset($pNames)) {
+			$pNames = array_keys($this->_defaultValues);
+		}
+		return $pNames;
 	}
 
 	/**
@@ -223,7 +210,11 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	final public function count(): int
 	{
-		return $this->_count;
+		static $count;
+		if (!isset($count)) {
+			$count = count($this->_defaultValues);
+		}
+		return $count;
 	}
 
 	/**
@@ -245,17 +236,17 @@ abstract class TypedClass extends TypedAbstract
 	{
 		$this->_massageInput($in);
 
-		$pChecklist = $this->getPublicNames();
+		$propertiesSet = [];
 		foreach ($in as $k => $v) {
-			$this->_setByName($this->_getMappedName($k), $v);
-			if (($k = array_search($v, $pChecklist)) !== false) {
-				unset($pChecklist[$k]);
+			$k = array_key_exists($k, $this->_map) ? $this->_map[$k] : $k;
+
+			if ($this->_keyExists($k)) {
+				$this->_setByName($k, $v);
+				$propertiesSet[] = $k;
 			}
 		}
 
-		foreach ($pChecklist as $pName) {
-			$this->_setByName($k, null);
-		}
+		$this->restoreInitialValues($propertiesSet);
 
 		$this->_checkRelatedProperties();
 	}
@@ -280,7 +271,10 @@ abstract class TypedClass extends TypedAbstract
 		$this->_massageInput($in);
 
 		foreach ($in as $k => $v) {
-			$this->_setByName($this->_getMappedName($k), $v);
+			$k = array_key_exists($k, $this->_map) ? $this->_map[$k] : $k;
+			if ($this->_keyExists($k) and null !== $v) {
+				$this->_setByName($k, $v);
+			}
 		}
 
 		$this->_checkRelatedProperties();
@@ -305,11 +299,26 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
+	 * @param array $namesToOmit -OPTIONAL
+	 *
+	 * @return void
+	 */
+	public function restoreInitialValues(array $namesToOmit = [])
+	{
+		$propertiesRemaining = array_diff($this->getPublicNames(), $namesToOmit);
+		foreach ($propertiesRemaining as $pName) {
+			$this->$pName = is_object($this->_defaultValues[$pName]) ?
+				clone $this->_defaultValues[$pName] :
+				$this->_defaultValues[$pName];
+		}
+	}
+
+	/**
 	 * @return void
 	 */
 	public function setArrayOptionsToNested(): void
 	{
-		foreach ($this->_publicNames as $k) {
+		foreach ($this->getPublicNames() as $k) {
 			if ($this->$k instanceof TypedAbstract) {
 				$this->$k->toArrayOptions->set($this->toArrayOptions->get());
 				$this->$k->setArrayOptionsToNested();
@@ -322,7 +331,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function setJsonOptionsToNested(): void
 	{
-		foreach ($this->_publicNames as $k) {
+		foreach ($this->getPublicNames() as $k) {
 			if ($this->$k instanceof TypedAbstract) {
 				$this->$k->toJsonOptions->set($this->toJsonOptions->get());
 				$this->$k->setJsonOptionsToNested();
@@ -344,7 +353,7 @@ abstract class TypedClass extends TypedAbstract
 		$objectsToString = $this->toArrayOptions->has(ArrayOptions::ALL_OBJECTS_TO_STRING);
 
 		$arr = [];
-		foreach ($this->_publicNames as $k) {
+		foreach ($this->getPublicNames() as $k) {
 			$v = $this->$k;
 
 			if ($omitDefaults && $v == $this->_defaultValues[$k]) {
@@ -404,7 +413,7 @@ abstract class TypedClass extends TypedAbstract
 		$ZJE             = '\\Laminas\\Json\\Expr';
 
 		$arr = [];
-		foreach ($this->_publicNames as $k) {
+		foreach ($this->getPublicNames() as $k) {
 			$v = $this->$k;
 
 			if ($omitDefaults && $v == $this->_defaultValues[$k]) {
@@ -510,9 +519,10 @@ abstract class TypedClass extends TypedAbstract
 		//	Copy indexed array by position to a named array
 		if (is_array($in) && !empty($in) && array_values($in) === $in) {
 			$newArr   = [];
-			$minCount = min(count($in), $this->_count);
+			$minCount = min(count($in), $this->count());
+			$pNames   = $this->getPublicNames();
 			for ($i = 0; $i < $minCount; ++$i) {
-				$newArr[$this->_publicNames[$i]] = $in[$i];
+				$newArr[$pNames[$i]] = $in[$i];
 			}
 
 			$in = $newArr;
@@ -534,8 +544,9 @@ abstract class TypedClass extends TypedAbstract
 			return $this->$pName;
 		}
 
+		$pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
 		$this->_assertPropName($pName);
-		return $this->_getByName($pName);
+		return $this->$pName instanceof AtomicInterface ? $this->$pName->get() : $this->$pName;
 	}
 
 	/**
@@ -547,7 +558,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __set(string $pName, $val)
 	{
-		$pName = $this->_getMappedName($pName);
+		$pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
 		$this->_assertPropName($pName);
 		$this->_setByName($pName, $val);
 		$this->_checkRelatedProperties();
@@ -564,20 +575,20 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __isset(string $pName): bool
 	{
-		$pName = $this->_getMappedName($pName);
+		$pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
 		return $this->_keyExists($pName) && ($this->$pName !== null);
 	}
 
 	/**
-	 * Sets a variable to its default value rather than unsetting it.
+	 * Sets a variable to its initValue value rather than unsetting it.
 	 *
 	 * @param string $pName
 	 */
 	public function __unset(string $pName)
 	{
-		$pName = $this->_getMappedName($pName);
+		$pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
 		$this->_assertPropName($pName);
-		$this->$pName = clone $this->_defaultValues[$pName];
+		$this->_setByName($pName, null);
 		$this->_checkRelatedProperties();
 	}
 
@@ -594,7 +605,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	protected function _setByName(string $pName, $in): void
 	{
-		if (!in_array($pName, $this->_publicNames)) {
+		if (!in_array($pName, $this->getPublicNames())) {
 			return;
 		}
 
@@ -667,16 +678,6 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
-	 * @param string $pName
-	 *
-	 * @return void
-	 */
-	protected function _getMappedName(string $pName): string
-	{
-		return array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
-	}
-
-	/**
 	 * Throws exception if named property does not exist.
 	 *
 	 * @param string $pName
@@ -691,22 +692,6 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
-	 * Get variable by name. Name must exist.
-	 *
-	 * @param string $pName
-	 *
-	 * @return mixed
-	 */
-	protected function _getByName(string $pName)
-	{
-		if ($this->$pName instanceof AtomicInterface) {
-			return $this->$pName->get();
-		}
-
-		return $this->$pName;
-	}
-
-	/**
 	 * Returns true if key/prop name exists or is mappable.
 	 *
 	 * @param string $pName
@@ -715,10 +700,6 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	private function _keyExists(string $pName): bool
 	{
-		if (array_key_exists($pName, $this->_map)) {
-			$pName = $this->_map[$pName];
-		}
-
-		return in_array($pName, $this->_publicNames);
+		return in_array($pName, $this->getPublicNames());
 	}
 }

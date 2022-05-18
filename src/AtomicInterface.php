@@ -11,6 +11,10 @@
 namespace Diskerror\Typed;
 
 
+/**
+ * Defines the methods for retrieving and setting a value in a class when we want
+ * to represent that class as a single value, generally a scalar, aka. "atomically".
+ */
 interface AtomicInterface
 {
 	public function get();

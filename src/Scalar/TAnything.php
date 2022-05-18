@@ -14,7 +14,7 @@ use Diskerror\Typed\ScalarAbstract;
 /**
  * Class TAnything
  *
- * This class allows input to be any scalar.
+ * This class allows input to be anything.
  * Some objects and arrays will be cast to a string.
  *
  * @package Diskerror\Typed
