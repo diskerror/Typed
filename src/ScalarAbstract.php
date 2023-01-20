@@ -66,6 +66,7 @@ abstract class ScalarAbstract implements AtomicInterface
 
 	/**
 	 * Returns true if value is set and is not null.
+	 * This will always return true if nulls are not allowed.
 	 */
 	public function isset(): bool
 	{
