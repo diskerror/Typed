@@ -22,7 +22,7 @@ class TBoolean extends ScalarAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->_value = $this->_allowNull ? null : false;
+				$this->_value = $this->isNullable() ? null : false;
 				break;
 
 			default:

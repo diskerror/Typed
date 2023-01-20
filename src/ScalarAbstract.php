@@ -9,6 +9,7 @@
 
 namespace Diskerror\Typed;
 
+use OutOfBoundsException;
 
 /**
  * Class ScalarAbstract
@@ -31,7 +32,7 @@ abstract class ScalarAbstract implements AtomicInterface
 	 *
 	 * @var bool
 	 */
-	protected bool $_allowNull;
+	private bool $_allowNull;
 
 	/**
 	 * ScalarAbstract constructor.
@@ -52,7 +53,19 @@ abstract class ScalarAbstract implements AtomicInterface
 	}
 
 	/**
+	 * isNullable
+	 *
+	 * @return bool
+	 */
+	public function isNullable(): bool
+	{
+		return $this->_allowNull;
+	}
+
+	/**
 	 * Returns the scalar value.
+	 *
+	 * @return mixed
 	 */
 	public function get()
 	{
@@ -61,11 +74,17 @@ abstract class ScalarAbstract implements AtomicInterface
 
 	/**
 	 * Filters the value before setting.
+	 *
+	 * @param $in
+	 *
+	 * @return void
 	 */
 	abstract public function set($in): void;
 
 	/**
 	 * Returns true if value is set and is not null.
+	 *
+	 * @return bool
 	 */
 	public function isset(): bool
 	{
@@ -81,6 +100,8 @@ abstract class ScalarAbstract implements AtomicInterface
 	}
 
 	/**
+	 * Casts an object to a simpler type.
+	 * 
 	 * @param  $in
 	 *
 	 * @return mixed

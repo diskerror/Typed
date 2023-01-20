@@ -13,6 +13,8 @@ use Diskerror\Typed\ScalarAbstract;
 
 class TFloat extends ScalarAbstract
 {
+	protected $_value;
+
 	public function set($in): void
 	{
 		$in = self::_castIfObject($in);
@@ -21,7 +23,7 @@ class TFloat extends ScalarAbstract
 			case 'string':
 				$in = trim(strtolower($in), "\x00..\x20\x7F");
 				if ($in === '' || $in === 'null' || $in === 'nan') {
-					$this->_value = $this->_allowNull ? null : 0.0;
+					$this->_value = $this->isNullable() ? null : 0.0;
 					break;
 				}
 
@@ -48,7 +50,7 @@ class TFloat extends ScalarAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->_value = $this->_allowNull ? null : 0.0;
+				$this->_value = $this->isNullable() ? null : 0.0;
 				break;
 
 			default:

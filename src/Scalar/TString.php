@@ -30,7 +30,7 @@ class TString extends ScalarAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->_value = $this->_allowNull ? null : '';
+				$this->_value = $this->isNullable() ? null : '';
 				break;
 
 			case 'resource':

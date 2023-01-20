@@ -22,7 +22,7 @@ class TInteger extends ScalarAbstract
 				$in = trim(strtolower($in), "\x00..\x20\x7F");
 				/**   If empty string or string with text "null" or "nan" */
 				if ($in === '' || $in === 'null' || $in === 'nan') {
-					$this->_value = $this->_allowNull ? null : 0;
+					$this->_value = $this->isNullable() ? null : 0;
 				}
 				else {
 					$this->_value = intval($in, 0);
@@ -31,7 +31,7 @@ class TInteger extends ScalarAbstract
 
 			case 'null':
 			case 'NULL':
-				$this->_value = $this->_allowNull ? null : 0;
+				$this->_value = $this->isNullable() ? null : 0;
 				break;
 
 			default:
