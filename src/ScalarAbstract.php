@@ -22,6 +22,7 @@ abstract class ScalarAbstract implements AtomicInterface
 
 	/**
 	 * Stores the scalar value.
+	 * Initialization defaults to false, zero, or an empty string.
 	 *
 	 * @var mixed
 	 */
@@ -29,6 +30,7 @@ abstract class ScalarAbstract implements AtomicInterface
 
 	/**
 	 * Indicates whether the value can also be null.
+	 * Initialization defaults to false.
 	 *
 	 * @var bool
 	 */
@@ -37,7 +39,7 @@ abstract class ScalarAbstract implements AtomicInterface
 	/**
 	 * ScalarAbstract constructor.
 	 *
-	 * @param mixed $in A initValue of an empty string will cast to false or zero as needed.
+	 * @param mixed $in An empty string will cast to false or zero as needed.
 	 * @param bool  $allowNull
 	 */
 	public function __construct($in = '', bool $allowNull = false)
@@ -82,7 +84,7 @@ abstract class ScalarAbstract implements AtomicInterface
 	abstract public function set($in): void;
 
 	/**
-	 * Returns true if value is set and is not null.
+	 * Returns true if value is not null.
 	 *
 	 * @return bool
 	 */

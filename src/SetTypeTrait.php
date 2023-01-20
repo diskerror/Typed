@@ -3,7 +3,6 @@
 namespace Diskerror\Typed;
 
 use ErrorException;
-use function _HumbugBox7eb78fbcc73e\iter\values;
 
 /**
  * Our settype() only using keyword casting.
