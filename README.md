@@ -1,5 +1,7 @@
 # Typed Classes and Objects
 
+March 3, 2024: Beginning updates for PHP8.
+
 This enables PHP objects to strictly define member structure, to control their data types, and to add convenience methods. The master branch is considered to be in constant development and currently only supports PHP version 7.4 and above, and now handles strict typing and allows for properties with class typing to be set to null.
 
 Object properties with public visibility will only use the built-in PHP type checking. Making the visibility protected or private will force the setting of values through the **Diskerror\Typed** mechanism. This mechanism silently ignores bad or unmapped property names and generally coerces input data into that best form represented by the property data type.
@@ -90,4 +92,3 @@ Returns a string formatted for an SQL "ON DUPLICATE KEY UPDATE" statement.
 ```
 > composer require diskerror/typed
 ```
-

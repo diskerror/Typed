@@ -240,7 +240,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 				$output[$k] = $v->toArray();
 			}
 		}
-		elseif (is_a($this->_type, DateTimeInterface::class, true)) {
+		elseif ($this->_type instanceof DateTimeInterface) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->format(DateTimeInterface::ATOM);
 			}
@@ -353,6 +353,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return mixed
 	 */
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		if (!$this->offsetExists($offset)) {
@@ -366,7 +367,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 
-		if (is_a($this->_type, AtomicInterface::class, true)) {
+		if ($this->_type instanceof AtomicInterface) {
 			return $this->_container[$offset]->get();
 		}
 
@@ -405,7 +406,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			return;
 		}
 
-		if (is_a($this->_type, AtomicInterface::class, true)) {
+		if ($this->_type instanceof AtomicInterface) {
 			if (!isset($this->_container[$offset])) {
 				$this->_container[$offset] = new $this->_type($value);
 			}
@@ -415,7 +416,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			return;
 		}
 
-		if (is_a($this->_type, TypedAbstract::class, true)) {
+		if ($this->_type instanceof TypedAbstract) {
 			if (!isset($this->_container[$offset])) {
 				$this->_container[$offset] = new $this->_type($value);
 			}
