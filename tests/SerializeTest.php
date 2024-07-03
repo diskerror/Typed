@@ -23,7 +23,7 @@ class SerializeTest extends TestCase
 	public function testNewTweet()
 	{
 		$tweet       = new Tweet();
-		$tweet->replace(file_get_contents(__DIR__ . '/data/tweet.json'));
+		$tweet->assign(file_get_contents(__DIR__ . '/data/tweet.json'));
 //		tprint($tweet);exit();
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetnew.json',
@@ -49,7 +49,7 @@ class SerializeTest extends TestCase
 	{
 		$tweetString = file_get_contents(__DIR__ . '/data/tweet2.json');
 		$tweet       = new Tweet();
-		$tweet->replace($tweetString);
+		$tweet->assign($tweetString);
 //		tprint($tweet);
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/tweetreplace.json',

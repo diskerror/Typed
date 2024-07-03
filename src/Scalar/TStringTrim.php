@@ -14,6 +14,7 @@ class TStringTrim extends TString
 	public function set($in): void
 	{
 		parent::set($in);
+
 		if (null !== $this->_value) {
 			$this->_value = trim($this->_value, "\x00..\x20");
 		}

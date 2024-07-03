@@ -23,6 +23,10 @@ class TAnything extends ScalarAbstract
 {
 	public function set($in): void
 	{
-		$this->_value = $in;
+		if ($in === null) {
+			$this->_value = $this->isNullable() ? null : false;
+		} else {
+			$this->_value = self::_castIfObject($in);
+		}
 	}
 }

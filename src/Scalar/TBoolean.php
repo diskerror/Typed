@@ -15,18 +15,10 @@ class TBoolean extends ScalarAbstract
 {
 	public function set($in): void
 	{
-		switch (gettype($in)) {
-			case 'object':
-				$this->_value = (bool) self::_castIfObject($in);
-				break;
-
-			case 'null':
-			case 'NULL':
-				$this->_value = $this->isNullable() ? null : false;
-				break;
-
-			default:
-				$this->_value = (bool) $in;
+		if ($in === null) {
+			$this->_value = $this->isNullable() ? null : false;
+		} else {
+			$this->_value = (bool)self::_castIfObject($in);
 		}
 	}
 }

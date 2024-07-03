@@ -2,18 +2,18 @@
 
 namespace TestClasses\Tweet\Entity;
 
-use Diskerror\Typed\{TypedArray, TypedClass};
+use Diskerror\Typed\{Scalar\TInteger, Scalar\TString, TypedArray, TypedClass};
 
 class Url extends TypedClass
 {
-	protected string     $url          = '';    //	We could do some fancy filtering for this.
-	protected string     $expanded_url = '';
-	protected string     $display_url  = '';
+	protected TString     $url;    //	We could do some fancy filtering for this.
+	protected TString     $expanded_url;
+	protected TString     $display_url;
 	protected TypedArray $indices;
 
-	protected function _initializeObjects()
+	public function __construct($in = null)
 	{
-		$this->indices = new TypedArray('int');
+		$this->indices = new TypedArray(TInteger::class);
+		parent::__construct($in);
 	}
-
 }

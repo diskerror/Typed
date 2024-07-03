@@ -2,17 +2,18 @@
 
 namespace TestClasses\Tweet\Entity;
 
-use Diskerror\Typed\{TypedClass, TypedArray};
+use Diskerror\Typed\{Scalar\TInteger, TypedArray, TypedClass};
 
 class UserMention extends TypedClass
 {
-	protected string     $id          = '';
-	protected string     $screen_name = '';
-	protected string     $name        = '';
+	public ?string       $id          = '';
+	public string        $screen_name = '';
+	public string        $name        = '';
 	protected TypedArray $indices;
 
-	protected function _initializeObjects()
+	public function __construct($in = null)
 	{
-		$this->indices = new TypedArray('int');
+		$this->indices = new TypedArray(TInteger::class);
+		parent::__construct($in);
 	}
 }

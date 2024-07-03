@@ -14,7 +14,7 @@ class Compare extends TStringTrim
 			strtoupper(preg_replace('/(|=|!=|<|>|>=|<=|LIKE|NOT LIKE|REGEXP|NOT REGEXP|IN)/i', '$1', $this->_value));
 
 		if ($this->_value === '') {
-			$this->_value = '=';
+			$this->_value = 'LIKE';
 		}
 	}
 }

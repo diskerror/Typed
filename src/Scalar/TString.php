@@ -28,7 +28,6 @@ class TString extends ScalarAbstract
 				$this->_value = $jsonStr;
 				break;
 
-			case 'null':
 			case 'NULL':
 				$this->_value = $this->isNullable() ? null : '';
 				break;

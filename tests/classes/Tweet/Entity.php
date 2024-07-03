@@ -2,8 +2,8 @@
 
 namespace TestClasses\Tweet;
 
+use Diskerror\Typed\{TypedArray, TypedClass};
 use TestClasses\Tweet\Entity\{Hashtag, Url, UserMention};
-use Diskerror\Typed\{TypedClass, TypedArray};
 
 /**
  * @property TypedArray $hashtags
@@ -16,11 +16,13 @@ class Entity extends TypedClass
 	protected TypedArray $urls;
 	protected TypedArray $user_mentions;
 
-	protected function _initializeObjects()
+	public function __construct($in = null)
 	{
 		$this->hashtags      = new TypedArray(Hashtag::class);
 		$this->urls          = new TypedArray(Url::class);
 		$this->user_mentions = new TypedArray(UserMention::class);
+
+		parent::__construct($in);
 	}
 
 }

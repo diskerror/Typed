@@ -6,7 +6,7 @@ use Diskerror\Typed\TypedClass;
 
 class Process extends TypedClass
 {
-	protected string $name    = '';
-	protected string $path    = '';
-	protected string $procDir = '';
+	public string $name    = '';
+	public string $path    = '';
+	public string $procDir = '';
 }

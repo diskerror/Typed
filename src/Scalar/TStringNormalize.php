@@ -9,6 +9,9 @@ class TStringNormalize extends TStringTrim
 	public function set($in): void
 	{
 		parent::set($in);
-		$this->_value = preg_replace('/\s+/', ' ', Normalizer::normalize($this->_value, Normalizer::FORM_D));
+
+		if ($this->_value !== null) {
+			$this->_value = preg_replace('/\s+/', ' ', Normalizer::normalize($this->_value, Normalizer::FORM_D));
+		}
 	}
 }

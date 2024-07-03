@@ -1,5 +1,6 @@
 <?php
 /** @noinspection ALL */
+
 /**
  * Provides support for class members/properties maintain their initial types.
  *
@@ -17,13 +18,19 @@ use Traversable;
 use TypeError;
 
 /**
- * Create a child of this class with your named properties with a visibility of
- *      protected or private, and initValue values of the desired type. Property
- *      names CANNOT begin with an underscore. This maintains the Zend Framework
+ * This requires a version PHP 8.1 or greater.
+ *
+ * Create a child of this class with your named properties as public, or
+ *      they can be protected or private and be a decendent of
+ *            * TypedAbstract,
+ *        * AtomicInterface,
+ *            * Diskerror\Typed\DateTime, or
+ *            * named "_id",
+ *        and these will be treated as public members but with additional sanatation.
+ *
+ * Property names CANNOT begin with an underscore (except "_id"). This maintains the Zend Framework
  *      convention that protected and private property names should begin with an
- *      underscore. This abstract class will expose all members whose name don't
- *      begin with an underscore, but filter access to those class members or
- *      properties that have a visibility of protected or private.
+ *      underscore.
  *
  * Input to the constructor or assign methods must be an array or object. Only the
  *      values in the matching names will be filtered and copied into the object.
@@ -43,8 +50,6 @@ use TypeError;
  */
 abstract class TypedClass extends TypedAbstract
 {
-	use SetTypeTrait;
-
 	/**
 	 * Holds the name pairs for when different/bad key names need to point to the same data.
 	 *
@@ -59,6 +64,9 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	protected array $_meta;
 
+	private int   $_count;
+	private array $_publicNames;
+
 
 	/**
 	 * Constructor.
@@ -66,93 +74,58 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @param mixed $in -OPTIONAL
 	 */
-	public function __construct($in = null)
+	public function __construct($in = [])
 	{
 		$this->_initToArrayOptions();
-		$this->_initializeObjects();
-		$this->_initMetaData();
-		if ($in !== null) {
-			$this->replace($in);
-		}
-	}
 
-	/**
-	 * Override to set initValue values for properties with object types.
-	 *
-	 * @return void
-	 */
-	protected function _initializeObjects()
-	{
-	}
-
-	/**
-	 * Initialize meta data.
-	 *
-	 * @return void
-	 */
-	final protected function _initMetaData()
-	{
+		//	Build metadata array.
 		$this->_meta = [];
 		$ro          = new ReflectionObject($this);
 
 		//	Build array of initValue values with converted types.
-		//	Ignore all properties starting with underscore, except "_id".
 		foreach ($ro->getProperties() as $p) {
-			$pName = $p->getName();
+			$pName    = $p->getName();
+			$typeObj  = $p->getType();
+			$typeName = !is_null($typeObj) ? $typeObj->__toString() : '';
+			$typeName = substr($typeName, 0, 1) === '?' ? substr($typeName, 1) : $typeName;
+			$isObject = !self::_isAssignable($typeName);
 
+			//	If the name is not in the list of options...
+			//	If the name begins with an underscore and is not "_id"...
+			//	If the name is empty...
+			//	If the property is public...
 			if (
-				in_array($pName, $this->_optionList)
-				|| ($pName[0] === '_' && $pName !== '_id')
-				|| empty($pName)
+				!in_array($pName, $this->_optionList)
+				&& ($pName[0] !== '_' || $pName === '_id')
+				&& !empty($pName)
+				&& ($p->isPublic() || $isObject)
 			) {
-				continue;
-			}
+				$isNullable = is_null($typeObj) || $typeObj->allowsNull();
 
-			$typeObj    = $p->getType();
-			$typeName   = !is_null($typeObj) ? $typeObj->getName() : '';
-			$isNullable = is_null($typeObj) || $typeObj->allowsNull();
-			$isObject   = !self::_isAssignable($typeName);
-
-			if (!isset($this->$pName)) {
-				switch (true) {
-					case $isObject:
-						//	All objects will be initialized.
-						if (is_a($typeName, AtomicInterface::class, true)) {
-							$this->$pName = new $typeName('', $isNullable);
-							$isNullable   = false;
-						}
-						else {
-							$this->$pName = new $typeName();
-						}
-						break;
-
-					case $isNullable:
-						$this->$pName = null;
-						break;
-
-					default:
-						$this->$pName = self::setType('', $typeName);
+				if (!$isNullable && $isObject && !isset($this->$pName)) {
+					$this->$pName = new $typeName();
 				}
+
+				$this->_meta[$pName] = new PropertyMetaData($typeName, $isObject, $isNullable, $p->isPublic());
 			}
+		}
 
-			$initialValue = $isObject ? clone $this->$pName : $this->$pName;
-
-			$this->_meta[$pName] = new PropertyMetaData($typeName, $isObject, $isNullable, $initialValue);
+		if ($in !== []) {
+			$this->assign($in);
 		}
 	}
 
 	/**
-	 * Return array of sudo public property names.
+	 * Return array of pseudo public property names.
 	 *
 	 * @return array
 	 */
 	final public function getPublicNames(): array
 	{
-		static $pNames;
-		if (!isset($pNames)) {
-			$pNames = array_keys($this->_meta);
+		if (!isset($this->_publicNames)) {
+			$this->_publicNames = array_keys($this->_meta);
 		}
-		return $pNames;
+		return $this->_publicNames;
 	}
 
 	/**
@@ -162,50 +135,14 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	final public function count(): int
 	{
-		static $count;
-		if (!isset($count)) {
-			$count = count($this->_meta);
+		if (!isset($this->_count)) {
+			$this->_count = count($this->_meta);
 		}
-		return $count;
+		return $this->_count;
 	}
 
 	/**
-	 * Assign matching values to local keys resetting unmatched local keys.
-	 *
-	 * Copies all matching property names while maintaining original types and
-	 *     doing a deep copy where appropriate.
-	 * This method silently ignores extra properties in $input,
-	 *     resets unmatched local properties, and
-	 *     skips names starting with an underscore.
-	 *
-	 * Input can be an object, or an indexed or associative array.
-	 *
-	 * @param array|object $in
-	 *
-	 * @return void
-	 */
-	public function assign($in): void
-	{
-		$this->_massageInput($in);
-		$this->_massageInputArray($in);
-
-		$propertiesSet = [];
-		foreach ($in as $k => $v) {
-			$k = array_key_exists($k, $this->_map) ? $this->_map[$k] : $k;
-
-			if ($this->_keyExists($k)) {
-				$this->_setByName($k, $v, false);
-				$propertiesSet[] = $k;
-			}
-		}
-
-		$this->restoreInitialValues($propertiesSet);
-
-		$this->_checkRelatedProperties();
-	}
-
-	/**
-	 * Deep replace local values with matches from input.
+	 * Assign local values with matches from input.
 	 *
 	 * Copies all matching property names while maintaining original types and
 	 *     doing a deep copy where appropriate.
@@ -219,14 +156,14 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return void
 	 */
-	public function replace($in): void
+	public function assign($in): void
 	{
 		$this->_massageInput($in);
 		$this->_massageInputArray($in);
 
 		foreach ($in as $k => $v) {
 			$k = array_key_exists($k, $this->_map) ? $this->_map[$k] : $k;
-			if ($this->_keyExists($k) and ($this->_meta[$k]->isNullable or null !== $v)) {
+			if ($this->_keyExists($k)) {
 				$this->_setByName($k, $v);
 			}
 		}
@@ -235,7 +172,38 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
-	 * Clone local values and replace matching values with input.
+	 * Clear all values.
+	 *
+	 * All values are set to zero or empty.
+	 *
+	 * @return void
+	 */
+	public function clear(): void
+	{
+		foreach ($this->_meta as $pName => $meta) {
+			$pType = $meta->type;
+			switch (true) {
+				case is_a($pType, AtomicInterface::class, true):
+					$this->$pName->set(null);
+					break;
+
+				case is_a($pType, TypedAbstract::class, true):
+					$this->$pName->clear();
+					break;
+
+				case is_object($this->$pName):
+					$this->$pName = new $pType();
+					break;
+
+				default:
+					$this->$pName = ScalarAbstract::setType('', gettype($this->$pName));
+					break;
+			}
+		}
+	}
+
+	/**
+	 * Clone local values and assign matching values with input.
 	 *
 	 * This method clones $this then replaces matching keys from $in
 	 *     and returns the new object.
@@ -247,24 +215,9 @@ abstract class TypedClass extends TypedAbstract
 	public function merge($in): TypedAbstract
 	{
 		$clone = clone $this;
-		$clone->replace($in);
+		$clone->assign($in);
 
 		return $clone;
-	}
-
-	/**
-	 * @param array $namesToOmit -OPTIONAL
-	 *
-	 * @return void
-	 */
-	public function restoreInitialValues(array $namesToOmit = [])
-	{
-		$propertiesRemaining = array_diff($this->getPublicNames(), $namesToOmit);
-		foreach ($propertiesRemaining as $pName) {
-			$this->$pName = $this->_meta[$pName]->isObject ?
-				clone $this->_meta[$pName]->initValue :
-				$this->_meta[$pName]->initValue;
-		}
 	}
 
 	/**
@@ -311,7 +264,7 @@ abstract class TypedClass extends TypedAbstract
 
 			if ($meta->isObject) {
 				switch (true) {
-					case $v instanceof AtomicInterface:
+					case is_a($v, AtomicInterface::class, true):
 						$v = $v->get();
 						break;
 
@@ -454,12 +407,12 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return void
 	 */
-	protected function _massageInputArray(&$in)
+	protected function _massageInputArray(&$in): void
 	{
 		//	If input is an array, test to see if it's an indexed or an associative array.
 		//	Leave associative array as is.
 		//	Copy indexed array by position to a named array
-		if (is_array($in) && !empty($in) && array_values($in) === $in) {
+		if (is_array($in) && array_is_list($in)) {
 			$newArr   = [];
 			$minCount = min(count($in), $this->count());
 			for ($i = 0; $i < $minCount; ++$i) {
@@ -468,7 +421,6 @@ abstract class TypedClass extends TypedAbstract
 
 			$in = $newArr;
 		}
-		//	else leave as is
 	}
 
 	/**
@@ -487,7 +439,7 @@ abstract class TypedClass extends TypedAbstract
 
 		$pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
 		$this->_assertPropName($pName);
-		return $this->$pName instanceof AtomicInterface ? $this->$pName->get() : $this->$pName;
+		return ($this->$pName instanceof AtomicInterface) ? $this->$pName->get() : $this->$pName;
 	}
 
 	/**
@@ -546,6 +498,11 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	protected function _setByName(string $pName, $in, bool $deepCopy = true): void
 	{
+		if ($this->_meta[$pName]->isPublic) {
+			$this->$pName = $in;
+			return;
+		}
+
 		$pType = $this->_meta[$pName]->type;
 
 		switch (true) {
@@ -556,15 +513,7 @@ abstract class TypedClass extends TypedAbstract
 						break;
 
 					case is_a($pType, TypedAbstract::class, true):
-						$this->$pName->assign([]);
-						break;
-
-					case $this->_meta[$pName]->isNullable:
-						$this->$pName = null;
-						break;
-
-					case self::_isAssignable($pType):
-						$this->$pName = self::setType($in, $pType);
+						$this->$pName->clear();
 						break;
 
 					default:
@@ -575,8 +524,7 @@ abstract class TypedClass extends TypedAbstract
 
 			case is_a($pType, TypedAbstract::class, true):
 				if ($deepCopy) {
-					$this->_setPropertyIfNotSet($pName);
-					$this->$pName->replace($in);
+					$this->$pName->assign($in);
 					return;
 				}
 				else {
@@ -589,7 +537,6 @@ abstract class TypedClass extends TypedAbstract
 						}
 							//	Then try to copy members by name.
 						catch (TypeError $t) {
-							$this->_setPropertyIfNotSet($pName);
 							foreach ($in as $k => $v) {
 								$this->$pName->{$k} = $v;
 							}
@@ -603,7 +550,6 @@ abstract class TypedClass extends TypedAbstract
 				return;
 
 			case is_a($pType, AtomicInterface::class, true):
-				$this->_setPropertyIfNotSet($pName);
 				$this->$pName->set($in);
 				return;
 
@@ -619,7 +565,6 @@ abstract class TypedClass extends TypedAbstract
 					}
 						//	Then try to copy members by name.
 					catch (TypeError $t) {
-						$this->_setPropertyIfNotSet($pName);
 						foreach ($in as $k => $v) {
 							$this->$pName->{$k} = $v;
 						}
@@ -629,10 +574,21 @@ abstract class TypedClass extends TypedAbstract
 
 			case is_array($in):
 				if ($pType === 'stdClass') {
-					$this->$pName = (object) $in;
+					$this->$pName = (object)$in;
 					break;
 				}
-			//	fall through
+				$this->$pName = new $pType($in);
+				return;
+
+			case $pType === 'bool':
+			case $pType === 'int':
+			case $pType === 'double':
+			case $pType === 'string':
+				if (!$this->_meta[$pName]->isNullable && $in === null) {
+					$in = '';
+				}
+				$this->$pName = ScalarAbstract::setType($in, $pType);
+				return;
 
 			default:
 				//	NULL is handled above.
@@ -649,19 +605,6 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	protected function _checkRelatedProperties()
 	{
-	}
-
-	/**
-	 * @param string $pName
-	 *
-	 * @return void
-	 */
-	private function _setPropertyIfNotSet(string $pName): void
-	{
-		$type = $this->_meta[$pName]->type;
-		if (!isset($this->$pName) && !self::_isAssignable($type)) {
-			$this->$pName = new $type();
-		}
 	}
 
 	/**

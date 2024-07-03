@@ -64,7 +64,7 @@ class ConstructTest extends TestCase
 //		tprint($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp2-48.json',
-			json_encode($simp)
+			json_encode($simp->toArray())
 		);
 	}
 

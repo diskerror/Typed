@@ -8,23 +8,23 @@ use ErrorException;
  * class PropertyMetaData
  *
  * @property string $type
- * @property bool   $isObject
- * @property bool   $isNullable
- * @property mixed  $initValue
+ * @property bool $isObject
+ * @property bool $isNullable
+ * @property mixed $initValue
  */
 final class PropertyMetaData
 {
 	private string $type;
 	private bool   $isObject;
 	private bool   $isNullable;
-	private        $initValue;
+	private        $isPublic;
 
-	public function __construct(string $type, bool $isObject, bool $isNullable, $initialValue)
+	public function __construct(string $type, bool $isObject, bool $isNullable, bool $isPublic)
 	{
 		$this->type       = $type;
 		$this->isObject   = $isObject;
 		$this->isNullable = $isNullable;
-		$this->initValue  = $initialValue;
+		$this->isPublic   = $isPublic;
 	}
 
 	/**

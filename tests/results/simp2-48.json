@@ -1,6 +1,10 @@
 {
-	"myInt": 77,
-	"myFloat": 0.5,
-	"myString": "simpppp2",
-	"myDate": "2010-01-01T01:01:01.001+00:00"
+    "myBool": false,
+    "myInt": 77,
+    "myFloat": 0.5,
+    "myString": "simpppp2",
+    "myArray": [],
+    "myObj": {},
+    "myDate": "2010-01-01 01:01:01.001",
+    "myTypedArray": []
 }

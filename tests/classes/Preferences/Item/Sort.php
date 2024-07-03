@@ -6,6 +6,11 @@ use Diskerror\Typed\Scalar\TStringTrim;
 
 class Sort extends TStringTrim
 {
+	public function __construct($in = 'ASC', bool $allowNull = false)
+	{
+		parent::__construct($in, $allowNull);
+	}
+
 	public function set($in): void
 	{
 		parent::set($in);

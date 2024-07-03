@@ -9,7 +9,7 @@
 
 namespace Diskerror\Typed;
 
-use OutOfBoundsException;
+use ErrorException;
 
 /**
  * Class ScalarAbstract
@@ -18,8 +18,6 @@ use OutOfBoundsException;
  */
 abstract class ScalarAbstract implements AtomicInterface
 {
-	use SetTypeTrait;
-
 	/**
 	 * Stores the scalar value.
 	 * Initialization defaults to false, zero, or an empty string.
@@ -98,12 +96,17 @@ abstract class ScalarAbstract implements AtomicInterface
 	 */
 	public function unset(): void
 	{
-		$this->_value = $this->_allowNull ? null : self::setType('', gettype($this->_value));
+		if ($this->_allowNull) {
+			$this->_value = null;
+		}
+		else {
+			$this->_value = self::setType('', gettype($this->_value));
+		}
 	}
 
 	/**
 	 * Casts an object to a simpler type.
-	 * 
+	 *
 	 * @param  $in
 	 *
 	 * @return mixed
@@ -126,9 +129,34 @@ abstract class ScalarAbstract implements AtomicInterface
 					return $in->toArray();
 			}
 
-			return (array) $in;
+			return (array)$in;
 		}
 
 		return $in;
+	}
+
+	/**
+	 * SetType.
+	 *
+	 * This differs from settype() in that it returns an empty array for an empty string.
+	 * It also throws an exception for bad type names.
+	 *
+	 * @param        $val
+	 * @param string $type
+	 *
+	 * @return array|bool|float|int|string|null
+	 * @throws ErrorException
+	 */
+	public static function setType($val, string $type): mixed
+	{
+		if ($type === 'array' && $val === '') {
+			return [];
+		}
+
+		if (settype($val, $type) === false) {
+			throw new ErrorException('bad type name');
+		}
+
+		return $val;
 	}
 }

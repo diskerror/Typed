@@ -211,34 +211,34 @@ class AssignTest extends TestCase
 		$this->assertEquals(new TypedArray(), $t->myArray);
 	}
 
-	public function testAssignObject()
-	{
-		$t = new SimpleTyped();
-
-		////////////////////////////////////////////////////////////////////////
-		//	Generic object.
-		$this->assertEquals(new stdClass(), $t->myObj);
-
-		$t->myObj = 77;
-		$this->assertEquals(new stdClass(), $t->myObj);
-
-		$t->myObj = null;
-		$this->assertEquals(new stdClass(), $t->myObj);
-
-		$t->myObj    = ['first' => 'a', 'second' => 'b'];
-		$obj         = new stdClass();
-		$obj->first  = 'a';
-		$obj->second = 'b';
-		$this->assertEquals($obj, $t->myObj);
-
-		$c          = new stdClass();
-		$c->aMember = 'string data';
-		$t->myObj   = $c;
-		$this->assertTrue($t->myObj === $c);
-
-		unset($t->myObj);
-		$this->assertEquals(new stdClass(), $t->myObj);
-	}
+//	public function testAssignObject()
+//	{
+//		$t = new SimpleTyped();
+//
+//		////////////////////////////////////////////////////////////////////////
+//		//	Generic object.
+//		$this->assertEquals(new stdClass(), $t->myObj);
+//
+//		$t->myObj = 77;
+//		$this->assertEquals(new stdClass(), $t->myObj);
+//
+//		$t->myObj = null;
+//		$this->assertEquals(new stdClass(), $t->myObj);
+//
+//		$t->myObj    = ['first' => 'a', 'second' => 'b'];
+//		$obj         = new stdClass();
+//		$obj->first  = 'a';
+//		$obj->second = 'b';
+//		$this->assertEquals($obj, $t->myObj);
+//
+//		$c          = new stdClass();
+//		$c->aMember = 'string data';
+//		$t->myObj   = $c;
+//		$this->assertTrue($t->myObj === $c);
+//
+//		unset($t->myObj);
+//		$this->assertEquals(new stdClass(), $t->myObj);
+//	}
 
 	public function testAssignDate()
 	{

@@ -2,7 +2,6 @@
 
 namespace TestClasses;
 
-use Diskerror\Typed\Scalar\TIntegerUnsigned;
 use Diskerror\Typed\TypedClass;
 use TestClasses\Tweet\ReTweet;
 use TestClasses\Tweet\TweetTrait;
@@ -10,19 +9,12 @@ use TestClasses\Tweet\TweetTrait;
 class Tweet extends TypedClass
 {
 	protected array $_map = [
-		'id' => '_id',    //	from Twitter
+		'id' => '_id',    //	received from Twitter
 	];
 
-	protected TIntegerUnsigned $_id;
+	public int $_id = 0;
 
 	use TweetTrait;
 
 	protected ReTweet $retweeted_status;
-
-	protected function _initializeObjects()
-	{
-		$this->_id = new TIntegerUnsigned();
-	}
-
-
 }

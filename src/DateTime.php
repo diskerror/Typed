@@ -103,7 +103,7 @@ class DateTime extends DT implements JsonSerializable
 	 * @param int              $month -DEFAULT 1
 	 * @param int              $day   -DEFAULT 1
 	 */
-	public function setDate($year, $month = 1, $day = 1)
+	public function setDate($year, $month = 1, $day = 1): self
 	{
 		switch (gettype($year)) {
 			case 'object':
@@ -162,7 +162,7 @@ class DateTime extends DT implements JsonSerializable
 	 * @param int              $second
 	 * @param int              $mcs Microseconds
 	 */
-	public function setTime($hour, $minute = 0, $second = 0, $mcs = 0)
+	public function setTime($hour, $minute = 0, $second = 0, $mcs = 0): self
 	{
 		switch (gettype($hour)) {
 			case 'object':

@@ -6,7 +6,7 @@ use Diskerror\Typed\TypedClass;
 
 class ReTweet extends TypedClass
 {
-	protected int $id = 0;
+	public ?int $id = 0;
 
 	use TweetTrait;
 

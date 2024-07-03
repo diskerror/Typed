@@ -29,7 +29,6 @@ class TInteger extends ScalarAbstract
 				}
 				break;
 
-			case 'null':
 			case 'NULL':
 				$this->_value = $this->isNullable() ? null : 0;
 				break;

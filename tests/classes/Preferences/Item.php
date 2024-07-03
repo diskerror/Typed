@@ -5,6 +5,8 @@
 
 namespace TestClasses\Preferences;
 
+use Diskerror\Typed\Scalar\TBoolean;
+use Diskerror\Typed\Scalar\TString;
 use Diskerror\Typed\TypedClass;
 use TestClasses\Preferences\Item\{Compare, Operator, Sort};
 
@@ -14,16 +16,16 @@ class Item extends TypedClass
 //	const COMPARE = '|=|!=|<|>|>=|<=|LIKE|NOT LIKE|REGEXP|NOT REGEXP|IN';
 //	const SORT    = '|ASC|DESC';
 
-	protected bool     $included = true; //	Include this in the view.
+	protected TBoolean $included;        //	Include this in the view.
 	protected Operator $operator;        //	AND, OR
 	protected Compare  $compare;         //	=, <, >, LIKE, REGEXP, IN, etc.
-	protected string   $find     = '';   //	search string
+	protected TString  $find;            //	search string
 	protected Sort     $sort;            //	ASC, DESC, sort direction or nothing
 
-	protected function _initializeObjects()
+	public function __construct($in)
 	{
-		$this->operator = new Operator('AND');
-		$this->compare  = new Compare('LIKE');
-		$this->sort     = new Sort('ASC');
+		$this->included = new TBoolean(true);
+
+		parent::__construct($in);
 	}
 }

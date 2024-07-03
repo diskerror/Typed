@@ -48,7 +48,6 @@ class TFloat extends ScalarAbstract
 				$this->_value = (float) $in;
 				break;
 
-			case 'null':
 			case 'NULL':
 				$this->_value = $this->isNullable() ? null : 0.0;
 				break;
