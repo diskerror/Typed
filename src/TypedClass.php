@@ -1,5 +1,4 @@
 <?php
-/** @noinspection ALL */
 
 /**
  * Provides support for class members/properties maintain their initial types.

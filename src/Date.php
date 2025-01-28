@@ -3,7 +3,6 @@
 namespace Diskerror\Typed;
 
 use DateInterval;
-use InvalidArgumentException;
 use LogicException;
 
 /**
@@ -25,7 +24,7 @@ class Date extends DateTime
 	 * Sets time to noon to avoid possible Daylight Savings transition issues.
 	 *
 	 * @param object|array|string $time -OPTIONAL
-	 * @param string $timezone -OPTIONAL
+	 * @param string              $timezone -OPTIONAL
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
@@ -79,13 +78,13 @@ class Date extends DateTime
 	 * Method shouldn't be used for Date object.
 	 *
 	 * @param array|int $hou
-	 * @param int $min
-	 * @param int $sec
-	 * @param int $mic
+	 * @param int       $min
+	 * @param int       $sec
+	 * @param int       $mic
 	 *
 	 * @throws LogicException
 	 */
-	public function setTime($hour, $minute = 0, $second = 0, $mcs = 0)
+	public function setTime($hour, $minute = 0, $second = 0, $mcs = 0): DateTime
 	{
 		throw new LogicException('method not available in Date class');
 	}
