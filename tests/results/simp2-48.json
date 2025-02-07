@@ -4,7 +4,7 @@
     "myFloat": 0.5,
     "myString": "simpppp2",
     "myArray": [],
-    "myObj": {},
-    "myDate": "2010-01-01 01:01:01.001",
+    "myObj": [],
+    "myDate": "+2010-01-01T01:01:01.001000+00:00",
     "myTypedArray": []
 }

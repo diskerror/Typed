@@ -1,0 +1,20 @@
+{
+  "myBool": true,
+  "myInt": 2,
+  "myFloat": 3.14,
+  "myString": "very complicated",
+  "myArray": [
+    "a",
+    "b",
+    "c"
+  ],
+  "myObj": {
+    "anything": "ha!",
+    "more": "much!"
+  },
+  "myDate": {
+    "date": "2010-01-01 01:01:01.001000",
+    "timezone_type": 1,
+    "timezone": "+00:00"
+  }
+}

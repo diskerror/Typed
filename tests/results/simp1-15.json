@@ -4,7 +4,7 @@
 	"myFloat": 3.14,
 	"myString": "",
 	"myArray": [],
-	"myObj": {},
-	"myDate": "2010-01-01 01:01:01.001",
+	"myObj": [],
+	"myDate": "+2010-01-01T01:01:01.001000+00:00",
 	"myTypedArray": []
 }

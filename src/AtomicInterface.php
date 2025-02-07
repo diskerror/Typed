@@ -17,9 +17,9 @@ namespace Diskerror\Typed;
  */
 interface AtomicInterface
 {
-	public function get();
+	public function get(): mixed;
 
-	public function set($in): void;
+	public function set(mixed $in): void;
 
 	public function isset(): bool;
 

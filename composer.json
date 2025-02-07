@@ -19,7 +19,7 @@
 		}
 	],
 	"require": {
-		"php": ">=7.4",
+		"php": ">=8.2",
 		"ext-json": "*",
 		"ext-intl": "*"
 	},
@@ -28,7 +28,8 @@
 		"phpdocumentor/phpdocumentor": "~3.1.2"
 	},
 	"suggest": {
-		"laminas/laminas-json": "~3.1.*"
+		"laminas/laminas-json": "~3.1.*",
+		"ext-mongodb":"*"
 	},
 	"autoload": {
 		"psr-4": {

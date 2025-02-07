@@ -67,7 +67,7 @@ abstract class ScalarAbstract implements AtomicInterface
 	 *
 	 * @return mixed
 	 */
-	public function get()
+	public function get(): mixed
 	{
 		return $this->_value;
 	}

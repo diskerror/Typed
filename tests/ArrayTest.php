@@ -8,6 +8,8 @@ class ArrayTest extends TestCase
 	public function testWalk()
 	{
 		$walk = new TypedArray('string', ['1', 2, '3', 'z', 5]);
+        $walk->conversionOptions->unset();
+
 //		tprint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array1.json',
@@ -21,7 +23,7 @@ class ArrayTest extends TestCase
 //		tprint($walk->toArray());exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/array2.json',
-			json_encode($walk->toArray()),
+			json_encode($walk),
 			'Multiply strings by number.'
 		);
 

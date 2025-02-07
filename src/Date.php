@@ -34,7 +34,7 @@ class Date extends DateTime
 
 	/**
 	 * Adds DateInterval to stored date and
-	 *       sets time to noon to avoid possible Daylight Savings transition issues.
+	 *       sets time to noon so as avoid possible Daylight Savings transition issues.
 	 *
 	 * @param DateInterval $interval
 	 *
@@ -77,14 +77,14 @@ class Date extends DateTime
 	/**
 	 * Method shouldn't be used for Date object.
 	 *
-	 * @param array|int $hou
-	 * @param int       $min
-	 * @param int       $sec
-	 * @param int       $mic
+	 * @param array|int $hour
+	 * @param int       $minute
+	 * @param int       $second
+	 * @param int       $microsecond
 	 *
 	 * @throws LogicException
 	 */
-	public function setTime($hour, $minute = 0, $second = 0, $mcs = 0): DateTime
+	public function setTime($hour, $minute = 0, $second = 0, $microsecond = 0): DateTime
 	{
 		throw new LogicException('method not available in Date class');
 	}
@@ -94,6 +94,6 @@ class Date extends DateTime
 	 */
 	public function jsonSerialize(): string
 	{
-		return $this->format('Y-m-d');
+		return $this->format('X-m-d');
 	}
 }

@@ -1,10 +1,10 @@
 # Typed Classes and Objects
 
-Updates for PHP8 (>=8.1).
+Updates for PHP8 (>=8.2).
 
-This enables PHP objects to strictly define member structure, to control their data types, and to add convenience methods. The master branch is considered to be in constant development and currently only supports PHP version 8.1 and above, and now handles strict typing and allows for properties with class typing to be set to null.
+This enables PHP objects to strictly define member structure, to control their data types, and to add convenience methods data sanitation. The master branch is considered to be in constant development and currently only supports PHP version 8.2 and above, and now handles strict typing and allows for properties with class typing to be set to null.
 
-Object properties with public visibility will only use the built-in PHP type checking. Making the visibility protected or private will force the setting of values through the **Diskerror\Typed** mechanism. This mechanism silently ignores bad or unmapped property names and silently coerces input data into the best form represented by the property data type. Assigning the wrong data type to *public* properties will throw an exception.
+Object properties with public visibility will only use the built-in PHP type checking. Making the visibility protected or private will force the setting of values through the **Diskerror\Typed** mechanism. This mechanism silently ignores bad or unmapped property names and silently coerces input data into the best form represented by the property data type. Assigning the wrong data type to *public* properties will depend on the projects .
 
 # TypedAbstract
 
@@ -28,11 +28,11 @@ Sets all members to null, zero, or empty. Objects will also have their members s
 
 ### toArray
 
-Returns an associative array of this object with only the appropriate members, according to the *toArrayOptions* setting. A deep copy/conversion to an associative array from objects is also performed.
+Returns an associative array of this object with only the appropriate members, according to the *ConversionOptions* setting. A deep copy/conversion to an associative array from objects is also performed.
 
 ### jsonSerialize
 
-This method will return an array when *json_encode* is called on the object. This will have the options to omit empty values and maintain expressions.
+This method will return an array when *json_encode()* is called passing in the object. This will have the options to omit empty values and maintain expressions.
 
 ### _setBasicTypeAndConfirm
 

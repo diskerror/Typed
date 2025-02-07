@@ -71,14 +71,11 @@ class SqlStatement
 		foreach ($arr as $k => $v) {
 			$kEq = '`' . $k . '` = ';
 			switch (gettype($v)) {
-				case 'bool':
 				case 'boolean':
 					$sqlStrs[] = $kEq . ($v ? '1' : '0');
 					break;
 
-				case 'int':
 				case 'integer':
-				case 'float':
 				case 'double':
 					$sqlStrs[] = $kEq . $v;
 					break;
@@ -98,7 +95,6 @@ class SqlStatement
 					}
 					break;
 
-				case 'null':
 				case 'NULL':
 					//	if $v is a NULL
 					$sqlStrs[] = $kEq . 'NULL';

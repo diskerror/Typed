@@ -1,6 +1,7 @@
 <?php
 /** @noinspection ALL */
 
+use Diskerror\Typed\ConversionOptions;
 use Diskerror\Typed\TypedArray;
 use PHPUnit\Framework\TestCase;
 use TestClasses\SimpleTyped;
@@ -10,6 +11,7 @@ class ConstructTest extends TestCase
 	public function testEmptyConstructor()
 	{
 		$simp = new SimpleTyped();
+        $simp->conversionOptions->unset();
 
 		$this->assertIsBool($simp->myBool);
 		$this->assertIsInt($simp->myInt);
@@ -26,7 +28,7 @@ class ConstructTest extends TestCase
 //		fprintf(STDERR, var_export($simp));exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-15.json',
-			json_encode($simp->toArray())
+			json_encode($simp)
 		);
 
 
@@ -42,10 +44,10 @@ class ConstructTest extends TestCase
 		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
 		$this->assertInstanceOf('stdClass', $simp->myObj);
 
-//		tprint($simp->toArray());exit;
+//		jsprint($simp);exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-32.json',
-			json_encode($simp->toArray())
+			json_encode($simp)
 		);
 	}
 
@@ -53,8 +55,9 @@ class ConstructTest extends TestCase
 	{
 		$input = [false, 77, .5, 'simpppp2'];
 		$simp  = new SimpleTyped($input);
+        $simp->conversionOptions->unset();
 
-		$this->assertIsBool($simp->myBool);
+        $this->assertIsBool($simp->myBool);
 		$this->assertIsInt($simp->myInt);
 		$this->assertIsFloat($simp->myFloat);
 		$this->assertIsString($simp->myString);
@@ -64,7 +67,7 @@ class ConstructTest extends TestCase
 //		tprint($simp); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp2-48.json',
-			json_encode($simp->toArray())
+			json_encode($simp)
 		);
 	}
 
@@ -72,8 +75,9 @@ class ConstructTest extends TestCase
 	{
 		$arr  = ['myString' => 234445, 'myInt' => 3.14, 'myNotExist' => 'to be ignored'];
 		$simp = new SimpleTyped($arr);
+        $simp->conversionOptions->set(ConversionOptions::OMIT_EMPTY);
 
-		$this->assertIsBool($simp->myBool);
+        $this->assertIsBool($simp->myBool);
 		$this->assertIsInt($simp->myInt);
 		$this->assertIsFloat($simp->myFloat);
 		$this->assertIsString($simp->myString);
@@ -99,8 +103,9 @@ class ConstructTest extends TestCase
 		$obj->myObj->more     = 'much!';
 
 		$simp = new SimpleTyped($obj);
+        $simp->conversionOptions->set(ConversionOptions::OMIT_EMPTY);
 
-		$this->assertIsBool($simp->myBool);
+        $this->assertIsBool($simp->myBool);
 		$this->assertIsInt($simp->myInt);
 		$this->assertIsFloat($simp->myFloat);
 		$this->assertIsString($simp->myString);
@@ -111,11 +116,17 @@ class ConstructTest extends TestCase
 		$simp->myInt    = null;
 		$simp->myInt    = 2.54;
 
-//		tprint($simp); exit;
+//		tprint($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp4-93.json',
 			json_encode($simp)
 		);
-	}
+
+//        jsprint($simp->toArray());
+        $this->assertJsonStringEqualsJsonFile(
+            __DIR__ . '/results/simp4-93a.json',
+            json_encode($simp->toArray())
+        );
+    }
 
 }
