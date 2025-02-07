@@ -10,7 +10,6 @@
 namespace Diskerror\Typed;
 
 use ArrayAccess;
-use DateTimeInterface;
 use InvalidArgumentException;
 use LengthException;
 use Traversable;

@@ -1,0 +1,34 @@
+{
+    "retweeted_status": {
+        "created_at": {
+            "$date": {
+                "$numberLong": "1531933828000"
+            }
+        },
+        "filter_level": "low",
+        "lang": "en",
+        "user": {
+            "created_at": {
+                "$date": {
+                    "$numberLong": "1531933828000"
+                }
+            },
+            "lang": "en"
+        }
+    },
+    "created_at": {
+        "$date": {
+            "$numberLong": "1531933828000"
+        }
+    },
+    "filter_level": "low",
+    "lang": "en",
+    "user": {
+        "created_at": {
+            "$date": {
+                "$numberLong": "1531933828000"
+            }
+        },
+        "lang": "en"
+    }
+}

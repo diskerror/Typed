@@ -1,22 +1,18 @@
 <?php
 
-namespace TestClasses\Mongo;
+namespace TestClasses;
 
-use Diskerror\Typed\TypedArray;
+use TestClasses\Config\{Caches, Mongo, Process, Twitter, WordStats};
+use Diskerror\Typed\Scalar\TString;
 use Diskerror\Typed\TypedClass;
 
-/**
- * Class MongoConfig
- *
- * @package Structure\Config
- *
- * @property $host
- * @property $database
- * @property $collections
- */
 class Config extends TypedClass
 {
-	protected $host        = 'mongodb://localhost';
-	protected $database    = '';
-	protected $collections = [TypedArray::class, ConfigCollection::class];
+    protected $version       = [TString::class];
+    protected $mongo_db      = [Mongo::class];
+    protected $tweets_expire = 600;
+    protected $word_stats    = [WordStats::class];
+    protected $twitter       = [Twitter::class];
+    protected $process       = [Process::class];
+    protected $caches        = [Caches::class];
 }
