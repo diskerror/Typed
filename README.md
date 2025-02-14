@@ -6,6 +6,10 @@ This enables PHP objects to strictly define member structure, to control their d
 
 Object properties with public visibility will only use the built-in PHP type checking. Making the visibility protected or private in your data structure that inherits from **TypedClass** or **TypedArray** will use the **Diskerror\Typed** type checking. This mechanism silently ignores bad or unmapped property names and silently coerces input data into the best form represented by the property data type. Assigning the wrong data type to *public* properties will depend on the project's or file's `declare(strict_types=?);` setting.
 
+### Overhead
+
+There is significant overhead for instantiating a data structure using deritives of **Typed** classes. It is recommended that if you want to use this to sanitize similar objects in a loop then it is recommended to create a single object and clear it before assigning new data to it. This way the old data is removed before it is mistaken for new when an unset input property is encountered that would leave the old value unchanged.
+
 # TypedAbstract
 
 ## Abstract Methods
