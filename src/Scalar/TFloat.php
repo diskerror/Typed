@@ -15,7 +15,7 @@ class TFloat extends ScalarAbstract
 {
 	protected $_value;
 
-	public function set($in): void
+	public function set(mixed $in): void
 	{
 		$in = self::_castIfObject($in);
 

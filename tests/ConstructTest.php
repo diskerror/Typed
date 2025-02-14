@@ -24,7 +24,7 @@ class ConstructTest extends TestCase
 		 * The method "toArray" is used in the function "json_encode" so as to
 		 * not invoke the method "jsonSerialize".
 		 */
-// 		tprint($simp); exit;
+// 		vxprint($simp->toArray()); exit;
 //		fprintf(STDERR, var_export($simp));exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp1-15.json',
@@ -76,6 +76,7 @@ class ConstructTest extends TestCase
 		$arr  = ['myString' => 234445, 'myInt' => 3.14, 'myNotExist' => 'to be ignored'];
 		$simp = new SimpleTyped($arr);
         $simp->conversionOptions->set(ConversionOptions::OMIT_EMPTY);
+        $simp->setConversionOptionsToNested();
 
         $this->assertIsBool($simp->myBool);
 		$this->assertIsInt($simp->myInt);
@@ -84,7 +85,7 @@ class ConstructTest extends TestCase
 		$this->assertInstanceOf(TypedArray::class, $simp->myArray);
 		$this->assertInstanceOf('stdClass', $simp->myObj);
 
-//		tprint($simp); exit;
+//		jsprint($simp->toArray()); exit;
 		$this->assertJsonStringEqualsJsonFile(
 			__DIR__ . '/results/simp3-65.json',
 			json_encode($simp)

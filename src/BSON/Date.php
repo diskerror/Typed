@@ -2,9 +2,10 @@
 
 namespace Diskerror\Typed\BSON;
 
-use MongoDB\BSON\Persistable;
+use MongoDB\BSON\Serializable;
+use MongoDB\BSON\Unserializable;
 
-class Date extends \Diskerror\Typed\Date implements Persistable
+class Date extends \Diskerror\Typed\Date implements Serializable, Unserializable
 {
     use DateTrait;
 

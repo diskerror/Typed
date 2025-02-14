@@ -2,7 +2,7 @@
 
 namespace TestClasses;
 
-use Diskerror\TypedBSON\TypedArray;
+use Diskerror\Typed\BSON\TypedArray;
 
 class PreferenceList extends TypedArray
 {

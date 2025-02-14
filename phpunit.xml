@@ -27,5 +27,8 @@
     <testsuite name="config">
       <file>tests/ConfigTest.php</file>
     </testsuite>
+    <testsuite name="mongo">
+      <file>tests/MongoTest.php</file>
+    </testsuite>
   </testsuites>
 </phpunit>

@@ -1,19 +1,17 @@
 <?php
 
-namespace TestClasses\Preferences;
+namespace TestClasses;
 
-use Diskerror\TypedBSON\TypedArray;
-
-class ListList extends TypedArray
+class PrefListList extends Diskerror\Typed\BSON\TypedArray
 {
-	protected $_type = ItemList::class;
+	protected $_type = 'PreferenceList';
 
-	public static function getDefault(): self
+	public static function getDefault()
 	{
 		$d = new self([
-			'Option Name'    => ItemList::getDefault(),
-			'Option Address' => ItemList::getDefault(),
-			'Option ZIP'     => ItemList::getDefault()
+			'Option Name'    => PreferenceList::getDefault(),
+			'Option Address' => PreferenceList::getDefault(),
+			'Option ZIP'     => PreferenceList::getDefault(),
 		]);
 
 		$d['Option Name']['name']->compare     = 'REGEXP';

@@ -9,86 +9,76 @@
 
 namespace Diskerror\Typed\BSON;
 
+use DateTimeInterface;
 use Diskerror\Typed\ConversionOptions;
-use MongoDB\BSON\ObjectId;
-use MongoDB\BSON\Persistable;
+use InvalidArgumentException;
+use MongoDB\BSON\{Document, ObjectId, PackedArray, Serializable, Unserializable, UTCDateTime};
+use stdClass;
 
 /**
  * Provides support for an array's elements to all have the same type.
  * If type is defined as null then any element can have any type but
  *      deep copying of objects is always available.
  */
-class TypedArray extends \Diskerror\Typed\TypedArray implements Persistable
+class TypedArray extends \Diskerror\Typed\TypedArray implements Serializable, Unserializable
 {
-    use TypedTrait;
-
-    /**
-     * Constructor.
-     *
-     * If this class is instantiated directly, ie. "$a = new TypedArray('integer', [1, 2, 3]);",
-     * then $param1 must be the data type as a string, and then $param2 can be the initial data.
-     *
-     * If a derived class is instantiated then the data type must be contained in
-     * the class, ie. "protected $_type = 'integer';", and $param1 can be the initial data.
-     *
-     * @param mixed             $param1 OPTIONAL ""
-     * @param array|object|null $param2 OPTIONAL null
-     */
-    public function __construct($param1 = '', $param2 = null)
+    public function __construct(mixed $param1 = null, mixed $param2 = null)
     {
-        $this->_initToArrayOptions();
-
         if (get_called_class() === self::class) {
-            $this->_type = (string)$param1;
-            parent::__construct($param2);
+            $this->_type = is_string($param1) ? $param1 : '';
+
+            $param1 = $param2;
+            $param2 = null;
         }
         else {
-            parent::__construct($param1, $param2);
+            if (!isset($this->_type)) {
+                throw new InvalidArgumentException('$this->_type must be set in child class.');
+            }
+
+            if (null !== $param2) {
+                throw new InvalidArgumentException('Only the first parameter can be set when using a derived class.');
+            }
+
+            $this->assign($param1);
         }
+        parent::__construct($param1, $param2);
     }
 
     /**
      * Called automatically by MongoDB.
      *
-     * @return array
+     * @return array|Document|PackedArray|stdClass
      */
-    public function bsonSerialize(): array
+    public function bsonSerialize(): array|Document|PackedArray|stdClass
     {
+        $dateToString = $this->conversionOptions->isset(ConversionOptions::DATE_TO_STRING);
+        $omitEmpty    = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
+        $castObjectId = $this->conversionOptions->isset(ConversionOptions::CAST_ID_TO_OBJECTID);
+
         $output = [];
-
-        if (is_a($this->_type, \Diskerror\Typed\DateTime::class, true)) {
-            if ($this->toBsonOptions->has(ConversionOptions::DATE_TO_STRING)) {
-                foreach ($this->_container as $k => $v) {
-                    $output[$k] = $v->jsonSerialize();
-                }
+        if (method_exists($this->_type, 'bsonSerialize')) {
+            foreach ($this->_container as $k => $v) {
+                $output[$k] = $v->bsonSerialize();
             }
-            else {
-                foreach ($this->_container as $k => $v) {
-                    $output[$k] = $v;
-                }
-            }
-
-            if ($this->toBsonOptions->has(ConversionOptions::OMIT_EMPTY)) {
-                self::_removeEmpty($output);
+        }
+        elseif (!$dateToString && is_a($this->_type, DateTimeInterface::class, true)) {
+            foreach ($this->_container as $k => $v) {
+                $output[$k] = (array)new UTCDateTime($v);
             }
         }
         else {
             $output = $this->toArray();
         }
 
+        if ($omitEmpty) {
+            self::_removeEmpties($output);
+        }
+
         /**
          * Cast "_id" string or number into a MongoDB\BSON\ObjectId.
          */
-        if (
-            $this->toBsonOptions->has(ConversionOptions::CAST_ID_TO_OBJECTID) &&
-            array_key_exists('_id', $output) && is_scalar($output['_id'])
-        ) {
-            if ($output['_id'] == 0) {
-                $output['_id'] = new ObjectId();
-            }
-            else {
-                $output['_id'] = new ObjectId((string)$output['_id']);
-            }
+        if ($castObjectId && array_key_exists('_id', $output) && is_scalar($output['_id'])) {
+            $output['_id'] = new ObjectId(empty($output['_id']) ? null : (string)$output['_id']);
         }
 
         return $output;
@@ -98,9 +88,9 @@ class TypedArray extends \Diskerror\Typed\TypedArray implements Persistable
      *
      * @param array $data
      */
-    public function bsonUnserialize(array $data)
+    public function bsonUnserialize(array $data): void
     {
-        $this->_initToArrayOptions();
-        $this->replace($data);
+        $this->clear();
+        $this->assign($data);
     }
 }

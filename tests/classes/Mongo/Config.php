@@ -1,18 +1,27 @@
 <?php
 
-namespace TestClasses;
+namespace TestClasses\Mongo;
 
-use TestClasses\Config\{Caches, Mongo, Process, Twitter, WordStats};
-use Diskerror\Typed\Scalar\TString;
-use Diskerror\Typed\TypedClass;
+use Diskerror\Typed\BSON\TypedArray;
+use Diskerror\Typed\BSON\TypedClass;
 
+/**
+ * Class Config
+ *
+ * @package TestClasses\Mongo
+ *
+ * @property string     $host
+ * @property string     $database
+ * @property Collection $collections
+ */
 class Config extends TypedClass
 {
-    protected $version       = [TString::class];
-    protected $mongo_db      = [Mongo::class];
-    protected $tweets_expire = 600;
-    protected $word_stats    = [WordStats::class];
-    protected $twitter       = [Twitter::class];
-    protected $process       = [Process::class];
-    protected $caches        = [Caches::class];
+    protected string     $host     = 'mongodb://localhost';
+    protected string     $database = '';
+    protected TypedArray $collections;
+
+    protected function _initProperties(): void
+    {
+        $this->collections = new TypedArray(Collection::class);
+    }
 }

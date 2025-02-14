@@ -17,7 +17,7 @@ final class PropertyMetaData
 	private string $type;
 	private bool   $isObject;
 	private bool   $isNullable;
-	private        $isPublic;
+	private bool   $isPublic;
 
 	public function __construct(string $type, bool $isObject, bool $isNullable, bool $isPublic)
 	{

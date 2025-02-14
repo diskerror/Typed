@@ -11,7 +11,7 @@ namespace Diskerror\Typed\Scalar;
 
 class TIntegerUnsigned extends TInteger
 {
-	public function set($in): void
+	public function set(mixed $in): void
 	{
 		parent::set($in);
 

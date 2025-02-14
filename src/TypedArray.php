@@ -50,7 +50,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
      *
      * @throws InvalidArgumentException
      */
-    public function __construct($param1 = null, $param2 = null)
+    public function __construct(mixed $param1 = null, mixed $param2 = null)
     {
         $this->conversionOptions = new ConversionOptions();
 
@@ -145,7 +145,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
         if (is_a($this->_type, TypedAbstract::class, true)) {
             foreach ($this->_container as $v) {
                 $v->conversionOptions->set($this->conversionOptions->get());
-                $v->setArrayOptionsToNested();
+                $v->setConversionOptionsToNested();
             }
         }
     }
@@ -200,7 +200,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
         }
 
         if ($omitEmpty) {
-            self::_removeEmpty($output);
+            self::_removeEmpties($output);
         }
 
         return $output;
@@ -234,7 +234,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
         }
 
         if ($omitEmpty) {
-            self::_removeEmpty($output);
+            self::_removeEmpties($output);
         }
 
         return $output;
@@ -247,20 +247,20 @@ class TypedArray extends TypedAbstract implements ArrayAccess
      *
      * @return void
      */
-    protected static function _removeEmpty(array &$arr): void
+    protected static function _removeEmpties(array &$arr): void
     {
-        //	Is this an associative array?
-        $isList = array_is_list($arr);
+        //	Is this an indexed array?
+        $indexed = array_is_list($arr);
 
         //	Remove empty items.
         foreach ($arr as $k => $v) {
-            if (self::_isEmpty($v)) {
+            if (empty($v)) {
                 unset($arr[$k]);
             }
         }
 
-        //	If it's an indexed array (not a list or associative array) then fix the indexes.
-        if (!$isList) {
+        //	If it's an indexed array (not an associative array) then fix the indexes.
+        if ($indexed) {
             $arr = array_values($arr);
         }
     }
@@ -281,13 +281,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess
         $ret = clone $this;
 
         if (array_is_list($in)) {
-            foreach ($in as $k => $v) {
-                $ret[$k] = $v;
+            foreach ($in as $v) {
+                $ret[] = $v;
             }
         }
         else {
-            foreach ($in as $v) {
-                $ret[] = $v;
+            foreach ($in as $k => $v) {
+                $ret[$k] = $v;
             }
         }
 
@@ -321,8 +321,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
      *
      * @return mixed
      */
-    #[\ReturnTypeWillChange]
-    public function offsetGet($offset)
+    public function offsetGet(mixed $offset): mixed
     {
         if (!$this->offsetExists($offset)) {
             //	Be sure offset exists before accessing it.

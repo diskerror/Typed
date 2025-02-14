@@ -8,7 +8,7 @@ namespace TestClasses\Preferences;
 use Diskerror\Typed\Scalar\TBoolean;
 use Diskerror\Typed\Scalar\TString;
 use Diskerror\Typed\TypedClass;
-use TestClasses\Preferences\Item\{Compare, Operator, Sort};
+use TestClasses\Mongo\Preferences\Item\{Compare, Operator, Sort};
 
 class Item extends TypedClass
 {

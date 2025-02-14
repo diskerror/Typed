@@ -1,9 +1,8 @@
-#!/usr/bin/php
 <?php
 
-namespace TestClasses;
+namespace TestClasses\Mongo;
 
-use Diskerror\Typed\TypedClass;
+use Diskerror\Typed\BSON\TypedClass;
 use TestClasses\Mongo\Tweet\ReTweet;
 use TestClasses\Mongo\Tweet\TweetTrait;
 

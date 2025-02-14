@@ -6,7 +6,7 @@ use Normalizer;
 
 class TStringNormalize extends TStringTrim
 {
-	public function set($in): void
+	public function set(mixed $in): void
 	{
 		parent::set($in);
 

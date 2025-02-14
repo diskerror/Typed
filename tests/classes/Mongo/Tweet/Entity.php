@@ -1,8 +1,8 @@
 <?php
 
-namespace TestClasses\Tweet;
+namespace TestClasses\Mongo\Tweet;
 
-use Diskerror\Typed\{TypedArray, TypedClass};
+use Diskerror\Typed\BSON\{TypedArray, TypedClass};
 use TestClasses\Mongo\Tweet\Entity\{Hashtag, Url, UserMention};
 
 /**

@@ -9,7 +9,6 @@ use TestClasses\Config\{Caches, Mongo, Process, Twitter, WordStats};
 class Config extends TypedClass
 {
 	protected TString   $version;
-	protected Mongo     $mongo_db;
 	public int          $tweets_expire = 600;
 	protected WordStats $word_stats;
 	protected Twitter   $twitter;

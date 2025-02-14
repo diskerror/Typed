@@ -14,7 +14,7 @@ use UnexpectedValueException;
 
 class TString extends ScalarAbstract
 {
-	public function set($in): void
+	public function set(mixed $in): void
 	{
 		$in = self::_castIfObject($in);
 

@@ -11,7 +11,7 @@ namespace Diskerror\Typed\Scalar;
 
 class TStringTrim extends TString
 {
-	public function set($in): void
+	public function set(mixed $in): void
 	{
 		parent::set($in);
 

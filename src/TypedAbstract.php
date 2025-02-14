@@ -178,20 +178,6 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
     }
 
     /**
-     * Our version of what should be considered empty.
-     *
-     * @return bool
-     */
-    protected static function _isEmpty($v): bool
-    {
-        if (gettype($v) == 'object') {
-            $v = (array)$v;
-        }
-
-        return empty($v);
-    }
-
-    /**
      * Assign. Replace values by name.
      *
      * Assign values from input object. Only named input items are copied.

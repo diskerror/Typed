@@ -10,25 +10,12 @@ use MongoDB\BSON\UTCDateTimeInterface;
  */
 trait DateTrait
 {
-	public function __construct($time = 'now', $timezone = null)
-	{
-		if ($timezone === null) {
-			$timezone = new DateTimeZone('UTC');
-		}
-
-		$this->_initCheckBson($time);
-		parent::__construct($time, $timezone);
-	}
-
-	/**
-	 * Adds the ability to accept a Mongo\BSON\UTCDateTime object.
-	 *
-	 * @param mixed $time
-	 */
-	public function _initCheckBson(&$time)
-	{
-		if (is_object($time) && $time instanceof UTCDateTimeInterface) {
-			$time = $time->toDateTime();
-		}
-	}
+    public function __construct(mixed $time = 'now', $timezone = null)
+    {
+        if (is_object($time) && $time instanceof UTCDateTimeInterface) {
+            $time     = $time->toDateTime();
+            $timezone = new DateTimeZone('UTC');
+        }
+        parent::__construct($time, $timezone);
+    }
 }

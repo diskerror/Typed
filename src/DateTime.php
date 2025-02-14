@@ -7,6 +7,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use InvalidArgumentException;
 use JsonSerializable;
+use Stringable;
 
 /**
  * This class adds convenience methods to the built-in DateTime.
@@ -16,7 +17,7 @@ use JsonSerializable;
  * @copyright     Copyright (c) 2011 Reid Woodbury Jr.
  * @license       http://www.apache.org/licenses/LICENSE-2.0.html	Apache License, Version 2.0
  */
-class DateTime extends DT implements JsonSerializable
+class DateTime extends DT implements JsonSerializable, Stringable
 {
     /**
      * Accepts a DateTime object or;
@@ -30,7 +31,7 @@ class DateTime extends DT implements JsonSerializable
      *
      * @throws InvalidArgumentException
      */
-    public function __construct($time = 'now', $timezone = null)
+    public function __construct(mixed $time = 'now', ?DateTimeZone $timezone = null)
     {
         switch (gettype($time)) {
             case 'object':
@@ -244,6 +245,6 @@ class DateTime extends DT implements JsonSerializable
      */
     public function jsonSerialize(): string
     {
-        return $this->format('X-m-d\TH:i:s.uP');
+        return $this->format('Y-m-d\TH:i:s.uP');
     }
 }

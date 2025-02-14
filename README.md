@@ -1,10 +1,10 @@
 # Typed Classes and Objects
 
-Updates for PHP8 (>=8.2).
+Updates for PHP8 (>=8.1).
 
-This enables PHP objects to strictly define member structure, to control their data types, and to add convenience methods data sanitation. The master branch is considered to be in constant development and currently only supports PHP version 8.2 and above, and now handles strict typing and allows for properties with class typing to be set to null.
+This enables PHP objects to strictly define member structure, to control their data types, and most importantly, to add convenience methods for data sanitation. The master branch is considered to be in constant development and currently only supports PHP version 8.1 and above, and now handles strict typing and allows for properties with class typing to be set to null.
 
-Object properties with public visibility will only use the built-in PHP type checking. Making the visibility protected or private will force the setting of values through the **Diskerror\Typed** mechanism. This mechanism silently ignores bad or unmapped property names and silently coerces input data into the best form represented by the property data type. Assigning the wrong data type to *public* properties will depend on the projects .
+Object properties with public visibility will only use the built-in PHP type checking. Making the visibility protected or private in your data structure that inherits from **TypedClass** or **TypedArray** will use the **Diskerror\Typed** type checking. This mechanism silently ignores bad or unmapped property names and silently coerces input data into the best form represented by the property data type. Assigning the wrong data type to *public* properties will depend on the project's or file's `declare(strict_types=?);` setting.
 
 # TypedAbstract
 
@@ -32,7 +32,13 @@ Returns an associative array of this object with only the appropriate members, a
 
 ### jsonSerialize
 
-This method will return an array when *json_encode()* is called passing in the object. This will have the options to omit empty values and maintain expressions.
+This method will return an array when *json_encode()* is called passing in the object. This will have the options to omit empty values and maintain expressions. Dates will be converted to strings that include the time zone and fractional seconds to the microsecond.
+
+### bsonSerialize
+
+This method will return an array when **MongoDB\BSON\toPHP** or related methods are is called passing in the object. This will have the options to omit empty values. Be aware that BSON dates are only accurate to the millisecond and are always converted to UTC.
+
+The interfaces **MongoDB\BSON\Serializable** and **MongoDB\BSON\Unserializable** are implemented instead of **MongoDB\BSON\Persistable** because creating new **Diskerror\Typed** objects requires muchmore overhead than assigning a document returned by MongoDB to an existing and cleared **Diskerror\Typed** object. See: https://www.php.net/manual/en/mongodb.persistence.php
 
 ### _setBasicTypeAndConfirm
 
@@ -47,19 +53,19 @@ The derivatives of **TypedClass** are contracted to do these things:
 * Silently cast data assigned to non-public properties in the most obvious way when input member to *assign*, or *merge* is of a different type than the corresponding local property.
 * Recognize classes inherited from **AtomicInterface** to manage their values internally.
 * Handle special cases of members/properties that are objects with an option for handling NULL assignments.
-* Implement “toArray” to return a deeply transformed standard associative array.
-* Appropriately handle being passed to *serialize* and *json_encode*.
+* Implement “toArray” to return a deeply transformed data structure to a standard associative array.
+* Return proper return values and types for *json_encode* and *bsonSerialize*.
 * Accept another object, associative or indexed array, and assign the input values to the appropriate members.
     * Copy each field or property item by item.
     * Copy indexed array by position.
     * Map alternate names to proper names.
-    * Reset single property or entire object's members to their initValue values.
+    * Clear all values without rebuilding the object.
 
 The users' class properties must be declared as "protected" or "private" for this contract to work. The names for the properties must follow the naming convention that the intended "public" members must not start with an underscore. This borrows from the Zend Framework property naming convention of protected and private property names starting with an underscore.
 
 If a non-public property has no type then it is assumed to accept any type and null values. If a property has no type but has been assigned an initial value then the type will be assumed to be of the initial value.
 
-Even more complex examples can be found int the "tests" directory.
+Even more complex examples can be found in the "tests" directory.
 
 # TypedArray
 
@@ -69,11 +75,11 @@ The instances or derivatives of **TypedArray** are contracted to do these things
 * Insure every member be the same type.
 * Silently cast assigned data in the most obvious way.
 * Implement “toArray” to return a deeply transformed PHP associative array.
-* Handle the functions *serialize* and *json_encode* appropriately.
+* Handle the functions *json_encode* and *bsonSerialize* appropriately.
 
 # DateTime and Date
 
-These classes add convenience methods to the built-in PHP **DateTime** class. This includes the *__toString* method that returns a date-time string formatted for the initValue MySQL date-time format.
+These classes add convenience methods to the built-in PHP **DateTime** class. This includes the *__toString* method that returns a date-time string formatted for the initValue MySQL date-time format. This includes fractional seconds to the microsecond.
 
 # SqlStatement
 
@@ -81,7 +87,7 @@ Utility class that outputs properly formatted partial SQL strings based on the i
 
 ## toInsert
 
-Returns a string formatted for an SQL INSERT or UPDATE statement. Accepts an array where the values are the names of members to include. An empty array means to use all members.
+Returns a string formatted for an SQL INSERT or UPDATE statement. Accepts an array where the values are the names of members to include. An empty second array parameter means to use all members in the first array parameter.
 
 ## toValues
 

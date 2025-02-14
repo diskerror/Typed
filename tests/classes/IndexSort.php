@@ -1,16 +1,16 @@
 <?php
-
-namespace TestClasses;
-
-use Diskerror\Typed\Scalar\TInteger;
-
 /**
  * Created by PhpStorm.
  * User: 3525339
  * Date: 12/10/2018
  * Time: 2:59 PM
  */
-class MongoIndexSort extends TInteger
+
+namespace TestClasses;
+
+use Diskerror\Typed\Scalar\TInteger;
+
+class IndexSort extends TInteger
 {
 	/**
 	 * MongoIndexSort constructor.

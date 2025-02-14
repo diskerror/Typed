@@ -11,100 +11,53 @@
 namespace Diskerror\Typed\BSON;
 
 use Diskerror\Typed\ConversionOptions;
-use MongoDB\BSON\ObjectId;
-use MongoDB\BSON\Persistable;
+use MongoDB\BSON\{Document, ObjectId, PackedArray, Serializable, Unserializable};
+use stdClass;
 
-class TypedClass extends \Diskerror\Typed\TypedClass implements Persistable
+class TypedClass extends \Diskerror\Typed\TypedClass implements Serializable, Unserializable
 {
-	/**
-	 * Called automatically by MongoDB.
-	 *
-	 * @return array
-	 */
-	public function bsonSerialize(): array
-	{
-		$omitEmpty       = $this->conversionOptions->isSet(ConversionOptions::OMIT_EMPTY);
-		$dateToString    = $this->conversionOptions->isSet(ConversionOptions::DATE_TO_STRING);
-		$objectsToString = $this->conversionOptions->isSet(ConversionOptions::ALL_OBJECTS_TO_STRING);
+    /**
+     * Called automatically by MongoDB.
+     *
+     * @return array|Document|PackedArray|stdClass
+     */
+    public function bsonSerialize(): array|Document|PackedArray|stdClass
+    {
+        $omitEmpty    = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
+        $castObjectId = $this->conversionOptions->isset(ConversionOptions::CAST_ID_TO_OBJECTID);
 
-		$arr = [];
-		foreach ($this->getPublicNames() as $pName) {
-			$v = $this->_getByName($pName);    //  AtomicInterface objects are returned as scalars.
+        $arr = $this->toArray();
+        foreach ($this->_meta as $k => $meta) {
+            if ($meta->isObject && method_exists($this->$k, 'bsonSerialize')) {
+                $arr[$k] = $this->$k->bsonSerialize();
+            }
 
-			switch (gettype($v)) {
-				case 'resource':
-					continue 2;
+            //	Testing for empty must happen after nested objects have been reduced.
+            if ($omitEmpty && isset($arr[$k]) && empty($arr[$k])) {
+                unset($arr[$k]);
+            }
+        }
 
-				case 'object':
-					switch (true) {
-						case strpos(get_class($v), 'MongoDB\\BSON') === 0:
-							break;
+        /**
+         * Cast "_id" string or number into a MongoDB\BSON\ObjectId.
+         */
+        if ($castObjectId && array_key_exists('_id', $arr) && is_scalar($arr['_id'])) {
+            $arr['_id'] = new ObjectId(empty($arr['_id']) ? null : (string)$arr['_id']);
+        }
 
-						case method_exists($v, 'bsonSerialize'):
-							$v = $v->bsonSerialize();
-							break;
+        return $arr;
+    }
 
-						case $dateToString && is_a($v, \Diskerror\Typed\DateTime::class, true):
-							$v = $v->jsonSerialize();
-							break;
-
-						case method_exists($v, 'jsonSerialize'):
-							$v = $v->jsonSerialize();
-							break;
-
-						case method_exists($v, 'toArray'):
-							$v = $v->toArray();
-							break;
-
-						case $objectsToString && method_exists($v, '__toString'):
-							$v = $v->__toString();
-							break;
-					}
-					break;
-
-				default:
-			}
-
-			if ($omitEmpty && self::_isEmpty($v)) {
-				continue;
-			}
-
-			$arr[$pName] = $v;
-		}
-
-		/**
-		 * Cast "_id" string or number into a MongoDB\BSON\ObjectId.
-		 */
-		if (
-			$this->conversionOptions->isSet(ConversionOptions::CAST_ID_TO_OBJECTID) &&
-			array_key_exists('_id', $arr) && is_scalar($arr['_id'])
-		) {
-			if ($arr['_id'] == 0) {
-				$arr['_id'] = new ObjectId();
-			}
-			else {
-				$arr['_id'] = new ObjectId((string) $arr['_id']);
-			}
-		}
-
-		return $arr;
-	}
-
-	/**
-	 * Called automatically by MongoDB when a document has a field named
-	 * "__pclass".
-	 *
-	 * Since zero, null, false, or empty strings can be omitted from the
-	 * serialized data stored in Mongo this method prevents non-empty defaults
-	 * from being written to the restored members.
-	 *
-	 * @param array $data
-	 */
-	public function bsonUnserialize(array $data): void
-	{
-		$this->_initToArrayOptions();
-		$this->_initMetaData();
-		$this->_initProperties();
-		$this->replace($data);
-	}
+    /**
+     * Since zero, null, false, or empty strings can be omitted from the
+     * serialized data stored in Mongo this method prevents non-empty defaults
+     * from being written to the restored members.
+     *
+     * @param array $data
+     */
+    public function bsonUnserialize(array $data): void
+    {
+        $this->clear();
+        $this->assign($data);
+    }
 }

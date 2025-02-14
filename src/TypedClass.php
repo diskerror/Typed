@@ -72,45 +72,73 @@ abstract class TypedClass extends TypedAbstract
      *
      * @param mixed $in -OPTIONAL
      */
-    public function __construct($in = [])
+    public function __construct(mixed $in = [])
     {
         $this->conversionOptions = new ConversionOptions();
+        $this->_initProperties();
 
         //	Build metadata array.
         $this->_meta = [];
-        $ro          = new ReflectionObject($this);
+        $reflection  = new ReflectionObject($this);
 
         //	Build array of initValue values with converted types.
-        foreach ($ro->getProperties() as $p) {
-            $pName    = $p->getName();
-            $typeObj  = $p->getType();
-            $typeName = !is_null($typeObj) ? $typeObj->__toString() : '';
-            $typeName = substr($typeName, 0, 1) === '?' ? substr($typeName, 1) : $typeName;
-            $isObject = !self::_isAssignable($typeName);
+        foreach ($reflection->getProperties() as $rProp) {
+            $pName      = $rProp->getName();
+            $typeObj    = $rProp->getType();
+            $typeName   = !is_null($typeObj) ? $typeObj->__toString() : '';
+            $allowsNull = $typeObj->allowsNull() || str_starts_with($typeName, '?');
+            $typeName   = str_starts_with($typeName, '?') ? substr($typeName, 1) : $typeName;
+            $isObject   = !self::_isAssignable($typeName);
 
-            //	If the name is not in the list of options...
             //	If the name begins with an underscore and is not "_id"...
+            //	If the not named "conversionOptions"...
             //	If the name is empty...
-            //	If the property is public...
-            if (
-                ($pName[0] !== '_' || $pName === '_id')
-                && $pName !== 'conversionOptions'
-                && !empty($pName)
-                && ($p->isPublic() || $isObject)
-            ) {
-                $isNullable = is_null($typeObj) || $typeObj->allowsNull();
-
-                if (!$isNullable && $isObject && !isset($this->$pName)) {
-                    $this->$pName = new $typeName();
-                }
-
-                $this->_meta[$pName] = new PropertyMetaData($typeName, $isObject, $isNullable, $p->isPublic());
+            //  Then skip it.
+            if ((str_starts_with($pName, '_') && $pName !== '_id') || $pName === 'conversionOptions') {
+                continue;
             }
+
+            if (!isset($this->$pName)) {
+                //  Always instantiate objects. They cannot be null.
+                if ($isObject) {
+                    $this->$pName = new $typeName();
+                    $allowsNull   = false;
+                }
+                elseif (!$allowsNull) {
+                    if (in_array($typeName, ['boolean', 'bool', 'int', 'integer', 'float', 'double', 'string'])) {
+                        $tmp = '';
+                        settype($tmp, $typeName);
+                        $this->$pName = $tmp;
+                    }
+                    elseif ($typeName === 'array') {
+                        $this->$pName = [];
+                    }
+                }
+            }
+
+            $this->_meta[$pName] = new PropertyMetaData(
+                $typeName,
+                $isObject,
+                $allowsNull,
+                $rProp->isPublic()
+            );
         }
 
         if ($in !== []) {
             $this->assign($in);
         }
+    }
+
+    /**
+     * Initialize properties.
+     *
+     * All properties that are objects will be instantiated.
+     * All properties that are scalars or arrays will be initialized to zero or empty or left null.
+     *
+     * Either override constructor and call constructor parent, or override this method for your initializations.
+     */
+    protected function _initProperties(): void
+    {
     }
 
     /**
@@ -238,7 +266,7 @@ abstract class TypedClass extends TypedAbstract
      */
     public function toArray(): array
     {
-        $dateToIsoString = $this->conversionOptions->isset(ConversionOptions::DATE_TO_STRING);
+        $dateToString    = $this->conversionOptions->isset(ConversionOptions::DATE_TO_STRING);
         $objectsToString = $this->conversionOptions->isset(ConversionOptions::ALL_OBJECTS_TO_STRING);
         $omitResources   = $this->conversionOptions->isset(ConversionOptions::OMIT_RESOURCE);
         $omitEmpty       = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
@@ -257,9 +285,8 @@ abstract class TypedClass extends TypedAbstract
                         $v = $v->toArray();
                         break;
 
-                    case ($dateToIsoString && is_a($v, DateTime::class, true)):
-                        //$v = ((array)$v)['date'];   //  Ignores type and timezone.
-                        $v = (string)$v;
+                    case is_a($v, DateTime::class, true):
+                        $v = $dateToString ? (string)$v : (array)$v;
                         break;
 
                     case $objectsToString
@@ -277,7 +304,7 @@ abstract class TypedClass extends TypedAbstract
             }
 
             //	Testing for empty must happen after nested objects have been reduced.
-            if ($omitEmpty && self::_isEmpty($v)) {
+            if ($omitEmpty && empty($v)) {
                 continue;
             }
 
@@ -311,10 +338,14 @@ abstract class TypedClass extends TypedAbstract
                     default:
                 }
 
-                //	Testing for empty must happen after nested objects have been reduced.
-                if ($omitEmpty && isset($arr[$k]) && self::_isEmpty($arr[$k])) {
+                if ($omitEmpty && isset($arr[$k]) && empty((array)$arr[$k])) {
                     unset($arr[$k]);
                 }
+            }
+
+            //	Testing for empty must happen after nested objects have been reduced.
+            if ($omitEmpty && isset($arr[$k]) && empty($arr[$k])) {
+                unset($arr[$k]);
             }
         }
 
@@ -324,7 +355,8 @@ abstract class TypedClass extends TypedAbstract
     /**
      * All member objects will be deep cloned.
      */
-    public function __clone()
+    public
+    function __clone()
     {
         foreach ($this as $k => $v) {
             if (is_object($v)) {
@@ -339,7 +371,8 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return Traversable
      */
-    public function getIterator(): Traversable
+    public
+    function getIterator(): Traversable
     {
         return (function &() {
             foreach ($this->getPublicNames() as $k) {
@@ -371,7 +404,8 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return void
      */
-    protected function _massageInputArray(&$in): void
+    protected
+    function _massageInputArray(&$in): void
     {
         //	If input is an array, test to see if it's an indexed or an associative array.
         //	Leave associative array as is.
@@ -379,8 +413,9 @@ abstract class TypedClass extends TypedAbstract
         if (is_array($in) && array_is_list($in)) {
             $newArr   = [];
             $minCount = min(count($in), $this->count());
+            $pn       = $this->getPublicNames();
             for ($i = 0; $i < $minCount; ++$i) {
-                $newArr[$this->getPublicNames()[$i]] = $in[$i];
+                $newArr[$pn[$i]] = $in[$i];
             }
 
             $in = $newArr;
@@ -394,7 +429,8 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return mixed
      */
-    public function __get(string $pName)
+    public
+    function __get(string $pName)
     {
         $pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
         $this->_assertPropName($pName);
@@ -408,7 +444,8 @@ abstract class TypedClass extends TypedAbstract
      * @param string $pName
      * @param mixed  $val
      */
-    public function __set(string $pName, $val)
+    public
+    function __set(string $pName, $val)
     {
         $pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
         $this->_assertPropName($pName);
@@ -425,7 +462,8 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return bool
      */
-    public function __isset(string $pName): bool
+    public
+    function __isset(string $pName): bool
     {
         $pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
         return $this->_keyExists($pName) && ($this->$pName !== null);
@@ -436,7 +474,8 @@ abstract class TypedClass extends TypedAbstract
      *
      * @param string $pName
      */
-    public function __unset(string $pName)
+    public
+    function __unset(string $pName)
     {
         $pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
         $this->_assertPropName($pName);
@@ -455,7 +494,8 @@ abstract class TypedClass extends TypedAbstract
      *
      * @throws InvalidArgumentException
      */
-    protected function _setByName(string $pName, $in, bool $deepCopy = true): void
+    protected
+    function _setByName(string $pName, $in, bool $deepCopy = true): void
     {
         if ($this->_meta[$pName]->isPublic) {
             $this->$pName = $in;
@@ -562,7 +602,8 @@ abstract class TypedClass extends TypedAbstract
      * is required to be earlier than an end-date, any range of values like
      * minimum and maximum, or any custom filtering dependent on more than a single property.
      */
-    protected function _checkRelatedProperties()
+    protected
+    function _checkRelatedProperties()
     {
     }
 
@@ -573,7 +614,8 @@ abstract class TypedClass extends TypedAbstract
      *
      * @throws InvalidArgumentException
      */
-    protected function _assertPropName(string $pName)
+    protected
+    function _assertPropName(string $pName)
     {
         if (!$this->_keyExists($pName)) {
             throw new InvalidArgumentException($pName);
@@ -587,7 +629,8 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return bool
      */
-    private function _keyExists(string $pName): bool
+    private
+    function _keyExists(string $pName): bool
     {
         return in_array($pName, $this->getPublicNames());
     }

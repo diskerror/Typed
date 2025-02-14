@@ -13,7 +13,7 @@ use Diskerror\Typed\ScalarAbstract;
 
 class TBoolean extends ScalarAbstract
 {
-	public function set($in): void
+	public function set(mixed $in): void
 	{
 		if ($in === null) {
 			$this->_value = $this->isNullable() ? null : false;

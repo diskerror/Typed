@@ -1,9 +1,10 @@
 <?php
-namespace TestClasses\Mongo;
+
+namespace TestClasses;
 
 use Diskerror\Typed\TypedArray;
 
 class ConfigCollection extends TypedArray
 {
-	protected string $_type = IndexDef::class;
+    protected string $_type = (string)IndexDef::class;
 }
