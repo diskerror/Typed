@@ -55,6 +55,8 @@ abstract class TypedClass extends TypedAbstract
      */
     protected array $_map = [];
 
+    public const SCALAR_NAMES = ['', 'boolean', 'bool', 'int', 'integer', 'float', 'double', 'string'];
+
     /**
      * Holds information about each property.
      *
@@ -105,7 +107,7 @@ abstract class TypedClass extends TypedAbstract
                     $allowsNull   = false;
                 }
                 elseif (!$allowsNull) {
-                    if (in_array($typeName, ['boolean', 'bool', 'int', 'integer', 'float', 'double', 'string'])) {
+                    if (in_array($typeName, self::SCALAR_NAMES)) {
                         $tmp = '';
                         settype($tmp, $typeName);
                         $this->$pName = $tmp;
@@ -355,8 +357,7 @@ abstract class TypedClass extends TypedAbstract
     /**
      * All member objects will be deep cloned.
      */
-    public
-    function __clone()
+    public function __clone()
     {
         foreach ($this as $k => $v) {
             if (is_object($v)) {
@@ -371,8 +372,7 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return Traversable
      */
-    public
-    function getIterator(): Traversable
+    public function getIterator(): Traversable
     {
         return (function &() {
             foreach ($this->getPublicNames() as $k) {
@@ -404,8 +404,7 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return void
      */
-    protected
-    function _massageInputArray(&$in): void
+    protected function _massageInputArray(&$in): void
     {
         //	If input is an array, test to see if it's an indexed or an associative array.
         //	Leave associative array as is.
@@ -429,8 +428,7 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return mixed
      */
-    public
-    function __get(string $pName)
+    public function __get(string $pName)
     {
         $pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
         $this->_assertPropName($pName);
@@ -444,8 +442,7 @@ abstract class TypedClass extends TypedAbstract
      * @param string $pName
      * @param mixed  $val
      */
-    public
-    function __set(string $pName, $val)
+    public function __set(string $pName, $val)
     {
         $pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
         $this->_assertPropName($pName);
@@ -462,8 +459,7 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return bool
      */
-    public
-    function __isset(string $pName): bool
+    public function __isset(string $pName): bool
     {
         $pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
         return $this->_keyExists($pName) && ($this->$pName !== null);
@@ -474,8 +470,7 @@ abstract class TypedClass extends TypedAbstract
      *
      * @param string $pName
      */
-    public
-    function __unset(string $pName)
+    public function __unset(string $pName)
     {
         $pName = array_key_exists($pName, $this->_map) ? $this->_map[$pName] : $pName;
         $this->_assertPropName($pName);
@@ -494,8 +489,7 @@ abstract class TypedClass extends TypedAbstract
      *
      * @throws InvalidArgumentException
      */
-    protected
-    function _setByName(string $pName, $in, bool $deepCopy = true): void
+    protected function _setByName(string $pName, $in, bool $deepCopy = true): void
     {
         if ($this->_meta[$pName]->isPublic) {
             $this->$pName = $in;
@@ -513,6 +507,15 @@ abstract class TypedClass extends TypedAbstract
 
                     case is_a($pType, TypedAbstract::class, true):
                         $this->$pName->clear();
+                        break;
+
+                    case in_array($pType, self::SCALAR_NAMES, true):
+                    case $pType == 'resource':
+                        $this->$pName = null;
+                        break;
+
+                    case $pType === 'array':
+                        $this->$pName = [];
                         break;
 
                     default:
@@ -579,10 +582,7 @@ abstract class TypedClass extends TypedAbstract
                 $this->$pName = new $pType($in);
                 return;
 
-            case $pType === 'bool':
-            case $pType === 'int':
-            case $pType === 'double':
-            case $pType === 'string':
+            case in_array($pType, self::SCALAR_NAMES, true):
                 if (!$this->_meta[$pName]->isNullable && $in === null) {
                     $in = '';
                 }
@@ -602,8 +602,7 @@ abstract class TypedClass extends TypedAbstract
      * is required to be earlier than an end-date, any range of values like
      * minimum and maximum, or any custom filtering dependent on more than a single property.
      */
-    protected
-    function _checkRelatedProperties()
+    protected function _checkRelatedProperties()
     {
     }
 
@@ -614,8 +613,7 @@ abstract class TypedClass extends TypedAbstract
      *
      * @throws InvalidArgumentException
      */
-    protected
-    function _assertPropName(string $pName)
+    protected function _assertPropName(string $pName)
     {
         if (!$this->_keyExists($pName)) {
             throw new InvalidArgumentException($pName);
@@ -629,8 +627,7 @@ abstract class TypedClass extends TypedAbstract
      *
      * @return bool
      */
-    private
-    function _keyExists(string $pName): bool
+    private function _keyExists(string $pName): bool
     {
         return in_array($pName, $this->getPublicNames());
     }
