@@ -55,7 +55,13 @@ abstract class TypedClass extends TypedAbstract
      */
     protected array $_map = [];
 
-    public const SCALAR_NAMES = ['', 'boolean', 'bool', 'int', 'integer', 'float', 'double', 'string'];
+    /**
+     * List of variable types that can contain only one value.
+     *
+     * @const SINGULAR_NAMES
+     */
+    public const SINGULAR_NAMES =
+        ['', 'boolean', 'bool', 'int', 'integer', 'float', 'double', 'string', 'resource', 'callable'];
 
     /**
      * Holds information about each property.
@@ -107,7 +113,7 @@ abstract class TypedClass extends TypedAbstract
                     $allowsNull   = false;
                 }
                 elseif (!$allowsNull) {
-                    if (in_array($typeName, self::SCALAR_NAMES)) {
+                    if (in_array($typeName, self::SINGULAR_NAMES)) {
                         $tmp = '';
                         settype($tmp, $typeName);
                         $this->$pName = $tmp;
@@ -509,8 +515,7 @@ abstract class TypedClass extends TypedAbstract
                         $this->$pName->clear();
                         break;
 
-                    case in_array($pType, self::SCALAR_NAMES, true):
-                    case $pType == 'resource':
+                    case in_array($pType, self::SINGULAR_NAMES, true):
                         $this->$pName = null;
                         break;
 
@@ -582,7 +587,7 @@ abstract class TypedClass extends TypedAbstract
                 $this->$pName = new $pType($in);
                 return;
 
-            case in_array($pType, self::SCALAR_NAMES, true):
+            case in_array($pType, self::SINGULAR_NAMES, true):
                 if (!$this->_meta[$pName]->isNullable && $in === null) {
                     $in = '';
                 }
