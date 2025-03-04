@@ -88,7 +88,7 @@ abstract class TypedClass extends TypedAbstract
             $pName      = $rProp->getName();
             $typeObj    = $rProp->getType();
             $typeName   = !is_null($typeObj) ? $typeObj->__toString() : '';
-            $allowsNull = $typeObj->allowsNull() || str_starts_with($typeName, '?');
+            $allowsNull = str_starts_with($typeName, '?') || ($typeObj !== null && $typeObj->allowsNull());
             $typeName   = str_starts_with($typeName, '?') ? substr($typeName, 1) : $typeName;
             $isObject   = !self::_isAssignable($typeName);
 
