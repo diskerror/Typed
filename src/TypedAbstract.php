@@ -125,6 +125,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
                 }
                 break;
 
+            case 'int':
             case 'integer':
                 switch ($valType) {
                     case 'object':
@@ -142,10 +143,12 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
                 }
                 break;
 
+            case 'float':
             case 'double':
                 $val = (double)$val;
                 break;
 
+            case 'bool':
             case 'boolean':
                 switch ($valType) {
                     case 'array':

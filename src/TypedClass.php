@@ -535,6 +535,15 @@ abstract class TypedClass extends TypedAbstract
 
         $pType = $this->_meta[$pName]->type;
 
+        // Handle empty/null-like strings for nullable scalars
+        if ($this->_meta[$pName]->isNullable && is_string($in)) {
+            $trimmed = trim(strtolower($in), "\x00..\x20\x7F");
+            if ($trimmed === '' || $trimmed === 'null' || $trimmed === 'nan') {
+                $this->$pName = null;
+                return;
+            }
+        }
+
         switch (true) {
             case $in === null;
                 switch (true) {
@@ -547,7 +556,13 @@ abstract class TypedClass extends TypedAbstract
                         break;
 
                     case in_array($pType, self::SINGULAR_NAMES, true):
-                        $this->$pName = null;
+                        if (!$this->_meta[$pName]->isNullable) {
+                            $in = '';
+                            settype($in, $pType);
+                            $this->$pName = $in;
+                        } else {
+                            $this->$pName = null;
+                        }
                         break;
 
                     case $pType === 'array':
@@ -596,6 +611,9 @@ abstract class TypedClass extends TypedAbstract
                 if ($pType === get_class($in)) {
                     $this->$pName = $in;
                 }
+                elseif (in_array($pType, self::SINGULAR_NAMES, true)) {
+                    $this->$pName = ScalarAbstract::setType($in, $pType);
+                }
                 else {
                     //	First try to absorb the input in its entirety,
                     try {
@@ -615,7 +633,12 @@ abstract class TypedClass extends TypedAbstract
                     $this->$pName = (object)$in;
                     break;
                 }
-                $this->$pName = new $pType($in);
+                if (in_array($pType, self::SINGULAR_NAMES, true)) {
+                    $this->$pName = ScalarAbstract::setType($in, $pType);
+                }
+                else {
+                    $this->$pName = new $pType($in);
+                }
                 return;
 
             case in_array($pType, self::SINGULAR_NAMES, true):

@@ -30,5 +30,20 @@
     <testsuite name="mongo">
       <file>tests/MongoTest.php</file>
     </testsuite>
+    <testsuite name="edgecase">
+      <file>tests/EdgeCaseTest.php</file>
+    </testsuite>
+    <testsuite name="nested">
+      <file>tests/NestedStructureTest.php</file>
+    </testsuite>
+    <testsuite name="iterator">
+      <file>tests/IteratorCountableTest.php</file>
+    </testsuite>
+    <testsuite name="magic">
+      <file>tests/MagicMethodTest.php</file>
+    </testsuite>
+    <testsuite name="attribute">
+      <file>tests/AttributeTest.php</file>
+    </testsuite>
   </testsuites>
 </phpunit>

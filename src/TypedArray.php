@@ -121,17 +121,17 @@ class TypedArray extends TypedAbstract implements ArrayAccess
         if (is_a($this->_type, AtomicInterface::class, true)) {
             return (function &() {
                 foreach ($this->_container as $k => $v) {
-                    $v = $v->get();
-                    yield $k => $v;
-                    $this->_container[$k]->set($v);
+                    $val = $v->get();
+                    yield $k => $val;
+                    $v->set($val);
                 }
             })();
         }
         else {
             return (function &() {
-                foreach ($this->_container as $k => $v) {
-                    yield $k => $v;
-                    $this->offsetSet($k, $v);
+                foreach ($this->keys() as $k) {
+                    yield $k => $this->_container[$k];
+                    $this->offsetSet($k, $this->_container[$k]);
                 }
             })();
         }
@@ -396,6 +396,11 @@ class TypedArray extends TypedAbstract implements ArrayAccess
         // if the object types match then
         if (is_object($value) && get_class($value) === $this->_type) {
             $this->_offsetSet($offset, $value);
+            return;
+        }
+
+        if (in_array($this->_type, TypedClass::SINGULAR_NAMES, true)) {
+            $this->_offsetSet($offset, ScalarAbstract::setType($value, $this->_type));
             return;
         }
 
