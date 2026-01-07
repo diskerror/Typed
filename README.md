@@ -6,6 +6,55 @@ This enables PHP objects to strictly define member structure, to control their d
 
 Object properties with public visibility will only use the built-in PHP type checking. Making the visibility protected or private in your data structure that inherits from **TypedClass** or **TypedArray** will use the **Diskerror\Typed** type checking. This mechanism silently ignores bad or unmapped property names and silently coerces input data into the best form represented by the property data type. Assigning the wrong data type to *public* properties will depend on the project's or file's `declare(strict_types=?);` setting.
 
+## Philosophy & Intent
+
+This library was primarily designed to handle the **sanitization** of data coming from HTTP `GET` or `POST` requests before storing it in an SQL or document database.
+
+*   **Bridge between HTTP and DB:** It acts as a layer that takes loose, often string-based HTTP input and hydrates it into strictly typed PHP objects matching your database schema.
+*   **Silent Coercion:** It assumes that **business logic validation** (e.g., ensuring a user is over 18) has already been performed on the client side (Javascript) or in a dedicated validation layer. Therefore, it "silently" coerces data to the correct type. For example, if a form sends `age="25"` (string), this library converts it to `25` (int) without complaining.
+*   **Sanitization, not Validation:** It ensures *Type Safety* (an integer is an integer), but does not validate the *value* itself.
+
+## Usage Examples
+
+### Form Data Scenario (Sanitizing POST data)
+
+```php
+use Diskerror\Typed\TypedClass;
+
+class UserProfile extends TypedClass
+{
+    // Protected properties trigger the "silent coercion" logic
+    protected int $userId;
+    protected string $username;
+    protected ?int $age = null; // Nullable
+    protected bool $isActive = false; // Default value
+}
+
+// Simulated $_POST data from a form
+$postData = [
+    'userId' => '42',         // String from form
+    'username' => ' Alice ',  // Trailing space
+    'age' => '',              // Empty string (common in forms)
+    'isActive' => '1',        // '1' or 'on' often sent for checkboxes
+    'extraField' => 'junk'    // Field not in our class
+];
+
+$user = new UserProfile($postData);
+
+// Result:
+// $user->userId is 42 (int)
+// $user->username is ' Alice ' (string) - *Trim handled by specific Scalar types if needed*
+// $user->age is null (empty string -> null for nullable types)
+// $user->isActive is true (boolean conversion)
+// 'extraField' is ignored.
+```
+
+### Persistence Workflow
+
+Typical flow for saving data:
+
+`HTTP Input` -> `TypedClass (Sanitize/Hydrate)` -> `SqlStatement` / `BSON` -> `Database`
+
 ### Overhead
 
 There is significant overhead for instantiating a data structure using deritives of **Typed** classes. It is recommended that if you want to use this to sanitize similar objects in a loop then it is recommended to create a single object and clear it before assigning new data to it. This way the old data is removed before it is mistaken for new when an unset input property is encountered that would leave the old value unchanged.
