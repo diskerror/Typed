@@ -10,6 +10,7 @@
 
 namespace Diskerror\Typed;
 
+use Diskerror\Typed\Attribute\Map;
 use InvalidArgumentException;
 use ReflectionObject;
 use Traversable;
@@ -56,6 +57,20 @@ abstract class TypedClass extends TypedAbstract
     protected array $_map = [];
 
     /**
+     * Cache for property metadata indexed by class name.
+     *
+     * @var array
+     */
+    private static array $_metaCache = [];
+
+    /**
+     * Cache for property mapping indexed by class name.
+     *
+     * @var array
+     */
+    private static array $_mapCache = [];
+
+    /**
      * List of variable types that can contain only one value.
      *
      * @const SINGULAR_NAMES
@@ -85,51 +100,67 @@ abstract class TypedClass extends TypedAbstract
         $this->conversionOptions = new ConversionOptions();
         $this->_initProperties();
 
-        //	Build metadata array.
-        $this->_meta = [];
-        $reflection  = new ReflectionObject($this);
+        $className = static::class;
 
-        //	Build array of initValue values with converted types.
-        foreach ($reflection->getProperties() as $rProp) {
-            $pName      = $rProp->getName();
-            $typeObj    = $rProp->getType();
-            $typeName   = !is_null($typeObj) ? $typeObj->__toString() : '';
-            $allowsNull = str_starts_with($typeName, '?') || ($typeObj !== null && $typeObj->allowsNull());
-            $typeName   = str_starts_with($typeName, '?') ? substr($typeName, 1) : $typeName;
-            $isObject   = !self::_isAssignable($typeName);
+        if (!isset(self::$_metaCache[$className])) {
+            $reflection = new ReflectionObject($this);
+            self::$_metaCache[$className] = [];
+            self::$_mapCache[$className] = [];
 
-            //	If the name begins with an underscore and is not "_id"...
-            //	If the not named "conversionOptions"...
-            //	If the name is empty...
-            //  Then skip it.
-            if ((str_starts_with($pName, '_') && $pName !== '_id') || $pName === 'conversionOptions') {
-                continue;
+            foreach ($reflection->getProperties() as $rProp) {
+                $pName      = $rProp->getName();
+                $typeObj    = $rProp->getType();
+                $typeName   = !is_null($typeObj) ? $typeObj->__toString() : '';
+                $allowsNull = str_starts_with($typeName, '?') || ($typeObj !== null && $typeObj->allowsNull());
+                $typeName   = str_starts_with($typeName, '?') ? substr($typeName, 1) : $typeName;
+                $isObject   = !self::_isAssignable($typeName);
+
+                if ((str_starts_with($pName, '_') && $pName !== '_id') || $pName === 'conversionOptions') {
+                    continue;
+                }
+
+                self::$_metaCache[$className][$pName] = new PropertyMetaData(
+                    $typeName,
+                    $isObject,
+                    $allowsNull,
+                    $rProp->isPublic()
+                );
+
+                // Check for Map attribute
+                $attributes = $rProp->getAttributes(Map::class);
+                foreach ($attributes as $attribute) {
+                    $inst = $attribute->newInstance();
+                    self::$_mapCache[$className][$inst->name] = $pName;
+                }
             }
+        }
 
+        $this->_meta = self::$_metaCache[$className];
+
+        // Merge mapped attributes into the local map.
+        // Attribute mappings take precedence over class property defined mappings if duplicates exist.
+        if (!empty(self::$_mapCache[$className])) {
+            $this->_map = array_merge($this->_map, self::$_mapCache[$className]);
+        }
+
+        foreach ($this->_meta as $pName => $meta) {
             if (!isset($this->$pName)) {
                 //  Always instantiate objects. They cannot be null.
-                if ($isObject) {
-                    $this->$pName = new $typeName();
-                    $allowsNull   = false;
+                if ($meta->isObject) {
+                    $pType = $meta->type;
+                    $this->$pName = new $pType();
                 }
-                elseif (!$allowsNull) {
-                    if (in_array($typeName, self::SINGULAR_NAMES)) {
+                elseif (!$meta->isNullable) {
+                    if (in_array($meta->type, self::SINGULAR_NAMES)) {
                         $tmp = '';
-                        settype($tmp, $typeName);
+                        settype($tmp, $meta->type);
                         $this->$pName = $tmp;
                     }
-                    elseif ($typeName === 'array') {
+                    elseif ($meta->type === 'array') {
                         $this->$pName = [];
                     }
                 }
             }
-
-            $this->_meta[$pName] = new PropertyMetaData(
-                $typeName,
-                $isObject,
-                $allowsNull,
-                $rProp->isPublic()
-            );
         }
 
         if ($in !== []) {

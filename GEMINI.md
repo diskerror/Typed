@@ -89,6 +89,30 @@ $user = new User(['name' => 'Alice', 'age' => '30']);
 // $user->name is 'Alice', $user->age is 30 (integer)
 ```
 
+#### Property Mapping with Attributes (PHP 8)
+You can use the `#[Map]` attribute to map incoming keys (e.g., from a database or API) to your class properties.
+
+```php
+use Diskerror\Typed\TypedClass;
+use Diskerror\Typed\Attribute\Map;
+
+class User extends TypedClass {
+    #[Map('user_id')]
+    protected int $userId;
+
+    #[Map('full_name')]
+    protected string $name;
+}
+
+$user = new User(['user_id' => 101, 'full_name' => 'Alice']);
+// $user->userId is 101
+// $user->name is 'Alice'
+```
+
+**Precedence:** If the same input key is defined in both an `#[Map]` attribute and the `$_map` array, the attribute mapping takes precedence.
+
+Legacy support for the `$_map` array property is also maintained.
+
 ### `TypedArray`
 Use this to create an array where every item must be of a specific type.
 

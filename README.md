@@ -49,6 +49,25 @@ $user = new UserProfile($postData);
 // 'extraField' is ignored.
 ```
 
+### Property Mapping (Aliases)
+
+You can map external field names (like `user_id` from a database) to your class properties (like `$userId`) using PHP 8 Attributes.
+
+```php
+use Diskerror\Typed\TypedClass;
+use Diskerror\Typed\Attribute\Map;
+
+class User extends TypedClass {
+    #[Map('user_id')]
+    protected int $userId;
+}
+
+$user = new User(['user_id' => 123]);
+// $user->userId is 123
+```
+
+*Note: If a conflict occurs, PHP 8 Attributes take precedence over the `protected $_map` array.*
+
 ### Persistence Workflow
 
 Typical flow for saving data:
