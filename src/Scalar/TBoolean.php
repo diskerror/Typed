@@ -13,12 +13,22 @@ use Diskerror\Typed\ScalarAbstract;
 
 class TBoolean extends ScalarAbstract
 {
-	public function set(mixed $in): void
-	{
-		if ($in === null) {
-			$this->_value = $this->isNullable() ? null : false;
-		} else {
-			$this->_value = (bool)self::_castIfObject($in);
-		}
-	}
+    public function set(mixed $in): void
+    {
+        if ($in === null) {
+            $this->_value = $this->isNullable() ? null : false;
+        }
+        else {
+            $this->_value = (bool)self::_castIfObject($in);
+        }
+    }
+
+    /**
+     * Booleans are a special case when converting to a string.
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return json_encode($this->_value); //   true, false, or null as a string
+    }
 }

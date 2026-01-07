@@ -275,7 +275,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
             //	A boolean 'true' falls through.
 
             default:
-                throw new InvalidArgumentException('bad input type ' . gettype($in) . ', value: "' . $in . '"');
+                throw new InvalidArgumentException(get_called_class() . ': bad input type ' . gettype($in) . ', value: "' . $in . '"');
         }
     }
 }
