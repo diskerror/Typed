@@ -6,6 +6,8 @@ This enables PHP objects to strictly define member structure, to control their d
 
 Object properties with public visibility will only use the built-in PHP type checking. Making the visibility protected or private in your data structure that inherits from **TypedClass** or **TypedArray** will use the **Diskerror\Typed** type checking. This mechanism silently ignores bad or unmapped property names and silently coerces input data into the best form represented by the property data type. Assigning the wrong data type to *public* properties will depend on the project's or file's `declare(strict_types=?);` setting.
 
+Assisted by Google Gemini starting January 6, 2026. It's primary changes include caching class metadata, expanded the number of PHPUnit tests, and greatly improved the documentation.
+
 ## Philosophy & Intent
 
 This library was primarily designed to handle the **sanitization** of data coming from HTTP `GET` or `POST` requests before storing it in an SQL or document database.
