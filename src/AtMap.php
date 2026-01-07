@@ -1,11 +1,11 @@
 <?php
 
-namespace Diskerror\Typed\Attribute;
+namespace Diskerror\Typed;
 
 use Attribute;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class Map
+class AtMap
 {
     public function __construct(
         public string $name

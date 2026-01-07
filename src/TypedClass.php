@@ -10,7 +10,7 @@
 
 namespace Diskerror\Typed;
 
-use Diskerror\Typed\Attribute\Map;
+use Diskerror\Typed\AtMap;
 use InvalidArgumentException;
 use ReflectionObject;
 use Traversable;
@@ -127,7 +127,7 @@ abstract class TypedClass extends TypedAbstract
                 );
 
                 // Check for Map attribute
-                $attributes = $rProp->getAttributes(Map::class);
+                $attributes = $rProp->getAttributes(AtMap::class);
                 foreach ($attributes as $attribute) {
                     $inst = $attribute->newInstance();
                     self::$_mapCache[$className][$inst->name] = $pName;

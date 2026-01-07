@@ -55,10 +55,10 @@ You can map external field names (like `user_id` from a database) to your class 
 
 ```php
 use Diskerror\Typed\TypedClass;
-use Diskerror\Typed\Attribute\Map;
+use Diskerror\Typed\AtMap;
 
 class User extends TypedClass {
-    #[Map('user_id')]
+    #[AtMap('user_id')]
     protected int $userId;
 }
 
