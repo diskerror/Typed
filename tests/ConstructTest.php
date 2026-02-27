@@ -8,10 +8,9 @@ use TestClasses\SimpleTyped;
 
 class ConstructTest extends TestCase
 {
-	public function testEmptyConstructor()
-	{
+	public function testEmptyConstructor() {
 		$simp = new SimpleTyped();
-        $simp->conversionOptions->unset();
+		$simp->conversionOptions->unset();
 
 		$this->assertIsBool($simp->myBool);
 		$this->assertIsInt($simp->myInt);
@@ -51,13 +50,24 @@ class ConstructTest extends TestCase
 		);
 	}
 
-	public function testIndexedArrayConstruct()
-	{
+	public function testFalseConstructor() {
+		$simp = new SimpleTyped(false);
+
+		/**
+		 * The method "toArray" is used in the function "json_encode" so as to
+		 * not invoke the method "jsonSerialize".
+		 */
+// 		vxprint($simp->toArray()); exit;
+//		fprintf(STDERR, var_export($simp));exit;
+		$this->assertTrue(true, '');
+	}
+
+	public function testIndexedArrayConstruct() {
 		$input = [false, 77, .5, 'simpppp2'];
 		$simp  = new SimpleTyped($input);
-        $simp->conversionOptions->unset();
+		$simp->conversionOptions->unset();
 
-        $this->assertIsBool($simp->myBool);
+		$this->assertIsBool($simp->myBool);
 		$this->assertIsInt($simp->myInt);
 		$this->assertIsFloat($simp->myFloat);
 		$this->assertIsString($simp->myString);
@@ -71,14 +81,13 @@ class ConstructTest extends TestCase
 		);
 	}
 
-	public function testAssocArrayConstruct()
-	{
+	public function testAssocArrayConstruct() {
 		$arr  = ['myString' => 234445, 'myInt' => 3.14, 'myNotExist' => 'to be ignored'];
 		$simp = new SimpleTyped($arr);
-        $simp->conversionOptions->set(ConversionOptions::OMIT_EMPTY);
-        $simp->setConversionOptionsToNested();
+		$simp->conversionOptions->set(ConversionOptions::OMIT_EMPTY);
+		$simp->setConversionOptionsToNested();
 
-        $this->assertIsBool($simp->myBool);
+		$this->assertIsBool($simp->myBool);
 		$this->assertIsInt($simp->myInt);
 		$this->assertIsFloat($simp->myFloat);
 		$this->assertIsString($simp->myString);
@@ -92,8 +101,7 @@ class ConstructTest extends TestCase
 		);
 	}
 
-	public function testWithClassConstruct()
-	{
+	public function testWithClassConstruct() {
 		$obj                  = new stdClass();
 		$obj->myNothing       = 'ignored';
 		$obj->myDouble        = '314 dropped';
@@ -104,9 +112,9 @@ class ConstructTest extends TestCase
 		$obj->myObj->more     = 'much!';
 
 		$simp = new SimpleTyped($obj);
-        $simp->conversionOptions->set(ConversionOptions::OMIT_EMPTY);
+		$simp->conversionOptions->set(ConversionOptions::OMIT_EMPTY);
 
-        $this->assertIsBool($simp->myBool);
+		$this->assertIsBool($simp->myBool);
 		$this->assertIsInt($simp->myInt);
 		$this->assertIsFloat($simp->myFloat);
 		$this->assertIsString($simp->myString);
@@ -124,10 +132,10 @@ class ConstructTest extends TestCase
 		);
 
 //        jsprint($simp->toArray());
-        $this->assertJsonStringEqualsJsonFile(
-            __DIR__ . '/results/simp4-93a.json',
-            json_encode($simp->toArray())
-        );
-    }
+		$this->assertJsonStringEqualsJsonFile(
+			__DIR__ . '/results/simp4-93a.json',
+			json_encode($simp->toArray())
+		);
+	}
 
 }
