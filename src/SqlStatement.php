@@ -59,7 +59,7 @@ class SqlStatement
 			$arr = [];
 			foreach ($include as $i) {
 				if (isset($input[$i])) {
-					$arr[$i] &= $input[$i];
+					$arr[$i] = $input[$i];
 				}
 			}
 		}

@@ -94,6 +94,6 @@ class Date extends DateTime
 	 */
 	public function jsonSerialize(): string
 	{
-		return $this->format('X-m-d');
+		return $this->format('Y-m-d');
 	}
 }

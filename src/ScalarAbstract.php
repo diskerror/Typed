@@ -10,6 +10,7 @@
 namespace Diskerror\Typed;
 
 use ErrorException;
+use LogicException;
 use Stringable;
 
 /**
@@ -19,153 +20,146 @@ use Stringable;
  */
 abstract class ScalarAbstract implements AtomicInterface, Stringable
 {
-    /**
-     * Stores the scalar value.
-     * Initialization defaults to false, zero, or an empty string.
-     *
-     * @var mixed
-     */
-    protected $_value;
+	/**
+	 * Stores the scalar value.
+	 * Initialization defaults to false, zero, or an empty string.
+	 *
+	 * @var mixed
+	 */
+	protected $_value;
 
-    /**
-     * Indicates whether the value can also be null.
-     * Initialization defaults to false.
-     *
-     * @var bool
-     */
-    private bool $_allowNull;
+	/**
+	 * Indicates whether the value can also be null.
+	 * Initialization defaults to false.
+	 *
+	 * @var bool
+	 */
+	private bool $_allowNull;
 
-    /**
-     * ScalarAbstract constructor.
-     *
-     * @param mixed $in An empty string will cast to false or zero as needed.
-     * @param bool  $allowNull
-     */
-    public function __construct(mixed $in = '', bool $allowNull = false)
-    {
-        $this->_allowNull = $allowNull;
+	use IsTypeTrait;
 
-        if ($in instanceof AtomicInterface) {
-            $this->set($in->get());
-        }
-        else {
-            $this->set($in);
-        }
-    }
+	/**
+	 * ScalarAbstract constructor.
+	 *
+	 * @param mixed $in An empty string will cast to false or zero as needed.
+	 * @param bool $allowNull
+	 */
+	public function __construct(mixed $in = '', bool $allowNull = false) {
+		$this->_allowNull = $allowNull;
+		$in               = self::_castIfObject($in);
 
-    /**
-     * isNullable
-     *
-     * @return bool
-     */
-    public function isNullable(): bool
-    {
-        return $this->_allowNull;
-    }
+		if (self::_isScalar(gettype($in)) || is_array($in)) {
+			$this->set($in);
+		} else {
+			throw new LogicException('bad type: ' . gettype($in));
+		}
+	}
 
-    /**
-     * Returns the scalar value.
-     *
-     * @return mixed
-     */
-    public function get(): mixed
-    {
-        return $this->_value;
-    }
+	/**
+	 * isNullable
+	 *
+	 * @return bool
+	 */
+	public function isNullable(): bool {
+		return $this->_allowNull;
+	}
 
-    /**
-     * Filters the value before setting.
-     *
-     * @param mixed $in
-     *
-     * @return void
-     */
-    abstract public function set(mixed $in): void;
+	/**
+	 * Returns the scalar value.
+	 *
+	 * @return mixed
+	 */
+	public function get(): mixed {
+		return $this->_value;
+	}
 
-    /**
-     * Returns true if value is not null.
-     *
-     * @return bool
-     */
-    public function isset(): bool
-    {
-        return isset($this->_value);
-    }
+	/**
+	 * Filters the value before setting.
+	 *
+	 * @param mixed $in
+	 *
+	 * @return void
+	 */
+	abstract public function set(mixed $in): void;
 
-    /**
-     * Sets a null or empty value.
-     */
-    public function unset(): void
-    {
-        if ($this->_allowNull) {
-            $this->_value = null;
-        }
-        else {
-            $this->_value = self::setType('', gettype($this->_value));
-        }
-    }
+	/**
+	 * Returns true if value is not null.
+	 *
+	 * @return bool
+	 */
+	public function isset(): bool {
+		return isset($this->_value);
+	}
 
-    /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        return (string)$this->_value;
-    }
+	/**
+	 * Sets a null or empty value.
+	 */
+	public function unset(): void {
+		if ($this->_allowNull) {
+			$this->_value = null;
+		} else {
+			$this->_value = self::setType('', gettype($this->_value));
+		}
+	}
 
-    /**
-     * Casts an object to a simpler type.
-     *
-     * @param  $in
-     *
-     * @return mixed
-     */
-    protected static function _castIfObject($in)
-    {
-        //	This could be any type
-        if (is_object($in)) {
-            switch (true) {
-                case $in instanceof AtomicInterface:
-                    return $in->get();
+	/**
+	 * @return string
+	 */
+	public function __toString(): string {
+		return (string)$this->_value;
+	}
 
-                case method_exists($in, '__toString'):
-                    return $in->__toString();
+	/**
+	 * Casts an object to a simpler type.
+	 *
+	 * @param mixed $in
+	 *
+	 * @return mixed
+	 */
+	protected static function _castIfObject(mixed $in): mixed {
+		//	This could be any type
+		if (is_object($in)) {
+			switch (true) {
+				case $in instanceof AtomicInterface:
+					return $in->get();
 
-                case method_exists($in, 'format'):
-                    return $in->format('c');
+				case method_exists($in, '__toString'):
+					return $in->__toString();
 
-                case method_exists($in, 'toArray'):
-                    return $in->toArray();
-            }
+				case method_exists($in, 'format'):
+					return $in->format('c');
 
-            return (array)$in;
-        }
+				case method_exists($in, 'toArray'):
+					return $in->toArray();
+			}
 
-        return $in;
-    }
+			return (array)$in;
+		}
 
-    /**
-     * SetType.
-     *
-     * This differs from settype() in that it returns an empty array for an empty string.
-     * It also throws an exception for bad type names.
-     *
-     * @param        $val
-     * @param string $type
-     *
-     * @return array|bool|float|int|string|null
-     * @throws ErrorException
-     */
-    public static function setType($val, string $type): mixed
-    {
-        if ($type === 'array' && $val === '') {
-            return [];
-        }
+		return $in;
+	}
 
-        if (settype($val, $type) === false) {
-            throw new ErrorException('bad type name');
-        }
+	/**
+	 * SetType.
+	 *
+	 * This differs from settype() in that it returns an empty array for an empty string.
+	 * It also throws an exception for bad type names.
+	 *
+	 * @param mixed  $val
+	 * @param string $type
+	 *
+	 * @return array|bool|float|int|string|null
+	 * @throws ErrorException
+	 */
+	public static function setType(mixed $val, string $type): mixed {
+		if ($type === 'array' && $val === '') {
+			return [];
+		}
 
-        return $val;
-    }
+		if (settype($val, $type) === false) {
+			throw new ErrorException('bad type name');
+		}
+
+		return $val;
+	}
 }

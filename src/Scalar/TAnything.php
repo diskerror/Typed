@@ -14,25 +14,20 @@ use Diskerror\Typed\ScalarAbstract;
 /**
  * Class TAnything
  *
- * This class allows input to be anything.
+ * This class allows input to be any scalar type.
  * Some objects and arrays will be cast to a string.
  *
  * @package Diskerror\Typed
  */
 class TAnything extends ScalarAbstract
 {
-    public function set(mixed $in): void
-    {
-        if ($in === null) {
-            $this->_value = $this->isNullable() ? null : false;
-        }
-        else {
-            $in = self::_castIfObject($in);
-            if (is_array($in)) {
-                $in = json_encode($in);
-            }
-
-            $this->_value = $in;
-        }
-    }
+	public function set(mixed $in): void {
+		if ($in === null) {
+			$this->_value = $this->isNullable() ? null : false;
+		} elseif (is_array($in)) {
+			$this->_value = json_encode($in);
+		} else {
+			$this->_value = $in;
+		}
+	}
 }

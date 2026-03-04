@@ -9,6 +9,13 @@ use TestClasses\Mongo\Tweet;
 
 class MongoTest extends PHPUnit\Framework\TestCase
 {
+	protected function setUp(): void
+	{
+		if (!extension_loaded('mongodb')) {
+			$this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+		}
+	}
+
 	public function testTweet()
 	{
 		$tweet = new Tweet();

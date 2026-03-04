@@ -6,6 +6,13 @@ use TestClasses\Tweet;
 
 class SerializeTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        if (!extension_loaded('mongodb')) {
+            $this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+        }
+    }
+
     public function testSerialize()
     {
         $tweet = new Tweet();

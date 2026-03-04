@@ -30,62 +30,17 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 */
 	public ConversionOptions $conversionOptions;
 
+	use IsTypeTrait;
+
 	/**
-	 * Assignable types can be simply assigned, as in $a = $b.
-	 * The remainders would be objects which often need to be cloned.
+	 * Coerces input to given scalar or array type. Objects are not changed.
 	 *
+	 * @param mixed  $val
 	 * @param string $type
 	 *
 	 * @return bool
 	 */
-	final protected static function _isAssignable(string $type): bool {
-		if (self::_isScalar($type)) {
-			return true;
-		}
-
-		switch ($type) {
-			case 'array':
-			case 'resource':
-			case 'callable':
-				return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Similar to the function is_scalar() but takes the type name as a string including 'null'.
-	 *
-	 * @param string $type
-	 *
-	 * @return bool
-	 */
-	final protected static function _isScalar(string $type): bool {
-		switch ($type) {
-			case 'NULL':
-			case 'null':
-			case 'bool':
-			case 'boolean':
-			case 'int':
-			case 'integer':
-			case 'float':
-			case 'double':
-			case 'string':
-				return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * The function settype() may return different values than type casting.
-	 *
-	 * @param        $val
-	 * @param string $type
-	 *
-	 * @return bool
-	 */
-	final protected static function _setBasicTypeAndConfirm(&$val, string $type): bool {
+	final protected static function _setBasicTypeAndConfirm(mixed &$val, string $type): bool {
 		$valType = gettype($val);
 
 		switch ($type) {
@@ -107,15 +62,9 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 							$val = (string)$val;
 							break;
 						}
+						// fall through
 					case 'array':
-						$val       = json_encode($val);
-						$lastError = json_last_error();
-						if ($lastError !== JSON_ERROR_NONE) {
-							throw new InvalidArgumentException(
-								'problem converting input data to JSON: ' . json_last_error_msg(),
-								$lastError
-							);
-						}
+						$val = json_encode($val, JSON_THROW_ON_ERROR);
 					break;
 
 					default:
@@ -127,8 +76,8 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 			case 'integer':
 				switch ($valType) {
 					case 'object':
-						if (is_a($val, AtomicInterface::class, true)) {
-							$val = $val->get();
+						if ($val instanceof AtomicInterface) {
+							$val = (int)$val->get();
 							break;
 						}
 					//	else fall through
@@ -143,7 +92,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 
 			case 'float':
 			case 'double':
-				$val = (double)$val;
+				$val = (float)$val;
 			break;
 
 			case 'bool':
@@ -154,7 +103,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 					break;
 
 					case 'object':
-						if (is_a($val, AtomicInterface::class, true)) {
+						if ($val instanceof AtomicInterface) {
 							$val = (bool)$val->get();
 						} else {
 							$val = !empty((array)$val);
@@ -253,20 +202,13 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 				if ('' === $in) {
 					$in = [];
 				} else {
-					$in        = json_decode($in, JSON_OBJECT_AS_ARRAY);
-					$lastError = json_last_error();
-					if ($lastError !== JSON_ERROR_NONE) {
-						throw new InvalidArgumentException(
-							'invalid input type (string); tried as JSON: ' . json_last_error_msg(),
-							$lastError
-						);
-					}
+					$in = json_decode($in, true, 512, JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING);
 				}
 			break;
 
 			case 'boolean':
-                // A 'false' is returned by MySQL:PDO for "no results".
-                if (true !== $in) {
+				// A 'false' is returned by many DB APIs for "no results".
+				if (true !== $in) {
 					/** Change false to empty array. */
 					$in = [];
 					break;

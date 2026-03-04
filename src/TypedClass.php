@@ -194,7 +194,7 @@ abstract class TypedClass extends TypedAbstract
     }
 
     /**
-     * Required method for Countable.
+     * Defined method for Countable.
      *
      * @return int
      */
@@ -404,7 +404,7 @@ abstract class TypedClass extends TypedAbstract
     }
 
     /**
-     * Required by the IteratorAggregate interface.
+     * Defined by the IteratorAggregate interface.
      * Every value is checked for change during iteration.
      *
      * @return Traversable
@@ -545,7 +545,7 @@ abstract class TypedClass extends TypedAbstract
         }
 
         switch (true) {
-            case $in === null;
+			case $in === null:
                 switch (true) {
                     case is_a($pType, AtomicInterface::class, true):
                         $this->$pName->set(null);

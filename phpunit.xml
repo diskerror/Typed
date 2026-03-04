@@ -45,5 +45,23 @@
     <testsuite name="attribute">
       <file>tests/AttributeTest.php</file>
     </testsuite>
+    <testsuite name="typedarray">
+      <file>tests/TypedArrayTest.php</file>
+    </testsuite>
+    <testsuite name="datetime">
+      <file>tests/DateTimeTest.php</file>
+    </testsuite>
+    <testsuite name="sqlstatement">
+      <file>tests/SqlStatementTest.php</file>
+    </testsuite>
+    <testsuite name="scalar">
+      <file>tests/ScalarTest.php</file>
+    </testsuite>
+    <testsuite name="typedclass">
+      <file>tests/TypedClassTest.php</file>
+    </testsuite>
+    <testsuite name="conversionoptions">
+      <file>tests/ConversionOptionsTest.php</file>
+    </testsuite>
   </testsuites>
 </phpunit>
