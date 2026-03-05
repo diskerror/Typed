@@ -385,4 +385,120 @@ class TypedClassTest extends TestCase
         $obj->strVal = $o;
         $this->assertSame('{"key":"val"}', $obj->strVal);
     }
+
+    // === _massageInput additional paths ===
+
+    public function testAssignNull()
+    {
+        $obj = new BasicTypedClass(['intVal' => 5]);
+        $obj->assign(null);
+        // null → empty array, so nothing changes
+        $this->assertSame(5, $obj->intVal);
+    }
+
+    public function testAssignEmptyString()
+    {
+        $obj = new BasicTypedClass(['intVal' => 5]);
+        $obj->assign('');
+        // empty string → empty array, so nothing changes
+        $this->assertSame(5, $obj->intVal);
+    }
+
+    public function testAssignJsonString()
+    {
+        $obj = new BasicTypedClass();
+        $obj->assign('{"intVal": 42, "strVal": "hello"}');
+        $this->assertSame(42, $obj->intVal);
+        $this->assertSame('hello', $obj->strVal);
+    }
+
+    public function testAssignFalse()
+    {
+        $obj = new BasicTypedClass(['intVal' => 5]);
+        $obj->assign(false);
+        // false → empty array, nothing changes
+        $this->assertSame(5, $obj->intVal);
+    }
+
+    public function testAssignTrueThrows()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $obj = new BasicTypedClass();
+        $obj->assign(true);
+    }
+
+    public function testAssignIntThrows()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $obj = new BasicTypedClass();
+        $obj->assign(42);
+    }
+
+    public function testAssignFloatThrows()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $obj = new BasicTypedClass();
+        $obj->assign(3.14);
+    }
+
+    // === _setBasicTypeAndConfirm additional paths ===
+
+    public function testStringableObjectToString()
+    {
+        $obj = new BasicTypedClass();
+        $stringable = new class {
+            public function __toString(): string { return 'stringable!'; }
+        };
+        $obj->strVal = $stringable;
+        $this->assertSame('stringable!', $obj->strVal);
+    }
+
+    public function testArrayToString()
+    {
+        $obj = new BasicTypedClass();
+        $obj->strVal = ['a', 'b', 'c'];
+        $this->assertSame('["a","b","c"]', $obj->strVal);
+    }
+
+    public function testArrayToBool()
+    {
+        $obj = new BasicTypedClass();
+        $obj->boolVal = [1, 2];
+        $this->assertTrue($obj->boolVal);
+
+        $obj->boolVal = [];
+        $this->assertFalse($obj->boolVal);
+    }
+
+    public function testObjectToBool()
+    {
+        $obj = new BasicTypedClass();
+        $o = new stdClass();
+        $o->key = 'val';
+        $obj->boolVal = $o;
+        $this->assertTrue($obj->boolVal);
+
+        $empty = new stdClass();
+        $obj->boolVal = $empty;
+        $this->assertFalse($obj->boolVal);
+    }
+
+    public function testObjectToInt()
+    {
+        $obj = new BasicTypedClass();
+        $o = new stdClass();
+        $o->a = 1;
+        $o->b = 2;
+        $obj->intVal = $o;
+        // object cast to array, then count
+        $this->assertSame(2, $obj->intVal);
+    }
+
+    public function testArrayToFloat()
+    {
+        $obj = new BasicTypedClass();
+        $obj->floatVal = [1, 2, 3];
+        // (float) on array — this is a PHP cast
+        $this->assertIsFloat($obj->floatVal);
+    }
 }

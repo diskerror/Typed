@@ -13,7 +13,6 @@ use Countable;
 use InvalidArgumentException;
 use IteratorAggregate;
 use JsonSerializable;
-use function _HumbugBox7eb78fbcc73e\Amp\Parallel\Worker\factory;
 
 /**
  * Class TypedAbstract
@@ -82,7 +81,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 						}
 					//	else fall through
 					case 'array':
-						$val = count($val);
+						$val = count((array)$val);
 					break;
 
 					default:

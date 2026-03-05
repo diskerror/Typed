@@ -194,4 +194,90 @@ class DateTimeTest extends TestCase
         $json = json_encode($d);
         $this->assertEquals('"2023-06-15"', $json);
     }
+
+    // === BSON\Date ===
+
+    public function testBsonDateConstruct()
+    {
+        if (!extension_loaded('mongodb')) {
+            $this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+        }
+        $d = new \Diskerror\Typed\BSON\Date('2024-03-15');
+        $this->assertSame('2024-03-15', (string)$d);
+    }
+
+    public function testBsonDateFromUTCDateTime()
+    {
+        if (!extension_loaded('mongodb')) {
+            $this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+        }
+        $utc = new \MongoDB\BSON\UTCDateTime(1710460800000); // 2024-03-15 00:00:00 UTC
+        $d = new \Diskerror\Typed\BSON\Date($utc);
+        $this->assertSame('2024-03-15', (string)$d);
+    }
+
+    public function testBsonDateSerialize()
+    {
+        if (!extension_loaded('mongodb')) {
+            $this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+        }
+        $d = new \Diskerror\Typed\BSON\Date('2024-03-15');
+        $result = $d->bsonSerialize();
+        $this->assertIsArray($result);
+        $this->assertSame('2024-03-15', $result[0]);
+    }
+
+    public function testBsonDateUnserialize()
+    {
+        if (!extension_loaded('mongodb')) {
+            $this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+        }
+        $d = new \Diskerror\Typed\BSON\Date('2000-01-01');
+        $d->bsonUnserialize(['2024-12-25']);
+        $this->assertSame('2024-12-25', (string)$d);
+    }
+
+    public function testBsonDateSetTimeThrows()
+    {
+        if (!extension_loaded('mongodb')) {
+            $this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+        }
+        $this->expectException(\LogicException::class);
+        $d = new \Diskerror\Typed\BSON\Date('2024-03-15');
+        $d->setTime(10, 30);
+    }
+
+    // === BSON\DateTime additional coverage ===
+
+    public function testBsonDateTimeSerializeUTC()
+    {
+        if (!extension_loaded('mongodb')) {
+            $this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+        }
+        $dt = new \Diskerror\Typed\BSON\DateTime('2024-03-15 10:30:00', new \DateTimeZone('UTC'));
+        $result = $dt->bsonSerialize();
+        $this->assertArrayHasKey('$date', $result);
+        $this->assertArrayHasKey('$numberLong', $result['$date']);
+    }
+
+    public function testBsonDateTimeSerializeNonUTC()
+    {
+        if (!extension_loaded('mongodb')) {
+            $this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+        }
+        $dt = new \Diskerror\Typed\BSON\DateTime('2024-03-15 10:30:00', new \DateTimeZone('America/Los_Angeles'));
+        $result = $dt->bsonSerialize();
+        $this->assertArrayHasKey('$date', $result);
+    }
+
+    public function testBsonDateTimeUnserialize()
+    {
+        if (!extension_loaded('mongodb')) {
+            $this->markTestSkipped('NOTICE: MongoDB extension not loaded.');
+        }
+        $dt = new \Diskerror\Typed\BSON\DateTime('2024-01-01', new \DateTimeZone('UTC'));
+        $dt->bsonUnserialize(['milliseconds' => 1710460800000]);
+        // Just verify it doesn't crash and time was set
+        $this->assertInstanceOf(\Diskerror\Typed\BSON\DateTime::class, $dt);
+    }
 }
