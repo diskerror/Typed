@@ -115,13 +115,13 @@ You can use the `#[AtMap]` attribute to map incoming keys (e.g., from a database
 
 ```php
 use Diskerror\Typed\TypedClass;
-use Diskerror\Typed\AtMap;
+use Diskerror\Typed\AttributeMap;
 
 class User extends TypedClass {
-    #[AtMap('user_id')]
+    #[AttributeMap('user_id')]
     protected int $userId;
 
-    #[AtMap('full_name')]
+    #[AttributeMap('full_name')]
     protected string $name;
 }
 

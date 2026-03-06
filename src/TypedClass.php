@@ -10,7 +10,8 @@
 
 namespace Diskerror\Typed;
 
-use Diskerror\Typed\AtMap;
+use Diskerror\Typed\AttributeMap;
+use DateTimeInterface;
 use InvalidArgumentException;
 use ReflectionObject;
 use Traversable;
@@ -119,26 +120,28 @@ abstract class TypedClass extends TypedAbstract
 			self::$_mapCache[$className]  = [];
 
 			foreach ($reflection->getProperties() as $rProp) {
-				$pName      = $rProp->getName();
-				$typeObj    = $rProp->getType();
-				$typeName   = !is_null($typeObj) ? $typeObj->__toString() : '';
-				$allowsNull = str_starts_with($typeName, '?') || ($typeObj !== null && $typeObj->allowsNull());
-				$typeName   = str_starts_with($typeName, '?') ? substr($typeName, 1) : $typeName;
-				$isObject   = !self::_isAssignable($typeName);
+				$pName = $rProp->getName();
 
 				if ((str_starts_with($pName, '_') && $pName !== '_id') || $pName === 'conversionOptions') {
 					continue;
 				}
 
+				$typeObj  = $rProp->getType();
+				$typeName = !is_null($typeObj) ? $typeObj->__toString() : '';
+				$typeName = str_starts_with($typeName, '?') ? substr($typeName, 1) : $typeName;
+
 				self::$_metaCache[$className][$pName] = new PropertyMetaData(
 					$typeName,
-					$isObject,
-					$allowsNull,
-					$rProp->isPublic()
+					!self::_isAssignable($typeName),
+					str_starts_with($typeName, '?') || ($typeObj !== null && $typeObj->allowsNull()),
+					$rProp->isPublic(),
+					is_a($typeName, AtomicInterface::class, true),
+					is_a($typeName, TypedAbstract::class, true),
+					is_a($typeName, DateTimeInterface::class, true)
 				);
 
 				// Check for Map attribute
-				$attributes = $rProp->getAttributes(AtMap::class);
+				$attributes = $rProp->getAttributes(AttributeMap::class);
 				foreach ($attributes as $attribute) {
 					$inst                                     = $attribute->newInstance();
 					self::$_mapCache[$className][$inst->name] = $pName;
@@ -236,7 +239,7 @@ abstract class TypedClass extends TypedAbstract
 		$this->_massageInputArray($in);
 
 		foreach ($in as $k => $v) {
-			$k = isset($this->_map[$k]) ? $this->_map[$k] : $k;
+			$k = $this->_map[$k] ?? $k;
 			if ($this->_keyExists($k)) {
 				$this->_setByName($k, $v);
 			}
@@ -257,15 +260,15 @@ abstract class TypedClass extends TypedAbstract
 		foreach ($this->_meta as $pName => $meta) {
 			$pType = $meta->type;
 			switch (true) {
-				case is_a($pType, AtomicInterface::class, true):
+				case $meta->isaAtomicInterface:
 					$this->$pName->set(null);
 				break;
 
-				case is_a($pType, TypedAbstract::class, true):
+				case $meta->isaTypedAbstract:
 					$this->$pName->clear();
 				break;
 
-				case is_object($this->$pName):
+				case $meta->isObject:
 					$this->$pName = new $pType();
 				break;
 
@@ -300,7 +303,7 @@ abstract class TypedClass extends TypedAbstract
 	public function setConversionOptionsToNested(): void
 	{
 		foreach ($this->getPublicNames() as $k) {
-			if ($this->$k instanceof TypedAbstract) {
+			if ($this->_meta[$k]->isaTypedAbstract) {
 				$this->$k->conversionOptions->set($this->conversionOptions->get());
 				$this->$k->setConversionOptionsToNested();
 			}
@@ -325,7 +328,7 @@ abstract class TypedClass extends TypedAbstract
 
 			if ($meta->isObject) {
 				switch (true) {
-					case ($v instanceof AtomicInterface):
+					case ($meta->isaAtomicInterface):
 						$v = $v->get();
 					break;
 
@@ -333,13 +336,13 @@ abstract class TypedClass extends TypedAbstract
 						$v = $v->toArray();
 					break;
 
-					case ($v instanceof DateTime):
+					case ($meta->isaDateTimeInterface):
 						$v = $dateToString ? (string)$v : (array)$v;
 					break;
 
 					case $objectsToString
 						&& method_exists($v, '__toString')
-						&& !($v instanceof DateTime):
+						&& !($meta->isaDateTimeInterface):
 						$v = (string)$v;
 					break;
 
@@ -422,7 +425,7 @@ abstract class TypedClass extends TypedAbstract
 	{
 		return (function &() {
 			foreach ($this->getPublicNames() as $k) {
-				if (is_a($this->_meta[$k]->type, AtomicInterface::class, true)) {
+				if ($this->_meta[$k]->isaAtomicInterface) {
 					$v     = $this->{$k}->get();
 					$vOrig = $v;
 
@@ -474,11 +477,11 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @return mixed
 	 */
-	public function __get(string $pName)
+	public function __get(string $pName): mixed
 	{
-		$pName = isset($this->_map[$pName]) ? $this->_map[$pName] : $pName;
+		$pName = $this->_map[$pName] ?? $pName;
 		$this->_assertPropName($pName);
-		return ($this->$pName instanceof AtomicInterface) ? $this->$pName->get() : $this->$pName;
+		return $this->_meta[$pName]->isaAtomicInterface ? $this->$pName->get() : $this->$pName;
 	}
 
 	/**
@@ -488,9 +491,9 @@ abstract class TypedClass extends TypedAbstract
 	 * @param string $pName
 	 * @param mixed $val
 	 */
-	public function __set(string $pName, $val)
+	public function __set(string $pName, $val): void
 	{
-		$pName = isset($this->_map[$pName]) ? $this->_map[$pName] : $pName;
+		$pName = $this->_map[$pName] ?? $pName;
 		$this->_assertPropName($pName);
 		$this->_setByName($pName, $val);
 		$this->_checkRelatedProperties();
@@ -507,7 +510,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __isset(string $pName): bool
 	{
-		$pName = isset($this->_map[$pName]) ? $this->_map[$pName] : $pName;
+		$pName = $this->_map[$pName] ?? $pName;
 		return $this->_keyExists($pName) && ($this->$pName !== null);
 	}
 
@@ -516,9 +519,9 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @param string $pName
 	 */
-	public function __unset(string $pName)
+	public function __unset(string $pName): void
 	{
-		$pName = isset($this->_map[$pName]) ? $this->_map[$pName] : $pName;
+		$pName = $this->_map[$pName] ?? $pName;
 		$this->_assertPropName($pName);
 		$this->_setByName($pName, null);
 		$this->_checkRelatedProperties();
@@ -532,17 +535,17 @@ abstract class TypedClass extends TypedAbstract
 	 * @param string $pName
 	 * @param mixed $in
 	 * @param bool $deepCopy -OPTIONAL
-	 *
-	 * @throws InvalidArgumentException
 	 */
 	protected function _setByName(string $pName, $in, bool $deepCopy = true): void
 	{
-		if ($this->_meta[$pName]->isPublic) {
+		$pMeta = $this->_meta[$pName];
+
+		if ($pMeta->isPublic) {
 			$this->$pName = $in;
 			return;
 		}
 
-		$pType = $this->_meta[$pName]->type;
+		$pType = $pMeta->type;
 
 		// Handle empty/null-like strings for nullable scalars
 		if ($this->_meta[$pName]->isNullable && is_string($in)) {
@@ -556,16 +559,16 @@ abstract class TypedClass extends TypedAbstract
 		switch (true) {
 			case $in === null:
 				switch (true) {
-					case is_a($pType, AtomicInterface::class, true):
+					case $pMeta->isaAtomicInterface:
 						$this->$pName->set(null);
 					break;
 
-					case is_a($pType, TypedAbstract::class, true):
+					case $pMeta->isaTypedAbstract:
 						$this->$pName->clear();
 					break;
 
 					case in_array($pType, self::SINGULAR_NAMES, true):
-						if (!$this->_meta[$pName]->isNullable) {
+						if (!$pMeta->isNullable) {
 							$in = '';
 							settype($in, $pType);
 							$this->$pName = $in;
@@ -585,7 +588,7 @@ abstract class TypedClass extends TypedAbstract
 				return;
 
 
-			case is_a($pType, TypedAbstract::class, true):
+			case $pMeta->isaTypedAbstract:
 				if ($deepCopy) {
 					$this->$pName->assign($in);
 					return;
@@ -612,7 +615,7 @@ abstract class TypedClass extends TypedAbstract
 				$this->$pName = $in;
 				return;
 
-			case is_a($pType, AtomicInterface::class, true):
+			case $pMeta->isaAtomicInterface:
 				$this->$pName->set($in);
 				return;
 
@@ -671,7 +674,7 @@ abstract class TypedClass extends TypedAbstract
 	 * is required to be earlier than an end-date, any range of values like
 	 * minimum and maximum, or any custom filtering dependent on more than a single property.
 	 */
-	protected function _checkRelatedProperties() {}
+	protected function _checkRelatedProperties(): void {}
 
 	/**
 	 * Throws exception if named property does not exist.
@@ -680,7 +683,7 @@ abstract class TypedClass extends TypedAbstract
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _assertPropName(string $pName)
+	protected function _assertPropName(string $pName): void
 	{
 		if (!$this->_keyExists($pName)) {
 			throw new InvalidArgumentException($pName);

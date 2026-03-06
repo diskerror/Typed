@@ -2,15 +2,15 @@
 
 namespace TestClasses;
 
-use Diskerror\Typed\AtMap;
+use Diskerror\Typed\AttributeMap;
 use Diskerror\Typed\TypedClass;
 
 class AttributeTestClass extends TypedClass
 {
-    #[AtMap('user_id')]
+    #[AttributeMap('user_id')]
     protected int $userId;
 
-    #[AtMap('user_name')]
+    #[AttributeMap('user_name')]
     protected string $userName;
 
     // Mixed usage: Defined in array, but should be mergeable or coexist if logic allows

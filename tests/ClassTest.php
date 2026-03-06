@@ -1,6 +1,6 @@
 <?php
 /** @noinspection ALL */
-declare(strict_types = 1);
+declare(strict_types=1);
 
 use Diskerror\Typed\DateTime;
 use Diskerror\Typed\TypedClass;
@@ -83,7 +83,7 @@ class DateRange extends TypedClass
 
 	protected DateTime $end;
 
-	public function _checkRelatedProperties()
+	public function _checkRelatedProperties(): void
 	{
 		if ($this->start > $this->end) {
 			$this->start = clone $this->end;

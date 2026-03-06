@@ -18,13 +18,19 @@ final class PropertyMetaData
 	private bool   $isObject;
 	private bool   $isNullable;
 	private bool   $isPublic;
+	private bool   $isaAtomicInterface;
+	private bool   $isaTypedAbstract;
+	private bool   $isaDateTimeInterface;
 
-	public function __construct(string $type, bool $isObject, bool $isNullable, bool $isPublic)
+	public function __construct(string $type, bool $isObject, bool $isNullable, bool $isPublic, bool $isaAtomicInterface, bool $isaTypedAbstract, bool $isaDateTimeInterface)
 	{
-		$this->type       = $type;
-		$this->isObject   = $isObject;
-		$this->isNullable = $isNullable;
-		$this->isPublic   = $isPublic;
+		$this->type                 = $type;
+		$this->isObject             = $isObject;
+		$this->isNullable           = $isNullable;
+		$this->isPublic             = $isPublic;
+		$this->isaAtomicInterface   = $isaAtomicInterface;
+		$this->isaTypedAbstract     = $isaTypedAbstract;
+		$this->isaDateTimeInterface = $isaDateTimeInterface;
 	}
 
 	/**

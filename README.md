@@ -72,10 +72,10 @@ Attributes.
 
 ```php
 use Diskerror\Typed\TypedClass;
-use Diskerror\Typed\AtMap;
+use Diskerror\Typed\AttributeMap;
 
 class User extends TypedClass {
-    #[AtMap('user_id')]
+    #[AttributeMap('user_id')]
     protected int $userId;
 }
 

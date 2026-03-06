@@ -1,6 +1,6 @@
 <?php
 
-use Diskerror\Typed\AtMap;
+use Diskerror\Typed\AttributeMap;
 use Diskerror\Typed\TypedClass;
 use PHPUnit\Framework\TestCase;
 
@@ -8,7 +8,7 @@ class MagicTestClass extends TypedClass
 {
     protected int $hiddenInt = 42;
     
-    #[AtMap('alias_int')]
+    #[AttributeMap('alias_int')]
     protected int $aliasedInt = 100;
     
     public int $publicInt = 10;

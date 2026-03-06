@@ -176,7 +176,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 		elseif (
-			($dateToString && is_a($this->_type, DateTime::class, true)) ||
+			($dateToString && is_a($this->_type, \DateTimeInterface::class, true)) ||
 			($objectsToString && method_exists($this->_type, '__toString'))
 		) {
 			foreach ($this->_container as $k => $v) {
