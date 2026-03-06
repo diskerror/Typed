@@ -10,6 +10,7 @@
 namespace Diskerror\Typed;
 
 use ArrayAccess;
+use DateTimeInterface;
 use InvalidArgumentException;
 use LengthException;
 use Traversable;
@@ -176,7 +177,7 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			}
 		}
 		elseif (
-			($dateToString && is_a($this->_type, \DateTimeInterface::class, true)) ||
+			($dateToString && is_a($this->_type, DateTimeInterface::class, true)) ||
 			($objectsToString && method_exists($this->_type, '__toString'))
 		) {
 			foreach ($this->_container as $k => $v) {

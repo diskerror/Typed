@@ -157,7 +157,7 @@ abstract class TypedClass extends TypedAbstract
 			$this->_map = array_merge($this->_map, self::$_mapCache[$className]);
 		}
 
-		foreach ($this->_meta as $pName => $meta) {
+		foreach ($this->_meta as $pName => &$meta) {
 			if (!isset($this->$pName)) {
 				//  Always instantiate objects. They cannot be null.
 				if ($meta->isObject) {
@@ -257,7 +257,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function clear(): void
 	{
-		foreach ($this->_meta as $pName => $meta) {
+		foreach ($this->_meta as $pName => &$meta) {
 			$pType = $meta->type;
 			switch (true) {
 				case $meta->isaAtomicInterface:
@@ -323,7 +323,7 @@ abstract class TypedClass extends TypedAbstract
 		$omitEmpty       = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
 
 		$arr = [];
-		foreach ($this->_meta as $k => $meta) {
+		foreach ($this->_meta as $k => &$meta) {
 			$v = $this->$k;
 
 			if ($meta->isObject) {
@@ -375,28 +375,28 @@ abstract class TypedClass extends TypedAbstract
 		$omitEmpty    = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
 
 		$arr = $this->toArray();
-		foreach ($this->_meta as $k => $meta) {
-			if ($meta->isObject) {
+		foreach ($arr as $k => &$v) {
+			if ($this->_meta[$k]->isObject) {
 				switch (true) {
 					case method_exists($this->$k, 'jsonSerialize'):
-						$arr[$k] = $this->$k->jsonSerialize();
+						$v = $this->$k->jsonSerialize();
 					break;
 
 					case $keepJsonExpr && $this->$k instanceof $ZJE:
-						$arr[$k] = $this->$k;  // return as \Laminas\Json\Expr
+						$v = $this->$k;  // return as \Laminas\Json\Expr
 					break;
 
 					default:
 				}
 
-				if ($omitEmpty && isset($arr[$k]) && empty((array)$arr[$k])) {
-					unset($arr[$k]);
+				if ($omitEmpty && isset($v) && empty((array)$v)) {
+					unset($v);
 				}
 			}
 
 			//	Testing for empty must happen after nested objects have been reduced.
-			if ($omitEmpty && isset($arr[$k]) && empty($arr[$k])) {
-				unset($arr[$k]);
+			if ($omitEmpty && isset($v) && empty($v)) {
+				unset($v);
 			}
 		}
 
@@ -404,7 +404,10 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
+	 * Clone.
+	 *
 	 * All member objects will be deep cloned.
+	 * This includes properties with names starting with '_'.
 	 */
 	public function __clone()
 	{
@@ -416,6 +419,8 @@ abstract class TypedClass extends TypedAbstract
 	}
 
 	/**
+	 * getIterator.
+	 *
 	 * Defined by the IteratorAggregate interface.
 	 * Every value is checked for change during iteration.
 	 *
