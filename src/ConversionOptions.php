@@ -51,7 +51,7 @@ class ConversionOptions extends BitWise
 	/**
 	 * Cast member with the name "_id" into MongoDB\BSON\ObjectId.
 	 */
-	public const CAST_ID_TO_OBJECTID = 32;
+	public const CAST_ID_TO_OBJECT_ID = 32;
 
 	/**
 	 * Constructor with default values.

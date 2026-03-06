@@ -325,7 +325,7 @@ abstract class TypedClass extends TypedAbstract
 
 			if ($meta->isObject) {
 				switch (true) {
-					case is_a($v, AtomicInterface::class, true):
+					case ($v instanceof AtomicInterface):
 						$v = $v->get();
 					break;
 
@@ -333,13 +333,13 @@ abstract class TypedClass extends TypedAbstract
 						$v = $v->toArray();
 					break;
 
-					case is_a($v, DateTime::class, true):
+					case ($v instanceof DateTime):
 						$v = $dateToString ? (string)$v : (array)$v;
 					break;
 
 					case $objectsToString
 						&& method_exists($v, '__toString')
-						&& !is_a($v, DateTime::class, true):
+						&& !($v instanceof DateTime):
 						$v = (string)$v;
 					break;
 

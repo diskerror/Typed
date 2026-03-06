@@ -53,7 +53,7 @@ class TypedArray extends \Diskerror\Typed\TypedArray implements Serializable, Un
 	{
 		$dateToString = $this->conversionOptions->isset(ConversionOptions::DATE_TO_STRING);
 		$omitEmpty    = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
-		$castObjectId = $this->conversionOptions->isset(ConversionOptions::CAST_ID_TO_OBJECTID);
+		$castObjectId = $this->conversionOptions->isset(ConversionOptions::CAST_ID_TO_OBJECT_ID);
 
 		$output = [];
 		if (method_exists($this->_type, 'bsonSerialize')) {

@@ -24,7 +24,7 @@ class TypedClass extends \Diskerror\Typed\TypedClass implements Serializable, Un
 	public function bsonSerialize(): array|Document|PackedArray|stdClass
 	{
 		$omitEmpty    = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
-		$castObjectId = $this->conversionOptions->isset(ConversionOptions::CAST_ID_TO_OBJECTID);
+		$castObjectId = $this->conversionOptions->isset(ConversionOptions::CAST_ID_TO_OBJECT_ID);
 
 		$arr = $this->toArray();
 		foreach ($this->_meta as $k => $meta) {

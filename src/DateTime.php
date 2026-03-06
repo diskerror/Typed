@@ -158,7 +158,7 @@ class DateTime extends DT implements JsonSerializable, Stringable
 	{
 		switch (gettype($hour)) {
 			case 'object':
-				if (is_a($hour, DateTimeInterface::class)) {
+				if ($hour instanceof DateTimeInterface) {
 					$microsecond = (int)$hour->format('u');
 					$second      = (int)$hour->format('s');
 					$minute      = (int)$hour->format('i');

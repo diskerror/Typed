@@ -129,7 +129,7 @@ abstract class ScalarAbstract implements AtomicInterface, Stringable
 		//	This could be any type
 		if (is_object($in)) {
 			switch (true) {
-				case $in instanceof AtomicInterface:
+				case ($in instanceof AtomicInterface):
 					return $in->get();
 
 				case method_exists($in, '__toString'):
