@@ -16,7 +16,8 @@ trait IsTypeTrait
 	 *
 	 * @return bool
 	 */
-	final protected static function _isAssignable(string $type): bool {
+	final protected static function _isAssignable(string $type): bool
+	{
 		if (self::_isScalar($type)) {
 			return true;
 		}
@@ -38,7 +39,8 @@ trait IsTypeTrait
 	 *
 	 * @return bool
 	 */
-	final protected static function _isScalar(string $type): bool {
+	final protected static function _isScalar(string $type): bool
+	{
 		switch ($type) {
 			case 'NULL':
 			case 'null':

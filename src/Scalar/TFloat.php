@@ -45,15 +45,15 @@ class TFloat extends ScalarAbstract
 					$in = str_replace(',', '.', $in);
 				}
 
-				$this->_value = (float) $in;
-				break;
+				$this->_value = (float)$in;
+			break;
 
 			case 'NULL':
 				$this->_value = $this->isNullable() ? null : 0.0;
-				break;
+			break;
 
 			default:
-				$this->_value = (float) $in;
+				$this->_value = (float)$in;
 		}
 	}
 }

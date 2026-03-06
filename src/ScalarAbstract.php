@@ -44,13 +44,15 @@ abstract class ScalarAbstract implements AtomicInterface, Stringable
 	 * @param mixed $in An empty string will cast to false or zero as needed.
 	 * @param bool $allowNull
 	 */
-	public function __construct(mixed $in = '', bool $allowNull = false) {
+	public function __construct(mixed $in = '', bool $allowNull = false)
+	{
 		$this->_allowNull = $allowNull;
 		$in               = self::_castIfObject($in);
 
 		if (self::_isScalar(gettype($in)) || is_array($in)) {
 			$this->set($in);
-		} else {
+		}
+		else {
 			throw new LogicException('bad type: ' . gettype($in));
 		}
 	}
@@ -60,7 +62,8 @@ abstract class ScalarAbstract implements AtomicInterface, Stringable
 	 *
 	 * @return bool
 	 */
-	public function isNullable(): bool {
+	public function isNullable(): bool
+	{
 		return $this->_allowNull;
 	}
 
@@ -69,7 +72,8 @@ abstract class ScalarAbstract implements AtomicInterface, Stringable
 	 *
 	 * @return mixed
 	 */
-	public function get(): mixed {
+	public function get(): mixed
+	{
 		return $this->_value;
 	}
 
@@ -87,17 +91,20 @@ abstract class ScalarAbstract implements AtomicInterface, Stringable
 	 *
 	 * @return bool
 	 */
-	public function isset(): bool {
+	public function isset(): bool
+	{
 		return isset($this->_value);
 	}
 
 	/**
 	 * Sets a null or empty value.
 	 */
-	public function unset(): void {
+	public function unset(): void
+	{
 		if ($this->_allowNull) {
 			$this->_value = null;
-		} else {
+		}
+		else {
 			$this->_value = self::setType('', gettype($this->_value));
 		}
 	}
@@ -105,7 +112,8 @@ abstract class ScalarAbstract implements AtomicInterface, Stringable
 	/**
 	 * @return string
 	 */
-	public function __toString(): string {
+	public function __toString(): string
+	{
 		return (string)$this->_value;
 	}
 
@@ -116,7 +124,8 @@ abstract class ScalarAbstract implements AtomicInterface, Stringable
 	 *
 	 * @return mixed
 	 */
-	protected static function _castIfObject(mixed $in): mixed {
+	protected static function _castIfObject(mixed $in): mixed
+	{
 		//	This could be any type
 		if (is_object($in)) {
 			switch (true) {
@@ -145,13 +154,14 @@ abstract class ScalarAbstract implements AtomicInterface, Stringable
 	 * This differs from settype() in that it returns an empty array for an empty string.
 	 * It also throws an exception for bad type names.
 	 *
-	 * @param mixed  $val
+	 * @param mixed $val
 	 * @param string $type
 	 *
 	 * @return array|bool|float|int|string|null
 	 * @throws ErrorException
 	 */
-	public static function setType(mixed $val, string $type): mixed {
+	public static function setType(mixed $val, string $type): mixed
+	{
 		if ($type === 'array' && $val === '') {
 			return [];
 		}

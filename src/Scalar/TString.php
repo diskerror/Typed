@@ -26,17 +26,17 @@ class TString extends ScalarAbstract
 					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 				}
 				$this->_value = $jsonStr;
-				break;
+			break;
 
 			case 'NULL':
 				$this->_value = $this->isNullable() ? null : '';
-				break;
+			break;
 
 			case 'resource':
 				throw new UnexpectedValueException('Value cannot be a resource.');
 
 			default:
-				$this->_value = (string) $in;
+				$this->_value = (string)$in;
 		}
 	}
 }

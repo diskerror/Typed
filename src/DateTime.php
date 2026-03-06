@@ -31,7 +31,8 @@ class DateTime extends DT implements JsonSerializable, Stringable
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct(mixed $time = 'now', ?DateTimeZone $timezone = null) {
+	public function __construct(mixed $time = 'now', ?DateTimeZone $timezone = null)
+	{
 		switch (gettype($time)) {
 			case 'object':
 				if ($time instanceof DateTimeInterface) {
@@ -59,7 +60,8 @@ class DateTime extends DT implements JsonSerializable, Stringable
 				elseif ($time[0] === '@') {
 					//	if this possibly contains fractional seconds, fixed formatting
 					parent::__construct(sprintf('@%f', substr($time, 1)), $timezone);
-				} else {
+				}
+				else {
 					parent::__construct($time, $timezone);
 				}
 			break;
@@ -93,7 +95,8 @@ class DateTime extends DT implements JsonSerializable, Stringable
 	 * @param int $month -DEFAULT 1
 	 * @param int $day -DEFAULT 1
 	 */
-	public function setDate($year, int $month = 1, int $day = 1): self {
+	public function setDate($year, int $month = 1, int $day = 1): self
+	{
 		switch (gettype($year)) {
 			case 'object':
 				if ($year instanceof DateTimeInterface) {
@@ -101,9 +104,11 @@ class DateTime extends DT implements JsonSerializable, Stringable
 					$month = $year->format('n');
 					$year  = $year->format('Y');
 					break;
-				} elseif (method_exists($year, 'toArray')) {
+				}
+				elseif (method_exists($year, 'toArray')) {
 					$year = $year->toArray();
-				} else {
+				}
+				else {
 					$year = (array)$year;
 				}
 			//	fall through
@@ -149,14 +154,15 @@ class DateTime extends DT implements JsonSerializable, Stringable
 	 * @param ?int $second
 	 * @param ?int $microsecond
 	 */
-	public function setTime($hour, ?int $minute = null, ?int $second = null, ?int $microsecond = null): self {
+	public function setTime($hour, ?int $minute = null, ?int $second = null, ?int $microsecond = null): self
+	{
 		switch (gettype($hour)) {
 			case 'object':
 				if (is_a($hour, DateTimeInterface::class)) {
-					$microsecond = (int) $hour->format('u');
-					$second      = (int) $hour->format('s');
-					$minute      = (int) $hour->format('i');
-					$hour        = (int) $hour->format('G');
+					$microsecond = (int)$hour->format('u');
+					$second      = (int)$hour->format('s');
+					$minute      = (int)$hour->format('i');
+					$hour        = (int)$hour->format('G');
 					break;
 				}
 
@@ -167,31 +173,31 @@ class DateTime extends DT implements JsonSerializable, Stringable
 			'array':
 				$arrIn = $hour;
 				//	Get current values as array input is allowed to be incomplete.
-				$hour        = (int) $this->format('G');
-				$minute      = (int) $this->format('i');
-				$second      = (int) $this->format('s');
-				$microsecond = (int) $this->format('u');
+				$hour        = (int)$this->format('G');
+				$minute      = (int)$this->format('i');
+				$second      = (int)$this->format('s');
+				$microsecond = (int)$this->format('u');
 
 				foreach ($arrIn as $k => $v) {
 					switch (substr(strtolower($k), 0, 3)) {
 						case 'hou':
-							$hour = (int) $v;
+							$hour = (int)$v;
 						break;
 
 						case 'min':
-							$minute = (int) $v;
+							$minute = (int)$v;
 						break;
 
 						case 'sec':
-							$second = (int) $v;
+							$second = (int)$v;
 						break;
 
 						case 'mic':
-							$microsecond = (int) $v;
+							$microsecond = (int)$v;
 						break;
 
 						case 'fra': //	Convert "fraction", a float, to microsecond as an integer.
-							$microsecond = (int) ($v * 1000000);
+							$microsecond = (int)($v * 1000000);
 						break;
 					}
 				}
@@ -199,19 +205,19 @@ class DateTime extends DT implements JsonSerializable, Stringable
 		}
 
 		if ($hour === null) {
-			$hour = (int) $this->format('G');
+			$hour = (int)$this->format('G');
 		}
 
 		if ($minute === null) {
-			$minute = (int) $this->format('i');
+			$minute = (int)$this->format('i');
 		}
 
 		if ($second === null) {
-			$second = (int) $this->format('s');
+			$second = (int)$this->format('s');
 		}
 
 		if ($microsecond === null) {
-			$microsecond = (int) $this->format('u');
+			$microsecond = (int)$this->format('u');
 		}
 
 		parent::setTime($hour, $minute, $second, $microsecond);
@@ -225,7 +231,8 @@ class DateTime extends DT implements JsonSerializable, Stringable
 	 *
 	 * @return string
 	 */
-	public function __toString() {
+	public function __toString()
+	{
 		return ((array)$this)['date'];
 	}
 
@@ -234,7 +241,8 @@ class DateTime extends DT implements JsonSerializable, Stringable
 	 *
 	 * @return int
 	 */
-	public function getTimestampMilli(): int {
+	public function getTimestampMilli(): int
+	{
 		return (int)($this->format('U.v') * 1000);
 	}
 
@@ -243,7 +251,8 @@ class DateTime extends DT implements JsonSerializable, Stringable
 	 *
 	 * @return float
 	 */
-	public function getTimestampWithDecimal(): float {
+	public function getTimestampWithDecimal(): float
+	{
 		return (float)$this->format('U.u');
 	}
 
@@ -252,7 +261,8 @@ class DateTime extends DT implements JsonSerializable, Stringable
 	 * Returns a date formated as ISO8601_EXPANDED with microsecond as decimal.
 	 * @return string
 	 */
-	public function jsonSerialize(): string {
+	public function jsonSerialize(): string
+	{
 		return $this->format('Y-m-d\TH:i:s.uP');
 	}
 }

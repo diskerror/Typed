@@ -50,15 +50,15 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct(mixed $param1 = null, mixed $param2 = null) {
+	public function __construct(mixed $param1 = null, mixed $param2 = null)
+	{
 		$this->conversionOptions = new ConversionOptions();
 
 		//	If this is an instance of TypedArray…
-		if (get_called_class() === self::class) {
+		if (static::class === self::class) {
 			$this->_type = is_string($param1) ? $param1 : '';
 			$this->assign($param2);
-		}
-		//	If this is a child of TypedArray…
+		} //	If this is a child of TypedArray…
 		else {
 			if (!isset($this->_type)) {
 				throw new InvalidArgumentException('$this->_type must be set in child class.');
@@ -75,7 +75,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	/**
 	 * Set the array to empty.
 	 */
-	public function clear(): void {
+	public function clear(): void
+	{
 		$this->_container = [];
 	}
 
@@ -84,10 +85,12 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param object|array|string|null $in
 	 */
-	public function assign($in): void {
+	public function assign($in): void
+	{
 		if ($in === null) {
 			$this->_container = [];
-		} else {
+		}
+		else {
 			$this->_massageInput($in);
 			foreach ($in as $k => $v) {
 				$this->offsetSet($k, $v);
@@ -100,7 +103,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return int
 	 */
-	public function count(): int {
+	public function count(): int
+	{
 		return count($this->_container);
 	}
 
@@ -113,7 +117,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return Traversable
 	 */
-	public function getIterator(): Traversable {
+	public function getIterator(): Traversable
+	{
 		if (is_a($this->_type, AtomicInterface::class, true)) {
 			return (function &() {
 				foreach ($this->_container as $k => $v) {
@@ -122,7 +127,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 					$v->set($val);
 				}
 			})();
-		} else {
+		}
+		else {
 			return (function &() {
 				foreach ($this->keys() as $k) {
 					yield $k => $this->_container[$k];
@@ -135,7 +141,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	/**
 	 * @return void
 	 */
-	public function setConversionOptionsToNested(): void {
+	public function setConversionOptionsToNested(): void
+	{
 		if (is_a($this->_type, TypedAbstract::class, true)) {
 			foreach ($this->_container as $v) {
 				$v->conversionOptions->set($this->conversionOptions->get());
@@ -151,7 +158,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return array
 	 */
-	public function toArray(): array {
+	public function toArray(): array
+	{
 		$omitEmpty       = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
 		$dateToString    = $this->conversionOptions->isset(ConversionOptions::DATE_TO_STRING);
 		$objectsToString = $this->conversionOptions->isset(ConversionOptions::ALL_OBJECTS_TO_STRING);
@@ -161,26 +169,31 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->get();
 			}
-		} elseif (method_exists($this->_type, 'toArray')) {
+		}
+		elseif (method_exists($this->_type, 'toArray')) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->toArray();
 			}
-		} elseif (
+		}
+		elseif (
 			($dateToString && is_a($this->_type, DateTime::class, true)) ||
 			($objectsToString && method_exists($this->_type, '__toString'))
 		) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->__toString();
 			}
-		} elseif ($this->_type === '') {
+		}
+		elseif ($this->_type === '') {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}
-		} elseif (!self::_isAssignable($this->_type)) {
+		}
+		elseif (!self::_isAssignable($this->_type)) {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = (array)$v;
 			}
-		} else {
+		}
+		else {
 			//  Is this needed?
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
@@ -201,7 +214,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return array
 	 */
-	public function jsonSerialize(): array {
+	public function jsonSerialize(): array
+	{
 		$keepJsonExpr = $this->conversionOptions->isset(ConversionOptions::KEEP_JSON_EXPR);
 		$omitEmpty    = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
 
@@ -210,11 +224,13 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v->jsonSerialize();
 			}
-		} elseif ($keepJsonExpr && $this->_type === '\\Laminas\\Json\\Expr') {
+		}
+		elseif ($keepJsonExpr && $this->_type === '\\Laminas\\Json\\Expr') {
 			foreach ($this->_container as $k => $v) {
 				$output[$k] = $v;
 			}
-		} else {
+		}
+		else {
 			return $this->toArray();
 		}
 
@@ -232,7 +248,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return void
 	 */
-	protected static function _removeEmpties(array &$arr): void {
+	protected static function _removeEmpties(array &$arr): void
+	{
 		//	Is this an indexed array?
 		$indexed = array_is_list($arr);
 
@@ -258,7 +275,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return TypedArray
 	 */
-	public function merge($in): TypedArray {
+	public function merge($in): TypedArray
+	{
 		$this->_massageInput($in);
 
 		$ret = clone $this;
@@ -267,7 +285,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 			foreach ($in as $v) {
 				$ret[] = $v;
 			}
-		} else {
+		}
+		else {
 			foreach ($in as $k => $v) {
 				$ret[$k] = $v;
 			}
@@ -283,8 +302,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return bool
 	 */
-	public function offsetExists($offset): bool {
-		return ($offset !== null && array_key_exists($offset, $this->_container));
+	public function offsetExists($offset): bool
+	{
+		return ($offset !== null && isset($this->_container[$offset]));
 	}
 
 	/**
@@ -302,8 +322,9 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return mixed
 	 */
-	public function offsetGet(mixed $offset): mixed {
-		if (!array_key_exists($offset, $this->_container)) {
+	public function offsetGet(mixed $offset): mixed
+	{
+		if (!isset($this->_container[$offset])) {
 			//	Be sure offset exists before accessing it.
 //			$this->offsetSet($offset, null);
 //
@@ -348,7 +369,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * @param string|int $offset
 	 * @param mixed $value
 	 */
-	public function offsetSet($offset, $value): void {
+	public function offsetSet($offset, $value): void
+	{
 		if (self::_setBasicTypeAndConfirm($value, $this->_type)) {
 			$this->_offsetSet($offset, $value);
 			return;
@@ -357,7 +379,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		if (is_a($this->_type, AtomicInterface::class, true)) {
 			if (is_null($offset) || !isset($this->_container[$offset])) {
 				$this->_offsetSet($offset, new $this->_type($value));
-			} else {
+			}
+			else {
 				$this->_container[$offset]->set($value);
 			}
 			return;
@@ -366,7 +389,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 		if (is_a($this->_type, TypedAbstract::class, true)) {
 			if (is_null($offset) || !isset($this->_container[$offset])) {
 				$this->_offsetSet($offset, new $this->_type($value));
-			} else {
+			}
+			else {
 				$this->_container[$offset]->assign($value);
 			}
 			return;
@@ -392,10 +416,12 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return void
 	 */
-	private function _offsetSet($offset, $value): void {
+	private function _offsetSet($offset, $value): void
+	{
 		if (is_null($offset)) {
 			$this->_container[] = $value;
-		} else {
+		}
+		else {
 			$this->_container[$offset] = $value;
 		}
 	}
@@ -405,14 +431,16 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @param string|int $offset
 	 */
-	public function offsetUnset($offset): void {
+	public function offsetUnset($offset): void
+	{
 		unset($this->_container[$offset]);
 	}
 
 	/**
 	 * Make sure object is deep copied.
 	 */
-	public function __clone() {
+	public function __clone()
+	{
 		if ($this->_type === '') {
 			foreach ($this->_container as &$v) {
 				// container accepts anything so test each value
@@ -420,7 +448,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 					$v = clone $v;
 				}
 			}
-		} elseif (!self::_isAssignable($this->_type)) {
+		}
+		elseif (!self::_isAssignable($this->_type)) {
 			// If not assignable then these must all already be objects.
 			foreach ($this->_container as &$v) {
 				$v = clone $v;
@@ -433,7 +462,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return array
 	 */
-	public function keys(): array {
+	public function keys(): array
+	{
 		return array_keys($this->_container);
 	}
 
@@ -445,7 +475,8 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 * @return TypedArray
 	 * @throws LengthException
 	 */
-	public function combine(array $keys): self {
+	public function combine(array $keys): self
+	{
 		if (count($keys) !== count($this->_container)) {
 			throw new LengthException('array counts do not match');
 		}
@@ -460,14 +491,16 @@ class TypedArray extends TypedAbstract implements ArrayAccess
 	 *
 	 * @return mixed
 	 */
-	public function shift() {
+	public function shift()
+	{
 		return array_shift($this->_container);
 	}
 
 	/**
 	 * @return array
 	 */
-	public function values(): array {
+	public function values(): array
+	{
 		return array_values($this->_container);
 	}
 }

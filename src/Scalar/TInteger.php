@@ -27,14 +27,14 @@ class TInteger extends ScalarAbstract
 				else {
 					$this->_value = intval($in, 0);
 				}
-				break;
+			break;
 
 			case 'NULL':
 				$this->_value = $this->isNullable() ? null : 0;
-				break;
+			break;
 
 			default:
-				$this->_value = (int) $in;
+				$this->_value = (int)$in;
 		}
 	}
 }

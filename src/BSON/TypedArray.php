@@ -22,75 +22,75 @@ use stdClass;
  */
 class TypedArray extends \Diskerror\Typed\TypedArray implements Serializable, Unserializable
 {
-    public function __construct(mixed $param1 = null, mixed $param2 = null)
-    {
-        if (get_called_class() === self::class) {
-            $this->_type = is_string($param1) ? $param1 : '';
+	public function __construct(mixed $param1 = null, mixed $param2 = null)
+	{
+		if (static::class === self::class) {
+			$this->_type = is_string($param1) ? $param1 : '';
 
-            $param1 = $param2;
-            $param2 = null;
-        }
-        else {
-            if (!isset($this->_type)) {
-                throw new InvalidArgumentException('$this->_type must be set in child class.');
-            }
+			$param1 = $param2;
+			$param2 = null;
+		}
+		else {
+			if (!isset($this->_type)) {
+				throw new InvalidArgumentException('$this->_type must be set in child class.');
+			}
 
-            if (null !== $param2) {
-                throw new InvalidArgumentException('Only the first parameter can be set when using a derived class.');
-            }
+			if (null !== $param2) {
+				throw new InvalidArgumentException('Only the first parameter can be set when using a derived class.');
+			}
 
-            $this->assign($param1);
-        }
-        parent::__construct($param1, $param2);
-    }
+			$this->assign($param1);
+		}
+		parent::__construct($param1, $param2);
+	}
 
-    /**
-     * Called automatically by MongoDB.
-     *
-     * @return array|Document|PackedArray|stdClass
-     */
-    public function bsonSerialize(): array|Document|PackedArray|stdClass
-    {
-        $dateToString = $this->conversionOptions->isset(ConversionOptions::DATE_TO_STRING);
-        $omitEmpty    = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
-        $castObjectId = $this->conversionOptions->isset(ConversionOptions::CAST_ID_TO_OBJECTID);
+	/**
+	 * Called automatically by MongoDB.
+	 *
+	 * @return array|Document|PackedArray|stdClass
+	 */
+	public function bsonSerialize(): array|Document|PackedArray|stdClass
+	{
+		$dateToString = $this->conversionOptions->isset(ConversionOptions::DATE_TO_STRING);
+		$omitEmpty    = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
+		$castObjectId = $this->conversionOptions->isset(ConversionOptions::CAST_ID_TO_OBJECTID);
 
-        $output = [];
-        if (method_exists($this->_type, 'bsonSerialize')) {
-            foreach ($this->_container as $k => $v) {
-                $output[$k] = $v->bsonSerialize();
-            }
-        }
-        elseif (!$dateToString && is_a($this->_type, DateTimeInterface::class, true)) {
-            foreach ($this->_container as $k => $v) {
-                $output[$k] = (array)new UTCDateTime($v);
-            }
-        }
-        else {
-            $output = $this->toArray();
-        }
+		$output = [];
+		if (method_exists($this->_type, 'bsonSerialize')) {
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = $v->bsonSerialize();
+			}
+		}
+		elseif (!$dateToString && is_a($this->_type, DateTimeInterface::class, true)) {
+			foreach ($this->_container as $k => $v) {
+				$output[$k] = (array)new UTCDateTime($v);
+			}
+		}
+		else {
+			$output = $this->toArray();
+		}
 
-        if ($omitEmpty) {
-            self::_removeEmpties($output);
-        }
+		if ($omitEmpty) {
+			self::_removeEmpties($output);
+		}
 
-        /**
-         * Cast "_id" string or number into a MongoDB\BSON\ObjectId.
-         */
-        if ($castObjectId && array_key_exists('_id', $output) && is_scalar($output['_id'])) {
-            $output['_id'] = new ObjectId(empty($output['_id']) ? null : (string)$output['_id']);
-        }
+		/**
+		 * Cast "_id" string or number into a MongoDB\BSON\ObjectId.
+		 */
+		if ($castObjectId && isset($output['_id']) && is_scalar($output['_id'])) {
+			$output['_id'] = new ObjectId(empty($output['_id']) ? null : (string)$output['_id']);
+		}
 
-        return $output;
-    }
+		return $output;
+	}
 
-    /**
-     *
-     * @param array $data
-     */
-    public function bsonUnserialize(array $data): void
-    {
-        $this->clear();
-        $this->assign($data);
-    }
+	/**
+	 *
+	 * @param array $data
+	 */
+	public function bsonUnserialize(array $data): void
+	{
+		$this->clear();
+		$this->assign($data);
+	}
 }

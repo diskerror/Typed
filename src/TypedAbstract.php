@@ -34,12 +34,13 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	/**
 	 * Coerces input to given scalar or array type. Objects are not changed.
 	 *
-	 * @param mixed  $val
+	 * @param mixed $val
 	 * @param string $type
 	 *
 	 * @return bool
 	 */
-	final protected static function _setBasicTypeAndConfirm(mixed &$val, string $type): bool {
+	final protected static function _setBasicTypeAndConfirm(mixed &$val, string $type): bool
+	{
 		$valType = gettype($val);
 
 		switch ($type) {
@@ -61,7 +62,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 							$val = (string)$val;
 							break;
 						}
-						// fall through
+					// fall through
 					case 'array':
 						$val = json_encode($val, JSON_THROW_ON_ERROR);
 					break;
@@ -104,7 +105,8 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 					case 'object':
 						if ($val instanceof AtomicInterface) {
 							$val = (bool)$val->get();
-						} else {
+						}
+						else {
 							$val = !empty((array)$val);
 						}
 					break;
@@ -186,7 +188,8 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	protected function _massageInput(&$in): void {
+	protected function _massageInput(&$in): void
+	{
 		switch (gettype($in)) {
 			case 'array':
 			case 'object':
@@ -200,7 +203,8 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 			case 'string':
 				if ('' === $in) {
 					$in = [];
-				} else {
+				}
+				else {
 					$in = json_decode($in, true, 512, JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING);
 				}
 			break;
@@ -215,7 +219,7 @@ abstract class TypedAbstract implements Countable, IteratorAggregate, JsonSerial
 			//	A boolean 'true' falls through.
 
 			default:
-				throw new InvalidArgumentException(get_called_class() . ': bad input type ' . gettype($in) . ', value: "' . $in . '"');
+				throw new InvalidArgumentException(static::class . ': bad input type ' . gettype($in) . ', value: "' . $in . '"');
 		}
 	}
 }

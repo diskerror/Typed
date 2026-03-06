@@ -24,7 +24,7 @@ class Date extends DateTime
 	 * Sets time to noon to avoid possible Daylight Savings transition issues.
 	 *
 	 * @param object|array|string $time -OPTIONAL
-	 * @param string              $timezone -OPTIONAL
+	 * @param string $timezone -OPTIONAL
 	 */
 	public function __construct($time = 'now', $timezone = null)
 	{
@@ -78,9 +78,9 @@ class Date extends DateTime
 	 * Method shouldn't be used for Date object.
 	 *
 	 * @param array|int $hour
-	 * @param int       $minute
-	 * @param int       $second
-	 * @param int       $microsecond
+	 * @param int $minute
+	 * @param int $second
+	 * @param int $microsecond
 	 *
 	 * @throws LogicException
 	 */

@@ -21,12 +21,15 @@ use Diskerror\Typed\ScalarAbstract;
  */
 class TAnything extends ScalarAbstract
 {
-	public function set(mixed $in): void {
+	public function set(mixed $in): void
+	{
 		if ($in === null) {
 			$this->_value = $this->isNullable() ? null : false;
-		} elseif (is_array($in)) {
+		}
+		elseif (is_array($in)) {
 			$this->_value = json_encode($in);
-		} else {
+		}
+		else {
 			$this->_value = $in;
 		}
 	}

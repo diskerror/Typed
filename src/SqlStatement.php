@@ -22,9 +22,7 @@ use UnexpectedValueException;
  */
 class SqlStatement
 {
-	protected final function __construct()
-	{
-	}
+	protected final function __construct() {}
 
 	/**
 	 * Returns a string formatted for an SQL insert or update.
@@ -34,7 +32,7 @@ class SqlStatement
 	 * An empty "include" array means to use all.
 	 *
 	 * @param array|object $input
-	 * @param array        $include
+	 * @param array $include
 	 *
 	 * @return string
 	 */
@@ -48,7 +46,7 @@ class SqlStatement
 				$input = iterator_to_array($input);
 			}
 			else {
-				$input = (array) $input;
+				$input = (array)$input;
 			}
 		}
 		elseif (!is_array($input)) {
@@ -73,12 +71,12 @@ class SqlStatement
 			switch (gettype($v)) {
 				case 'boolean':
 					$sqlStrs[] = $kEq . ($v ? '1' : '0');
-					break;
+				break;
 
 				case 'integer':
 				case 'double':
 					$sqlStrs[] = $kEq . $v;
-					break;
+				break;
 
 				case 'string':
 					//	if $v is a string that contains the text 'NULL' then
@@ -93,12 +91,12 @@ class SqlStatement
 						$sqlStrs[] = $kEq . '"' . addslashes($v) . '"';
 //						$sqlStrs[] = $kEq . '0x' . bin2hex($v);
 					}
-					break;
+				break;
 
 				case 'NULL':
 					//	if $v is a NULL
 					$sqlStrs[] = $kEq . 'NULL';
-					break;
+				break;
 
 				case 'object':
 					if ($v instanceof DateTime) {
@@ -113,11 +111,11 @@ class SqlStatement
 					if ($jsonLastErr !== JSON_ERROR_NONE) {
 						throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
 					}
-					break;
+				break;
 
 				//	resource, just ignore these
 				default:
-					break;
+				break;
 			}
 		}
 
@@ -133,7 +131,7 @@ class SqlStatement
 	 * An empty "include" array means to use all.
 	 *
 	 * @param array|stdClass $input
-	 * @param array          $include
+	 * @param array $include
 	 *
 	 * @return string
 	 */
@@ -147,7 +145,7 @@ class SqlStatement
 
 		if (count($include)) {
 			foreach ($include as $i) {
-				if (array_key_exists($i, $input)) {
+				if (isset($input[$i])) {
 					$sqlStrs[] = '`' . $i . '` = VALUES(`' . $i . '`)';
 				}
 			}
