@@ -10,7 +10,7 @@
 
 namespace Diskerror\Typed;
 
-use Diskerror\Typed\AttributeMap;
+use Diskerror\Typed\ConversionOptions as ConOpts;
 use DateTimeInterface;
 use InvalidArgumentException;
 use ReflectionObject;
@@ -109,7 +109,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function __construct(mixed $in = [])
 	{
-		$this->conversionOptions = new ConversionOptions();
+		$this->conversionOptions = new ConOpts();
 		$this->_initProperties();
 
 		$className = static::class;
@@ -317,86 +317,81 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function toArray(): array
 	{
-		$dateToString    = $this->conversionOptions->isset(ConversionOptions::DATE_TO_STRING);
-		$objectsToString = $this->conversionOptions->isset(ConversionOptions::ALL_OBJECTS_TO_STRING);
-		$omitResources   = $this->conversionOptions->isset(ConversionOptions::OMIT_RESOURCE);
-		$omitEmpty       = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
+		return $this->_toArray(false);
+	}
+
+	/**
+	 * jsonSerialize
+	 *
+	 * Called automatically when you call json_encode($typedClassChild).
+	 *
+	 * @return array
+	 */
+	public function jsonSerialize(): array
+	{
+		return $this->_toArray(true);
+	}
+
+	/**
+	 * _toArray
+	 * Builds the actual array returned by toArray() and jsonSerialize().
+	 *
+	 * @param bool $forJSON
+	 * @return array
+	 */
+	protected function _toArray(bool $forJSON): array
+	{
+		$dateToString    = $this->conversionOptions->isset(ConOpts::DATE_TO_STRING);
+		$objectsToString = $this->conversionOptions->isset(ConOpts::ALL_OBJECTS_TO_STRING);
+		$omitResources   = $this->conversionOptions->isset(ConOpts::OMIT_RESOURCE);
+		$omitEmpty       = $this->conversionOptions->isset(ConOpts::OMIT_EMPTY);
+		$keepJsonExpr    = $this->conversionOptions->isSet(ConOpts::KEEP_JSON_EXPR);
+		$ZJE             = '\\Laminas\\Json\\Expr';
 
 		$arr = [];
 		foreach ($this->_meta as $k => &$meta) {
-			$v = $this->$k;
+			$v =& $this->$k;
 
 			if ($meta->isObject) {
 				switch (true) {
 					case ($meta->isaAtomicInterface):
-						$v = $v->get();
+						$arr[$k] = $v->get();
 					break;
 
-					case method_exists($v, 'toArray'):
-						$v = $v->toArray();
+					case $forJSON && method_exists($v, 'jsonSerialize'):
+						$arr[$k] = $v->jsonSerialize();
+					break;
+
+					case $forJSON && $keepJsonExpr && is_a($v, '\\Laminas\\Json\\Expr'):
+						$arr[$k] = $v;  // return as \Laminas\Json\Expr
+					break;
+
+					case !$forJSON && method_exists($v, 'toArray'):
+						$arr[$k] = $v->toArray();
 					break;
 
 					case ($meta->isaDateTimeInterface):
-						$v = $dateToString ? (string)$v : (array)$v;
+						$arr[$k] = $dateToString ? (string)$v : (array)$v;
 					break;
 
-					case $objectsToString
-						&& method_exists($v, '__toString')
-						&& !($meta->isaDateTimeInterface):
-						$v = (string)$v;
+					case $objectsToString && method_exists($v, '__toString'):
+						$arr[$k] = (string)$v;
 					break;
 
 					default:
-						$v = (array)$v;
+						$arr[$k] = (array)$v;
 				}
 			}
 			elseif ($omitResources && is_resource($v)) {
 				continue;
 			}
-
-			//	Testing for empty must happen after nested objects have been reduced.
-			if ($omitEmpty && empty($v)) {
-				continue;
-			}
-
-			$arr[$k] = $v;
-		}
-
-		return $arr;
-	}
-
-	/**
-	 * @return array
-	 */
-	public function jsonSerialize(): array
-	{
-		$keepJsonExpr = $this->conversionOptions->isSet(ConversionOptions::KEEP_JSON_EXPR);
-		$ZJE          = '\\Laminas\\Json\\Expr';
-		$omitEmpty    = $this->conversionOptions->isset(ConversionOptions::OMIT_EMPTY);
-
-		$arr = $this->toArray();
-		foreach ($arr as $k => &$v) {
-			if ($this->_meta[$k]->isObject) {
-				switch (true) {
-					case method_exists($this->$k, 'jsonSerialize'):
-						$v = $this->$k->jsonSerialize();
-					break;
-
-					case $keepJsonExpr && $this->$k instanceof $ZJE:
-						$v = $this->$k;  // return as \Laminas\Json\Expr
-					break;
-
-					default:
-				}
-
-				if ($omitEmpty && isset($v) && empty((array)$v)) {
-					unset($v);
-				}
+			else {
+				$arr[$k] = $v;
 			}
 
 			//	Testing for empty must happen after nested objects have been reduced.
-			if ($omitEmpty && isset($v) && empty($v)) {
-				unset($v);
+			if ($omitEmpty && empty($arr[$k])) {
+				unset($arr[$k]);
 			}
 		}
 
