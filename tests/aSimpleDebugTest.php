@@ -2,11 +2,8 @@
 
 require "bootstrap.php";
 
-use TestClasses\AttributeTestClass;
-use TestClasses\Config;
+use TestClasses\Tweet;
 
 
-//$a = new AttributeTestClass();
-
-$c = new Config();
+$a = new Tweet();
 

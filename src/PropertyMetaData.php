@@ -21,8 +21,20 @@ final class PropertyMetaData
 	private bool   $isaAtomicInterface;
 	private bool   $isaTypedAbstract;
 	private bool   $isaDateTimeInterface;
+	private bool   $hasToArray;
+	private bool   $hasJsonSerialize;
+	private bool   $hasToString;
 
-	public function __construct(string $type, bool $isObject, bool $isNullable, bool $isPublic, bool $isaAtomicInterface, bool $isaTypedAbstract, bool $isaDateTimeInterface)
+	public function __construct(string $type,
+								bool   $isObject,
+								bool   $isNullable,
+								bool   $isPublic,
+								bool   $isaAtomicInterface,
+								bool   $isaTypedAbstract,
+								bool   $isaDateTimeInterface,
+								bool   $hasToArray,
+								bool   $hasJsonSerialize,
+								bool   $hasToString)
 	{
 		$this->type                 = $type;
 		$this->isObject             = $isObject;
@@ -31,6 +43,9 @@ final class PropertyMetaData
 		$this->isaAtomicInterface   = $isaAtomicInterface;
 		$this->isaTypedAbstract     = $isaTypedAbstract;
 		$this->isaDateTimeInterface = $isaDateTimeInterface;
+		$this->hasToArray           = $hasToArray;
+		$this->hasJsonSerialize     = $hasJsonSerialize;
+		$this->hasToString          = $hasToString;
 	}
 
 	/**

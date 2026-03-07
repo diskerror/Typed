@@ -126,18 +126,40 @@ abstract class TypedClass extends TypedAbstract
 					continue;
 				}
 
-				$typeObj  = $rProp->getType();
-				$typeName = !is_null($typeObj) ? $typeObj->__toString() : '';
-				$typeName = str_starts_with($typeName, '?') ? substr($typeName, 1) : $typeName;
+				$typeObj    = $rProp->getType();
+				$typeName   = !is_null($typeObj) ? $typeObj->__toString() : '';
+				$typeName   = str_starts_with($typeName, '?') ? substr($typeName, 1) : $typeName;
+				$isObject   = !self::_isAssignable($typeName);
+				$isNullable = str_starts_with($typeName, '?') || ($typeObj !== null && $typeObj->allowsNull());
+
+				if (!isset($this->$pName)) {
+					//  Always instantiate objects. They cannot be null.
+					if ($isObject) {
+						$this->$pName = new $typeName();
+					}
+					elseif (!$isNullable) {
+						if (in_array($typeName, self::SINGULAR_NAMES)) {
+							$tmp = '';
+							settype($tmp, $typeName);
+							$this->$pName = $tmp;
+						}
+						elseif ($typeName === 'array') {
+							$this->$pName = [];
+						}
+					}
+				}
 
 				self::$_metaCache[$className][$pName] = new PropertyMetaData(
 					$typeName,
-					!self::_isAssignable($typeName),
-					str_starts_with($typeName, '?') || ($typeObj !== null && $typeObj->allowsNull()),
+					$isObject,
+					$isNullable,
 					$rProp->isPublic(),
-					is_a($typeName, AtomicInterface::class, true),
-					is_a($typeName, TypedAbstract::class, true),
-					is_a($typeName, DateTimeInterface::class, true)
+					$isObject && is_a($typeName, AtomicInterface::class, true),
+					$isObject && is_a($typeName, TypedAbstract::class, true),
+					$isObject && is_a($typeName, DateTimeInterface::class, true),
+					$isObject && method_exists($this->$pName, 'toArray'),
+					$isObject && method_exists($this->$pName, 'jsonSerialize'),
+					$isObject && method_exists($this->$pName, '__toString')
 				);
 
 				// Check for Map attribute
@@ -151,18 +173,13 @@ abstract class TypedClass extends TypedAbstract
 
 		$this->_meta = self::$_metaCache[$className];
 
-		// Merge mapped attributes into the local map.
-		// Attribute mappings take precedence over class property defined mappings if duplicates exist.
-		if (!empty(self::$_mapCache[$className])) {
-			$this->_map = array_merge($this->_map, self::$_mapCache[$className]);
-		}
-
-		foreach ($this->_meta as $pName => &$meta) {
+		//	If there is already an instance of this class then initialization is done here.
+		//	Otherwise, on the first instance if-isset skips all properties.
+		foreach($this->_meta as $pName => $meta) {
 			if (!isset($this->$pName)) {
 				//  Always instantiate objects. They cannot be null.
 				if ($meta->isObject) {
-					$pType        = $meta->type;
-					$this->$pName = new $pType();
+					$this->$pName = new $meta->type;
 				}
 				elseif (!$meta->isNullable) {
 					if (in_array($meta->type, self::SINGULAR_NAMES)) {
@@ -175,6 +192,12 @@ abstract class TypedClass extends TypedAbstract
 					}
 				}
 			}
+		}
+
+		// Merge mapped attributes into the local map.
+		// Attribute mappings take precedence over class property defined mappings if duplicates exist.
+		if (!empty(self::$_mapCache[$className])) {
+			$this->_map = array_merge($this->_map, self::$_mapCache[$className]);
 		}
 
 		if ($in !== []) {
@@ -257,7 +280,7 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function clear(): void
 	{
-		foreach ($this->_meta as $pName => &$meta) {
+		foreach ($this->_meta as $pName => $meta) {
 			$pType = $meta->type;
 			switch (true) {
 				case $meta->isaAtomicInterface:
@@ -302,8 +325,8 @@ abstract class TypedClass extends TypedAbstract
 	 */
 	public function setConversionOptionsToNested(): void
 	{
-		foreach ($this->getPublicNames() as $k) {
-			if ($this->_meta[$k]->isaTypedAbstract) {
+		foreach ($this->_meta as $k => $meta) {
+			if ($meta->isaTypedAbstract) {
 				$this->$k->conversionOptions->set($this->conversionOptions->get());
 				$this->$k->setConversionOptionsToNested();
 			}
@@ -346,11 +369,11 @@ abstract class TypedClass extends TypedAbstract
 		$omitResources   = $this->conversionOptions->isset(ConOpts::OMIT_RESOURCE);
 		$omitEmpty       = $this->conversionOptions->isset(ConOpts::OMIT_EMPTY);
 		$keepJsonExpr    = $this->conversionOptions->isSet(ConOpts::KEEP_JSON_EXPR);
-		$ZJE             = '\\Laminas\\Json\\Expr';
+		//$ZJE             = '\\Laminas\\Json\\Expr';
 
 		$arr = [];
-		foreach ($this->_meta as $k => &$meta) {
-			$v =& $this->$k;
+		foreach ($this->_meta as $k => $meta) {
+			$v = $this->$k;
 
 			if ($meta->isObject) {
 				switch (true) {
@@ -358,7 +381,11 @@ abstract class TypedClass extends TypedAbstract
 						$arr[$k] = $v->get();
 					break;
 
-					case $forJSON && method_exists($v, 'jsonSerialize'):
+					case !$forJSON && $meta->hasToArray:
+						$arr[$k] = $v->toArray();
+					break;
+
+					case $forJSON && $meta->hasJsonSerialize:
 						$arr[$k] = $v->jsonSerialize();
 					break;
 
@@ -366,15 +393,11 @@ abstract class TypedClass extends TypedAbstract
 						$arr[$k] = $v;  // return as \Laminas\Json\Expr
 					break;
 
-					case !$forJSON && method_exists($v, 'toArray'):
-						$arr[$k] = $v->toArray();
-					break;
-
 					case ($meta->isaDateTimeInterface):
 						$arr[$k] = $dateToString ? (string)$v : (array)$v;
 					break;
 
-					case $objectsToString && method_exists($v, '__toString'):
+					case $objectsToString && $meta->hasToString:
 						$arr[$k] = (string)$v;
 					break;
 
@@ -424,22 +447,22 @@ abstract class TypedClass extends TypedAbstract
 	public function getIterator(): Traversable
 	{
 		return (function &() {
-			foreach ($this->getPublicNames() as $k) {
-				if ($this->_meta[$k]->isaAtomicInterface) {
-					$v     = $this->{$k}->get();
+			foreach ($this->_meta as $k => $meta) {
+				if ($meta->isaAtomicInterface) {
+					$v     = $this->$k->get();
 					$vOrig = $v;
 
 					yield $k => $v;
 
 					if ($v != $vOrig) {
-						$this->{$k}->set($v);
+						$this->$k->set($v);
 					}
 				}
 				else {
 					yield $k => $this->{$k};
 
 					//	Cast if not the same type.
-					if (!is_object($this->{$k}) || get_class($this->{$k}) !== $this->_meta[$k]->type) {
+					if (!is_object($this->{$k}) || get_class($this->{$k}) !== $meta->type) {
 						$this->_setByName($k, $this->{$k});
 					}
 					//	Null property types don't get checked.
@@ -511,7 +534,7 @@ abstract class TypedClass extends TypedAbstract
 	public function __isset(string $pName): bool
 	{
 		$pName = $this->_map[$pName] ?? $pName;
-		return $this->_keyExists($pName) && ($this->$pName !== null);
+		return $this->_keyExists($pName) && $this->$pName !== null;
 	}
 
 	/**
