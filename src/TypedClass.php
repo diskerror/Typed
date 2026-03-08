@@ -18,7 +18,7 @@ use Traversable;
 use TypeError;
 
 /**
- * This requires PHP version 8.2 or greater.
+ * This requires PHP version 8.1 or greater.
  *
  * Create a child of this class with your named properties as public, or
  *      they can be protected or private and be a decendent of

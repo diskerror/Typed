@@ -166,9 +166,7 @@ abstract class ScalarAbstract implements AtomicInterface, Stringable
 			return [];
 		}
 
-		if (settype($val, $type) === false) {
-			throw new ErrorException('bad type name');
-		}
+		settype($val, $type);
 
 		return $val;
 	}

@@ -283,4 +283,120 @@ class ScalarTest extends TestCase
         $a = new TAnything(null, true);
         $this->assertNull($a->get());
     }
+
+    // === ScalarAbstract coverage: _castIfObject branches ===
+
+    public function testCastIfObjectWithFormatMethod()
+    {
+        // Object with format() but no __toString or AtomicInterface
+        $obj = new class {
+            public function format(string $f): string { return '2025-01-01T00:00:00+00:00'; }
+        };
+        $s = new TString($obj);
+        $this->assertSame('2025-01-01T00:00:00+00:00', $s->get());
+    }
+
+    public function testCastIfObjectWithToArrayMethod()
+    {
+        // Object with toArray() but no __toString, format, or AtomicInterface
+        $obj = new class {
+            public function toArray(): array { return ['x' => 1, 'y' => 2]; }
+        };
+        $s = new TString($obj);
+        // Array gets JSON-encoded by TString::set()
+        $this->assertSame('{"x":1,"y":2}', $s->get());
+    }
+
+    public function testCastIfObjectPlainObject()
+    {
+        // Plain object with no special methods — cast to array
+        $obj = new \stdClass();
+        $obj->foo = 'bar';
+        $s = new TString($obj);
+        $this->assertSame('{"foo":"bar"}', $s->get());
+    }
+
+    public function testCastIfObjectWithAtomicInterface()
+    {
+        // AtomicInterface object — uses get()
+        $inner = new TInteger(99);
+        $s = new TString($inner);
+        $this->assertSame('99', $s->get());
+    }
+
+    public function testCastIfObjectWithToString()
+    {
+        // Object with __toString but not AtomicInterface
+        $obj = new class {
+            public function __toString(): string { return 'stringified'; }
+        };
+        $s = new TString($obj);
+        $this->assertSame('stringified', $s->get());
+    }
+
+    // === ScalarAbstract coverage: setType edge cases ===
+
+    public function testSetTypeEmptyStringToArray()
+    {
+        $result = \Diskerror\Typed\ScalarAbstract::setType('', 'array');
+        $this->assertSame([], $result);
+    }
+
+    public function testSetTypeNormalConversion()
+    {
+        $result = \Diskerror\Typed\ScalarAbstract::setType('42', 'integer');
+        $this->assertSame(42, $result);
+    }
+
+    public function testSetTypeStringToBoolean()
+    {
+        $result = \Diskerror\Typed\ScalarAbstract::setType('1', 'boolean');
+        $this->assertTrue($result);
+    }
+
+    // === ScalarAbstract coverage: isNullable ===
+
+    public function testIsNullableTrue()
+    {
+        $s = new TString('hi', true);
+        $this->assertTrue($s->isNullable());
+    }
+
+    public function testIsNullableFalse()
+    {
+        $s = new TString('hi', false);
+        $this->assertFalse($s->isNullable());
+    }
+
+    // === ScalarAbstract coverage: unset with nullable ===
+
+    public function testUnsetNullableSetsNull()
+    {
+        $s = new TString('hello', true);
+        $s->unset();
+        $this->assertNull($s->get());
+        $this->assertFalse($s->isset());
+    }
+
+    public function testUnsetNonNullableSetsEmpty()
+    {
+        $s = new TString('hello', false);
+        $s->unset();
+        $this->assertSame('', $s->get());
+        $this->assertTrue($s->isset());  // empty string is still "set"
+    }
+
+    // === ScalarAbstract: constructor with bad type ===
+
+    public function testConstructorRejectsResource()
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('bad type');
+        $r = tmpfile();
+        try {
+            new TString($r);
+        } finally {
+            fclose($r);
+        }
+    }
 }

@@ -20,20 +20,12 @@ class TString extends ScalarAbstract
 
 		switch (gettype($in)) {
 			case 'array':
-				$jsonStr     = json_encode($in);
-				$jsonLastErr = json_last_error();
-				if ($jsonLastErr !== JSON_ERROR_NONE) {
-					throw new UnexpectedValueException(json_last_error_msg(), $jsonLastErr);
-				}
-				$this->_value = $jsonStr;
+				$this->_value = json_encode($in, JSON_THROW_ON_ERROR);
 			break;
 
 			case 'NULL':
 				$this->_value = $this->isNullable() ? null : '';
 			break;
-
-			case 'resource':
-				throw new UnexpectedValueException('Value cannot be a resource.');
 
 			default:
 				$this->_value = (string)$in;
